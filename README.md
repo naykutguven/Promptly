@@ -38,6 +38,7 @@ Promptly is a native macOS teleprompter designed for private, offline use. This 
 ## Tech stack
 
 - **Minimum deployment target:** macOS 26.0.
+- **Swift:** Swift 6.4 toolchain, strict concurrency checking, Approachable Concurrency enabled, and `MainActor` as the default isolation.
 - **SwiftUI:** Application interface, script editor, controls, and settings.
 - **AppKit:** Floating panel, window positioning, focus behavior, and display integration.
 - **SwiftData:** Local persistence for scripts and section metadata, with CloudKit synchronization disabled.
