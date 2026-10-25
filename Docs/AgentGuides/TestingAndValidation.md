@@ -18,10 +18,11 @@ Follow [AGENTS.md](../../AGENTS.md) and the relevant domain guides.
   `buildForTesting: true` to compile test targets; an app-only build misses test
   compilation failures. Discover tests with `GetTestList`, then use `RunSomeTests`
   for the relevant selection.
-- Shell builds/tests use `xcodebuild -project Promptly.xcodeproj -scheme Promptly`
+- Shell app builds/tests use `xcodebuild -project Promptly.xcodeproj -scheme Promptly`
   with an explicit configuration and `-destination 'platform=macOS'`. Use `xcsift`
   when available, preserving the build's exit status with `pipefail`; otherwise
-  keep the unfiltered result. Do not use SwiftPM or iOS Simulator workflows.
+  keep the unfiltered result. Build/test the app through its Xcode project, not
+  `swift build`/`swift test`; use macOS destinations.
 - If a restricted CLI environment prevents compiler macro plug-ins from launching,
   check the logs and compare with Xcode before treating it as a source failure.
   Do not install tools, clean builds, or add CI merely for an unrelated task.

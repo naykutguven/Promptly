@@ -73,6 +73,10 @@ Read the relevant guide completely before acting; tasks may need several:
 
 - Prioritize correctness, data preservation, privacy, and thread safety, followed
   by maintainability, accessibility, responsiveness, and energy use.
+- Prefer small readable diffs and clear names. Omit redundant `internal` modifiers;
+  use narrower access where appropriate. Broader APIs are maintenance promises.
+- Comments explain non-obvious intent, invariants, ownership, data-loss constraints,
+  or measured tradeoffs. Avoid restating the code.
 - Use native macOS controls and conventions. Keep UI, AppKit windows, and
   presentation state on `MainActor`; give mutable non-UI subsystems one explicit
   owner. Never pass live SwiftData models or `ModelContext` across actors.
@@ -83,16 +87,48 @@ Read the relevant guide completely before acting; tasks may need several:
   isolation escapes or unchecked `Sendable` without a documented invariant.
 - Use typed failures and useful recovery. Avoid empty catches, forced operations,
   and fatal termination for recoverable file, store, or system failures.
-- Inject dependencies where substitution or determinism is needed. Prefer small
-  concrete types; add protocols at real consumer boundaries.
-- Views render state and send intents. Use enums for mutually exclusive workflows
-  and keep independent state axes separate.
-- Grow app composition, features, domain values, and capability services as needed.
-  Create dependencies once at the composition root; avoid mutable global singletons,
-  speculative layers, and unrelated restructuring.
+- Inject time, IDs, file roots, and capabilities where substitution or determinism
+  requires it.
 - Keep configuration changes minimal. Do not change platform scope, deployment
   target, signing, sandbox entitlements, capabilities, or permission strings unless
   the requested behavior requires it.
+
+## Architecture and state
+
+Grow toward this shape without reorganizing unrelated files:
+
+```text
+Promptly/
+  App/                    Composition, lifecycle, routing
+  Features/<Feature>/     Feature UI and presentation
+  Domain/                 Shared value types and policies
+  Services/<Capability>/  Persistence, files, windowing, speech, inference
+  DesignSystem/           Reused app-specific visuals only
+  Extensions/             Focused native-type extensions
+```
+
+- The app composition root creates long-lived dependencies once and injects them.
+  Avoid service locators and mutable global singletons.
+- Views render state and send intents; framework integration belongs in injected
+  capability services.
+- Maintain one-way dependencies: features depend on domain contracts/services;
+  services do not depend on feature views or control feature presentation.
+- Add a protocol where a consumer needs substitution, not for every concrete type.
+- Model mutually exclusive view-model workflow states with enums and associated
+  values. Render with exhaustive switches and derive convenience properties
+  instead of parallel Boolean/optional flags.
+- Keep independent state axes in separate enums rather than one Cartesian-product
+  mega-enum. Add `Equatable`/`Sendable` when their semantics make them useful.
+- Long operations use explicit legal transitions, cancellation/retry, a stable
+  generation ID, and a last safe commit point. Revalidate identity/revision after
+  each relevant `await`.
+- Keep one primary type per file, named `TypeName.swift`. Put native extensions in
+  `Promptly/Extensions/TypeName+Extensions.swift`.
+- Mirror source folders under `PromptlyTests/`, using `TypeNameTests.swift` or
+  `TypeName+ExtensionsTests.swift`. Keep UI journey tests under `PromptlyUITests/`
+  with names such as `FeatureUITests.swift`.
+- Avoid generic `Utils`, `Helpers`, and `Manager` dumping grounds.
+- Add a target/package only for a real ownership, reuse, or dependency boundary.
 
 ## Working and validation
 

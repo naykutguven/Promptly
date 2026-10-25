@@ -52,7 +52,10 @@ ownership and [Testing and Validation](TestingAndValidation.md) before verificat
 
 - Treat model output as untrusted suggestions. Bound input/output and validate
   structure, section ranges, ordering, duplicates, and source ID/revision before
-  display or save. Never invent a framework model version.
+  display or save.
+- Persist source IDs/revisions and app-owned prompt, format, and inference versions
+  with accepted generated output. Record a model identifier only when the OS
+  exposes one; never invent a framework model version.
 - User acceptance is the commit boundary. Suggestions must not rewrite script
   text or silently replace manual sections; source edits invalidate stale work.
 - Check on-device model availability and explain the reported state. Refusal,
