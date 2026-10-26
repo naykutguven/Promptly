@@ -5,7 +5,6 @@
 //  Created by Aykut Güven on 26.10.26.
 //
 
-import AppKit
 import SwiftUI
 
 struct ReaderMenu: View {
@@ -31,8 +30,5 @@ struct ReaderMenu: View {
         if controller.preferenceFailure != nil {
             Text("Window preferences could not be restored or saved. Return to Notch to reset placement.")
         }
-        Divider()
-        Button("Quit Promptly") { NSApplication.shared.terminate(nil) }
-            .keyboardShortcut("q")
     }
 }

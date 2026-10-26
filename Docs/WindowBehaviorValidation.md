@@ -50,7 +50,7 @@ with the minimum macOS 26.0 release.
 | Release app compilation | Passed | Unsigned CLI build below; no compiler warnings. Does not validate signing or notarization |
 | Placement, state, preferences, and AppKit tests | Passed: 31 | Xcode `GetTestList` then `RunSomeTests`, all `PromptlyTests` on My Mac |
 | Native window, drag, resize, and menu/keyboard journeys | Passed: 5 | All five `ReaderWindowUITests` passed in the full 36-test coverage run on MacBook Pro (Mac16,8), macOS 27.0.1. An earlier missed initial Detach click remains recorded in the resize follow-up below |
-| App source line coverage | 96.58% (678/702) | Increased from 95.73% after seven tests; see the [source coverage report](SourceCoverage.md) for per-file results and limitations |
+| App source line coverage before app/menu ownership cleanup | 96.58% (678/702) | Increased from 95.73% after seven tests; see the [source coverage report](SourceCoverage.md) for historical per-file results and limitations |
 | Controller lifecycle under Thread Sanitizer | Passed: 7 | Targeted CLI command below; no sanitizer findings; linker reported a duplicate `@executable_path` rpath warning |
 | Local pointer focus | Partial | TextEdit's empty synthetic document retained its focused text field after a reader control click; does not establish compatibility with presenting apps |
 | Physical notch and no-notch placement | Pending | MacBook Pro and external display |
@@ -65,6 +65,16 @@ an attachment containing only the synthetic anchored reader. The keyboard test
 recovers a hidden reader through the menu-bar item, focuses Collapse, activates it
 with Space, tabs to Lock, and confirms Space no longer changes the control after
 Escape. These do not replace physical accessibility or presenting-app checks.
+
+App/menu ownership cleanup on 2026-10-26 moved `PromptlyApp.swift` into `App/`
+and moved the final divider and Quit command from `ReaderMenu` into the app's
+`MenuBarExtra` composition. Xcode `BuildProject(buildForTesting: true)` succeeded,
+and `RunSomeTests` passed
+`ReaderWindowUITests/testMenuRecoversLockedCollapsedReaderAndQuits()` (1 passed,
+0 failed or skipped) using the Promptly scheme on My Mac, macOS 27.0.1. The
+existing journey verifies menu recovery and graceful Quit after the ownership
+change. The full suite and coverage measurement were not repeated for this
+cleanup; the coverage figures above describe the earlier source layout.
 
 Drag verification on 2026-10-26 reproduced a dead area in the header: only the
 small title text originally accepted dragging. The regression failed before the

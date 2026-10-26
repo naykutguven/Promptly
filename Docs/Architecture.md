@@ -37,8 +37,8 @@ SwiftData storage, and scrolling are not implemented.
 
 ```text
 Promptly/
-├── PromptlyApp.swift
 ├── App/
+│   ├── PromptlyApp.swift
 │   └── PromptlyAppDelegate.swift
 ├── Domain/
 │   ├── DisplayGeometry.swift
@@ -62,8 +62,9 @@ Promptly/
 window controller and injects the hosted `ReaderView` through `setContent(NSView)`.
 The controller manages panel mechanics without constructing a feature view.
 `ReaderDragHandle` is a reader-local AppKit bridge and stays with that feature.
-`PromptlyApp.swift` can move into `App/` when that area is next changed; no move or
-separate composition type is required for the present scale.
+`App/PromptlyApp.swift` composes the menu-bar scene, including the app-wide Quit
+command; `ReaderMenu` supplies reader commands and preference warnings. A separate
+composition type is not required for the present scale.
 
 Unit/AppKit tests mirror `Domain/` and `Services/Windowing/` under `PromptlyTests/`.
 `PromptlyUITests/ReaderWindowUITests.swift` covers reader journeys. See the

@@ -1,6 +1,9 @@
 # Source test coverage
 
-Measured on 2026-10-26 for the current milestone 1 implementation.
+Measured on 2026-10-26 for the milestone 1 implementation before the app-entry
+move and Quit-menu ownership cleanup. Source links follow the current layout;
+the counts below remain the historical measurement, including the former
+placement of Quit in `ReaderMenu`.
 
 App source executable-line coverage increased from **95.73%
 (672/702)** to **96.58%
@@ -30,7 +33,7 @@ no percentage. These measurements do not establish minimum macOS 26.0 support.
 | [ReaderDragHandle.swift](../Promptly/Features/Reader/ReaderDragHandle.swift) | 100.00% | 100.00% | 25/25 |
 | [ReaderMenu.swift](../Promptly/Features/Reader/ReaderMenu.swift) | 78.12% | 81.25% | 26/32 |
 | [ReaderView.swift](../Promptly/Features/Reader/ReaderView.swift) | 100.00% | 100.00% | 227/227 |
-| [PromptlyApp.swift](../Promptly/PromptlyApp.swift) | 100.00% | 100.00% | 8/8 |
+| [PromptlyApp.swift](../Promptly/App/PromptlyApp.swift) | 100.00% | 100.00% | 8/8 |
 | [ReaderHostingView.swift](../Promptly/Services/Windowing/ReaderHostingView.swift) | 0.00% | 0.00% | 0/2 |
 | [ReaderPanel.swift](../Promptly/Services/Windowing/ReaderPanel.swift) | 100.00% | 100.00% | 10/10 |
 | [ReaderWindowController.swift](../Promptly/Services/Windowing/ReaderWindowController.swift) | 95.26% | 95.26% | 221/232 |
