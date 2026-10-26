@@ -1,8 +1,16 @@
 # Promptly
 
-Promptly is a native macOS teleprompter designed for private, offline use. This README describes the planned feature set and technical direction.
+Promptly is a native macOS teleprompter designed for private, offline use. The current prototype implements the first window-behavior milestone with synthetic sample text; the feature set below describes the broader product plan.
 
 See the [draft roadmap](ROADMAP.md) for the proposed implementation sequence, starting with window behavior.
+
+## Current implementation
+
+Launch Promptly and use its menu-bar icon to **Show Prompter** or **Focus Prompter**. The reader wraps around the primary display's notch, or sits at the top center on a display without one. Choose **Detach Prompter**, then drag the title or empty header area to move it and resize its edges. The header shows a grab cursor when dragging is available. Collapse, expand, lock, return to the notch, hide, and quit are available through the reader or its menu. Lock prevents movement and resizing; Return to Notch remains available while locked.
+
+Pointer interactions are intended to preserve the presenting app's focus. Choose Focus Prompter for keyboard control, then press Escape to release reader focus. Use macOS keyboard menu-bar navigation to reach Promptly's menu; its displayed keyboard shortcuts are local menu shortcuts, not global shortcuts.
+
+Window placement and state are saved locally in UserDefaults. Script editing, script storage, and scrolling are not implemented. Physical notch/display, full-screen, VoiceOver, and Zoom/Teams/Google Meet capture validation remain open; see the [validation record](Docs/WindowBehaviorValidation.md). Capture exclusion is not guaranteed.
 
 ## Planned features
 

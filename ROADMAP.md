@@ -1,8 +1,12 @@
 # Promptly roadmap
 
 Draft sequence based on the [planned feature set](README.md#planned-features).
-These milestones describe intended outcomes, not completed work or release dates.
-The app currently contains starter scaffolding.
+These milestones describe intended outcomes, not release dates. The first
+window-behavior prototype now provides a menu-bar reader with synthetic text,
+notch anchoring, detachment, collapse, locking, and local placement restoration.
+Milestone 1 remains open for physical display, full-screen, VoiceOver, and
+sharing-app validation; see the [validation record](Docs/WindowBehaviorValidation.md).
+The remaining milestones are planned work.
 
 ## 1. Window behavior
 
