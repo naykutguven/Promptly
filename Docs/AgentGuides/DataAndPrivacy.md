@@ -7,9 +7,9 @@ ownership and [Testing and Validation](TestingAndValidation.md) before verificat
 
 ## Local persistence and edits
 
-- The app's `ModelConfiguration` explicitly sets `cloudKitDatabase: .none`.
-  Preserve that boundary for every script-store configuration, including tests
-  and previews. Capabilities alone never authorize data transfer.
+- Script storage is planned. When introduced, every script-store
+  `ModelConfiguration` must explicitly set `cloudKitDatabase: .none`, including
+  tests and previews. Capabilities alone never authorize data transfer.
 - Give scripts stable IDs and revisions. Persistence writes have one isolated
   owner; pass IDs or immutable snapshots across isolation boundaries.
 - Use `@AppStorage` for preferences, not script storage or secrets. Keep script text

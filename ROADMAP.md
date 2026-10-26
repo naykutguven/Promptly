@@ -48,7 +48,7 @@ Script storage, editing, and scrolling belong to later milestones.
   milestones; keep management controls out of the reader.
 - Support autosave and native undo/redo, with clear pending-save and failure states.
 - Add manual section boundaries that remain usable as the script changes.
-- Replace the starter persistence patterns with owned, bounded storage operations;
+- Introduce owned, bounded SwiftData storage operations;
   define schema/migration policy before distributing durable script stores.
 - Define safe close/quit behavior for unsaved edits and recovery from store or
   save failures, preserving newer edits and the last good save.

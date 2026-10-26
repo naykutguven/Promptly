@@ -28,9 +28,9 @@ The three target folders use Xcode filesystem-synchronized groups. Add ordinary
 target files on disk; keep docs/tool configuration outside them and do not edit
 `project.pbxproj` solely for file membership.
 
-Source is still SwiftUI/SwiftData starter scaffolding. `Item`, the unbounded
-`@Query`, direct view-side persistence, startup `fatalError`, and placeholder tests
-are not production patterns; replace them as the requested features need.
+The current prototype implements reader window behavior with synthetic text and
+local UserDefaults placement preferences. Script editing, SwiftData storage, and
+scrolling remain planned; do not reintroduce starter persistence patterns.
 
 ## Task guides
 
@@ -94,6 +94,9 @@ Read the relevant guide completely before acting; tasks may need several:
   the requested behavior requires it.
 
 ## Architecture and state
+
+See [Architecture and Source Layout](Docs/Architecture.md) for the current source
+map, destination responsibilities, and common placement decisions.
 
 Grow toward this shape without reorganizing unrelated files:
 

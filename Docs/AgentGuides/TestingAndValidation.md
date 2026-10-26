@@ -38,8 +38,10 @@ Follow [AGENTS.md](../../AGENTS.md) and the relevant domain guides.
 - Keep `XCTestCase` subclasses `nonisolated` under default `MainActor` isolation;
   annotate UI test methods with `@MainActor`. XCTest initializers and lifecycle
   overrides must retain their base-class isolation; do not weaken app settings.
-- Current tests are starter examples and a launch metric. Their passing does not
-  establish feature coverage; run the metric only when performance work warrants it.
+- Current tests cover window state, layout, preferences, AppKit behavior, and
+  reader UI journeys. See the [validation record](../WindowBehaviorValidation.md)
+  and [coverage report](../SourceCoverage.md) for evidence and remaining gaps;
+  they do not establish coverage of planned script editing or playback.
 - Use isolated in-memory stores for suitable logic tests and unique temporary
   on-disk stores for persistence, migration, reopen, and file-transaction tests.
 - Inject time, IDs, file roots, and capability clients where determinism matters.

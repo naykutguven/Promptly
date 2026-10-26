@@ -3,6 +3,7 @@
 Promptly is a native macOS teleprompter designed for private, offline use. The current prototype implements the first window-behavior milestone with synthetic sample text; the feature set below describes the broader product plan.
 
 See the [draft roadmap](ROADMAP.md) for the proposed implementation sequence, starting with window behavior.
+The [architecture map](Docs/Architecture.md) documents current ownership, planned source destinations, and placement decisions.
 
 ## Current implementation
 
