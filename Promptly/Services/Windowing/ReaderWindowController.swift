@@ -29,11 +29,17 @@ final class ReaderWindowController: NSObject, NSWindowDelegate {
     @ObservationIgnored private var previouslyFocusedApplication: NSRunningApplication?
     @ObservationIgnored private var preservesUnreadablePreferences = false
 
-    init(preferences: ReaderWindowPreferences,
-         panel: ReaderPanel = ReaderPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel],
-                                         backing: .buffered, defer: true),
-         displayProvider: @escaping () -> [DisplayGeometry] = { NSScreen.screens.compactMap(\.displayGeometry) },
-         primaryDisplayID: @escaping () -> UInt32 = { CGMainDisplayID() }) {
+    init(
+        preferences: ReaderWindowPreferences,
+        panel: ReaderPanel = ReaderPanel(
+            contentRect: .zero,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: true
+        ),
+        displayProvider: @escaping () -> [DisplayGeometry] = { NSScreen.screens.compactMap(\.displayGeometry) },
+        primaryDisplayID: @escaping () -> UInt32 = { CGMainDisplayID() }
+    ) {
         self.preferences = preferences
         self.panel = panel
         self.displayProvider = displayProvider
