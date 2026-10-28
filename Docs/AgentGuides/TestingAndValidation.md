@@ -61,6 +61,12 @@ Cover the affected behavior, especially:
 
 ## UI and Mac validation
 
+- The [approved Library design](../LibraryDesign.md) has a separate
+  [planned acceptance matrix](../ScriptEditingValidation.md#approved-design-adoption-pending)
+  for its first implementation. Preserve the reader-window prototype's evidence;
+  there is no implemented Library baseline or passing Library test suite.
+  Browser mockup checks and design approval do not establish native gesture,
+  keyboard, VoiceOver, persistence or handoff behavior.
 - Inspect affected UI on macOS with synthetic scripts, including keyboard-only
   operation, VoiceOver, focus, text editing, and undo/redo.
 - Exercise notch/no-notch placement, detached windows, resizing, multiple displays,

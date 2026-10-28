@@ -32,7 +32,7 @@ on UI or persistence frameworks.
 ## Current source snapshot
 
 The application currently implements the first window-behavior prototype with
-synthetic text and local UserDefaults placement preferences. Script preparation,
+synthetic text and local UserDefaults placement preferences. The Library feature,
 SwiftData storage, and scrolling are not implemented.
 
 ```text
@@ -72,6 +72,52 @@ Unit/AppKit tests mirror `Domain/` and `Services/Windowing/` under `PromptlyTest
 [coverage report](SourceCoverage.md) for evidence and remaining hardware,
 accessibility, minimum-OS, and capture checks.
 
+## Approved Library design adoption
+
+The [approved active and empty states](LibraryDesign.md) are the target for
+[milestone 2](../ROADMAP.md#2-scripts-and-safe-local-editing), not part of the
+current source snapshot above. Library, script-domain, persistence and
+handoff code must be implemented from scratch. The planned ownership is:
+
+- `Features/Library/` will render the script sidebar/editor/Sections layout and own
+  its presentation models and editing sessions. Keep row gesture presentation
+  local to the list; action ownership and target script IDs belong to the
+  feature's state owner even when the action's row is not selected.
+- Derive a genuinely empty library from a successful ready result, separately
+  from loading/failure, no search matches and an intentionally blank document.
+  Filtering must not clear the active editing session. Empty/active rendering,
+  outline naming focus and transient feedback are feature presentation concerns.
+- A native editing-session owner will coordinate section metadata, paragraph
+  anchors and ordinary editor undo. Inline rename, jump and remove intents use it;
+  views must not create a separate section collection or edit script text to
+  simulate section names. Scope outline keys so editor typing and composition
+  retain native behavior.
+- Keep rename state, save/send workflow, library load state and toast visibility
+  as independent state axes. A destructive action's recovery snapshot is owned
+  only for its active 10-second Undo toast window. Explicit close or timeout must
+  discard that snapshot and disable its recovery action. Keep unrelated native
+  editor undo independent; do not introduce a session Undo Delete buffer.
+  Use cancellable, identity-checked timers on `MainActor`, inject time for tests,
+  and avoid stale Undo actions after a later operation or script change.
+- Script and pin metadata will belong to planned domain contracts and an isolated
+  repository, with feature grouping derived from immutable summaries. The agreed
+  script metadata field is `isPinned: Bool = false`, exposed in those summaries;
+  no separate pin model is needed. No script types or schema currently exist.
+  Include the field in the initial schema and define ordering, pagination and
+  revision strategy under the [pin metadata decision](PersistencePolicy.md#pin-metadata-decision).
+  Pin/unpin must not mutate sent content or bypass save guards.
+- `App/` will add Show Library, New Script and Send menu commands and
+  Library/reader coordination. These commands do not exist yet. Window services
+  will host injected content;
+  editing, persistence and recovery ownership belong outside window controllers.
+
+The design uses feature-local composition and native controls. Introduce reused
+visuals in `DesignSystem/` only when independent features actually share them.
+Library names the complete workspace; editor-specific and script-domain types
+retain Script/Section terminology rather than taking the feature's name.
+The first implementation's acceptance checks belong in the
+[planned checklist](ScriptEditingValidation.md#approved-design-adoption-pending).
+
 ## Destination layout
 
 Paths below are relative to `Promptly/`. ✅ means present, 🗓️ means planned, and
@@ -81,8 +127,8 @@ points; preserve ownership when implementation details change.
 | Status | Destination | Responsibility and growth |
 | --- | --- | --- |
 | ✅ | `App/` | Lifecycle and dependency wiring. Add `Composition/` only when wiring grows; keep native scenes, app-wide commands/menus, and cross-window presentation coordination here. |
-| 🗓️ | `Features/Preparation/` | Library, editor, manual sections, save-state presentation, and Send to Prompter. Subdivide by workflow only as needed; import/export and suggestions arrive in their later milestones. |
-| ✅ | `Features/Reader/` | Reader content and controls. Add appearance, logical-position presentation, and playback controls with their milestones. Keep script-management UI in preparation. |
+| 🗓️ | `Features/Library/` | First implementation of the approved Library/editor/Sections design, editing sessions, save-state presentation and Send to Prompter in milestone 2. Import/export and suggestions arrive later. |
+| ✅ | `Features/Reader/` | Reader content and controls. Add appearance, logical-position presentation, and playback controls with their milestones. Keep script-management UI in the Library. |
 | 🗓️ | `Features/Settings/` | Preference controls and synthetic appearance previews; capability-specific state stays with its owner. |
 | ✅ | `Domain/` | Current display geometry, placement policy, and independent window states. Retain the small flat layout until capability folders improve clarity. |
 | 🗓️ | `Domain/Scripts/`, `Sections/`, `Reader/`, `Playback/` | Stable script IDs/revisions, snapshots, section meaning, reading anchors, appearance values, and playback states/policies. These are capability folders under `Domain/`. |
@@ -90,7 +136,7 @@ points; preserve ownership when implementation details change.
 | 🗓️ | `Services/Persistence/` | Isolated script store and recoverable container construction; `Models/`, `Schema/`, and `Migrations/` hold SwiftData representations and compatibility policy. Explicitly disable CloudKit. |
 | 🗓️ | `Services/Playback/` | One reader-session owner, starting with the sent snapshot at handoff. Add logical anchors, playback state, speed, count-in, and cancellable elapsed-time updates with their milestones; UI-bound scrolling stays on `MainActor`. |
 | ⚠️ | `Services/Files/` | Bounded import parsing, validation, staged export, and cleanup. Define supported formats and compatibility, and review export write access during the file milestone. |
-| 🗓️ | `Services/Inference/` | Optional on-device section generation, availability, bounded execution, and output validation. `Models/` contains framework output schemas; review UI stays in preparation. |
+| 🗓️ | `Services/Inference/` | Optional on-device section generation, availability, bounded execution, and output validation. `Models/` contains framework output schemas; review UI stays in the Library. |
 | 🗓️ | `DesignSystem/` | Components and semantic visuals reused by independent features. Prefer native controls; create folders only after actual reuse. |
 | ✅ | `Extensions/` | Narrow native-type extensions such as the existing `NSScreen` geometry adapter. |
 
@@ -106,7 +152,7 @@ work. This map creates no destinations or capabilities for them in advance.
 
 | Code being added | Destination |
 | --- | --- |
-| App-wide scene, command, or preparation/reader window coordination | `App/` |
+| App-wide scene, command, or Library/reader window coordination | `App/` |
 | Feature presentation model (`@MainActor @Observable`) | Beside its owning feature view |
 | Feature-only component or `NSViewRepresentable` interaction bridge | `Features/<Feature>/`, optionally `Components/` |
 | Component reused by independent features | `DesignSystem/Components/` |
@@ -128,26 +174,29 @@ AppKit imports also do not turn a feature-local view bridge into a service.
 Window services may host an injected view and control its panel; feature content
 and app-wide routing remain with features and the app shell.
 
-## Preparation-to-reader handoff
+## Library-to-reader handoff
 
-Keep three distinct forms of state: the preparation working draft, the last
+This is a planned workflow. No Library window, script persistence or
+reader-session/handoff implementation is present in the source snapshot.
+
+Keep three distinct forms of state: the Library's working draft, the last
 successfully saved script revision, and the immutable revision explicitly sent
-to the reader. The persistence owner serializes writes; preparation owns edit
+to the reader. The persistence owner serializes writes; the Library owns edit
 and save/send presentation; the reader-session owner holds the active snapshot.
 
 Send to Prompter saves the intended draft and prepares a stable snapshot. Before
 committing, revalidate the operation identity, script identity, and source
 revision after relevant suspension points. Failure, cancellation, deletion, or
-newer edits before commit preserve the active reader and keep preparation open
+newer edits before commit preserve the active reader and keep the Library open
 with edits intact. Only a successful handoff permits app-level coordination to
-close preparation and show the reader paused. Sending does not implicitly
+close the Library and show the reader paused. Sending does not implicitly
 restart an already loaded script; Play remains a separate intent.
 
-Further edits reach the reader only through another explicit send. Reopening
-preparation restores the selected script. Keep placement, collapse, and position
-locking independent of playback; resizing and styling preserve a logical reading
-anchor. Window presentation must not become an alternative owner of script or
-playback state.
+Further edits reach the reader only through another explicit send. Show Library
+reopens the workspace with the selected script. Keep placement, collapse and
+position locking independent of playback; resizing and styling preserve a logical
+reading anchor. Window presentation must not become an alternative owner of
+script or playback state.
 
 ## Growth and review rules
 

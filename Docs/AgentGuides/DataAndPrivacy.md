@@ -27,6 +27,12 @@ ownership and [Testing and Validation](TestingAndValidation.md) before verificat
 - Page or batch large libraries and bound script parsing, search, and in-flight
   saves. Keep indexes rebuildable from source data and update them after edits
   and deletion.
+- Pinning in the [approved Library design](../LibraryDesign.md) is not
+  implemented. Its agreed representation is `isPinned: Bool = false` in script
+  storage metadata, exposed in library summaries, without a separate pin model.
+  Follow the [pin metadata decision](../PersistencePolicy.md#pin-metadata-decision)
+  when introducing the initial store and defining revisions and bounded queries.
+  A pin-only change must not mutate or misrepresent the reader's sent content.
 
 ## Files, import, export, and deletion
 
@@ -47,6 +53,10 @@ ownership and [Testing and Validation](TestingAndValidation.md) before verificat
   atomic transaction. Handle actual write/save failures, including low storage.
 - Deletion must cover associated metadata, search data, derived suggestions, and
   pending work without allowing a late result to recreate deleted content.
+- Destructive-action recovery is limited to the Undo toast, with a default
+  10-second lifetime. Explicit dismissal or timeout discards that operation's
+  recovery snapshot; do not retain a hidden session Undo Delete history or
+  post-dismissal recovery command. Keep unrelated native editing undo separate.
 
 ## Generated sections
 

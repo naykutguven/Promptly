@@ -19,9 +19,32 @@ for scrolling and [Testing and Validation](TestingAndValidation.md) before verif
 - Keep script font, spacing, width, alignment, contrast, and background opacity
   adjustable without losing the logical reading position.
 
+## Approved Library design
+
+Use the [approved active and empty states](../LibraryDesign.md) for
+Library UI work. The first native implementation is planned in roadmap
+milestone 2; no Library implementation or native validation is present.
+
+- Keep swipe actions available through row context menus, keyboard and VoiceOver.
+  Actions target the row's ID, not whichever script happens to be selected.
+- Select the title after Create. Keep section rows stable for double-click
+  naming, distinguish outline focus from the highlighted current section, and
+  scope Return/Space/arrow handling to the outline. Preserve editor typing,
+  composition and native undo.
+- Derive empty-library, no-match and blank-script presentations from their actual
+  states. Loading and store failures must not appear as an empty library.
+- Keep shortcut glyphs readable and expose their meaning accessibly. Disabled
+  controls must not trap initial keyboard focus. Respect semantic colors,
+  contrast and reduced effects when matching the mockups.
+- Keep Undo reachable during its 10-second toast window, pausing the timer during
+  hover/focus and announcing feedback once. Explicit dismissal or expiry ends
+  that operation's recovery and discards its snapshot; no recovery command
+  remains afterward. Preserve unrelated native editing undo. Persistent save
+  failures retain their recovery UI and do not use this transient timer.
+
 ## Panels, displays, and focus
 
-- Support the planned notch-anchored panel and detached, draggable, resizable
+- Preserve the notch-anchored panel and detached, draggable, resizable
   window without hard-coded screen geometry. Handle Macs without a notch,
   multiple displays, scaling, and changing display arrangements.
 - Account for visible screen bounds and safe areas. Keep controls reachable after

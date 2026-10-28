@@ -6,7 +6,9 @@ window-behavior prototype now provides a menu-bar reader with synthetic text,
 notch anchoring, detachment, collapse, locking, and local placement restoration.
 Milestone 1 remains open for physical display, full-screen, VoiceOver, and
 sharing-app validation; see the [validation record](Docs/WindowBehaviorValidation.md).
-The remaining milestones are planned work.
+The active and empty-library designs are approved. Their first
+implementation belongs to milestone 2; Library code, storage and tests are
+not present. Milestones 2 onward remain planned work.
 
 ## 1. Window behavior
 
@@ -42,32 +44,48 @@ Script storage, editing, and scrolling belong to later milestones.
 
 **Goal:** Let users prepare real scripts without losing their work.
 
-- Create, open, edit, duplicate, search, and delete scripts in a local library.
-- Put library management, editing, and manual sections in a dedicated preparation
-  window. Add file import/export and section suggestions there in their later
-  milestones; keep management controls out of the reader.
-- Support autosave and native undo/redo, with clear pending-save and failure states.
-- Add manual section boundaries that remain usable as the script changes.
-- Introduce owned, bounded SwiftData storage operations;
-  define schema/migration policy before distributing durable script stores.
-- Define safe close/quit behavior for unsaved edits and recovery from store or
-  save failures, preserving newer edits and the last good save.
-- Add Send to Prompter: save current edits, prepare a stable revision, revalidate
-  its identity/revision, then commit the handoff and close preparation. Failure,
-  cancellation, or newer edits before commit keep preparation open and preserve
-  the active reader. The reader opens paused, without an automatic restart of an
-  already loaded script.
-- Keep the reader's sent revision stable while preparation is edited. Reopening
-  preparation through a menu command restores the selected script; another send
-  explicitly updates the reader.
-- Treat an intentionally empty script as valid. Commit migration completion only
-  after successful writes; an atomic write alone does not establish safe autosave.
+**Status:** Design approved; implementation from scratch and validation pending.
+There is no existing Library implementation, script store or passing
+Library test suite to build on.
+The [design contract and retained mockups](Docs/LibraryDesign.md) define the
+active and empty target states. The [planned persistence requirements](Docs/PersistencePolicy.md)
+and [acceptance checklist](Docs/ScriptEditingValidation.md#approved-design-adoption-pending)
+guide the first implementation; design approval is not native validation.
 
-**Done when:** Scripts and sections survive reopening, undo/redo works, and failed
-or out-of-order saves cannot silently discard newer work or reset the store.
-Typing then immediately switching scripts, clearing text then reopening, and
-pasting into existing text preserve the intended edits. Sending closes preparation
-only after a successful handoff, and it can be reopened without losing context.
+- Create, open, edit, duplicate, pin/unpin, search and delete scripts in a local
+  library. Keep management and manual sections in the dedicated Library window.
+- Build the quiet Library/editor/Sections layout and inline ⌘↵ Send shortcut.
+  Omit redundant toolbar/title labels, editor footer and leading section marker.
+- Implement the empty-library, first-script and no-search-match states. Preserve
+  editor selection, valid blank scripts and accurate save/sent status.
+- Add Pinned grouping, circular row swipe controls and full-swipe actions, with
+  context-menu, keyboard and VoiceOver alternatives. Operations target the row's
+  ID even when a different script is selected.
+- Provide destructive-action recovery only through a 10-second Undo toast,
+  pausing during hover/focus. Explicit dismissal or expiry discards that
+  operation's recovery snapshot; no session Undo Delete fallback remains.
+- Add compact outline navigation, inline naming, add-at-cursor naming and
+  metadata-only section removal. Preserve normal native editing undo separately
+  from toast-limited destructive recovery, including boundaries affected by text.
+- Implement autosave, pending/saving/failure states and safe close/quit behavior.
+  Failed or out-of-order saves must preserve newer edits and the last good save.
+- Design the initial SwiftData schema for scripts and sections, with the agreed
+  `isPinned: Bool = false` script metadata field, an isolated persistence owner,
+  bounded queries, revision handling and a compatibility policy.
+  No schema version, store filename, cache limits or migration baseline is chosen
+  yet. Validate writes/reopen and recovery before distributing durable stores.
+- Implement Send to Prompter: save the intended revision, revalidate identity and
+  revision before handoff, then close the Library and show the reader without
+  automatic movement. Failure, cancellation or newer edits keep the Library
+  open and preserve the reader. Further edits reach it only through another Send.
+- Keep import/export and optional section suggestions in their later milestones.
+
+**Done when:** The [planned acceptance matrix](Docs/ScriptEditingValidation.md#approved-design-adoption-pending)
+passes for empty → create → edit → send and last-delete → empty → Undo journeys,
+including final recovery expiry, row actions, pin persistence, native section
+editing, keyboard/VoiceOver, appearance and failure recovery. Scripts and sections
+survive reopening without silent data loss. Preserve the existing reader-window
+behavior. Browser mockup checks alone do not complete this milestone.
 
 ## 3. Reader appearance
 
@@ -102,7 +120,7 @@ or appearance keeps the reader at the same logical place in the script.
   Keep keyboard playback commands compatible with normal text editing.
 - Derive movement from elapsed time and stop updates when idle. Manual scrolling
   takes precedence without automatic movement fighting it or jumping afterward.
-- Show estimated reading duration in preparation from language-aware word count
+- Show estimated reading duration in the Library from language-aware word count
   divided by a displayed, adjustable assumed words-per-minute rate. For example,
   600 words at 150 words per minute is about four minutes. This is approximate
   speaking time, independent of scroll speed; count-in is shown separately.

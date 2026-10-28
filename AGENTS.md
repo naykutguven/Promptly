@@ -31,6 +31,10 @@ target files on disk; keep docs/tool configuration outside them and do not edit
 The current prototype implements reader window behavior with synthetic text and
 local UserDefaults placement preferences. Script editing, SwiftData storage, and
 scrolling remain planned; do not reintroduce starter persistence patterns.
+The [approved Library design](Docs/LibraryDesign.md) specifies the active
+and empty-library target states for the first Library implementation in
+roadmap milestone 2. No Library implementation or native Library
+validation is present.
 
 ## Task guides
 
