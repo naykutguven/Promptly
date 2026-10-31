@@ -36,6 +36,6 @@ struct ReaderWindowStateTests {
         #expect(state.expansion == .expanded)
         #expect(state.positionLock == .unlocked)
         #expect(state.detachedFrame == nil)
-        #expect(state.expandedSize == ReaderWindowLayout.defaultExpandedSize)
+        #expect(state.expandedSize == ReaderWindowLayoutConstants.defaultExpandedSize)
     }
 }

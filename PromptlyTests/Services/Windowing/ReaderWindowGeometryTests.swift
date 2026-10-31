@@ -1,5 +1,5 @@
 //
-//  ReaderWindowLayoutTests.swift
+//  ReaderWindowGeometryTests.swift
 //  PromptlyTests
 //
 //  Created by Aykut Güven on 26.10.26.
@@ -11,7 +11,7 @@ import Testing
 @testable import Promptly
 
 @MainActor
-struct ReaderWindowLayoutTests {
+struct ReaderWindowGeometryTests {
     private let primary = DisplayGeometry(
         id: 1,
         frame: CGRect(x: 0, y: 0, width: 1512, height: 982),
@@ -29,7 +29,7 @@ struct ReaderWindowLayoutTests {
     )
 
     @Test func anchoredPanelIncludesCameraHousingAboveContent() {
-        let frame = ReaderWindowLayout.anchoredFrame(
+        let frame = ReaderWindowGeometry.anchoredFrame(
             on: primary, expandedSize: CGSize(width: 640, height: 320), expansion: .expanded
         )
         #expect(frame.midX == primary.frame.midX)
@@ -39,7 +39,7 @@ struct ReaderWindowLayoutTests {
     }
 
     @Test func noNotchPanelLeavesMenuBarAvailable() {
-        let frame = ReaderWindowLayout.anchoredFrame(
+        let frame = ReaderWindowGeometry.anchoredFrame(
             on: external, expandedSize: CGSize(width: 640, height: 320), expansion: .expanded
         )
         #expect(frame.maxY == external.visibleFrame.maxY)
@@ -48,15 +48,15 @@ struct ReaderWindowLayoutTests {
     }
 
     @Test func collapsingAnchoredPanelRetainsNotchIntegration() {
-        let frame = ReaderWindowLayout.anchoredFrame(
+        let frame = ReaderWindowGeometry.anchoredFrame(
             on: primary, expandedSize: CGSize(width: 640, height: 320), expansion: .collapsed
         )
         #expect(frame.maxY == primary.frame.maxY)
-        #expect(frame.height == ReaderWindowLayout.collapsedHeight + primary.safeAreaTop)
+        #expect(frame.height == ReaderWindowLayoutConstants.collapsedHeight + primary.safeAreaTop)
     }
 
     @Test func savedDisplayIsPreferredOverAnotherIntersectingDisplay() throws {
-        let result = try #require(ReaderWindowLayout.restoredDetachedPlacement(
+        let result = try #require(ReaderWindowGeometry.restoredDetachedPlacement(
             frame: CGRect(x: 400, y: 300, width: 640, height: 320),
             displayID: external.id, expandedSize: CGSize(width: 640, height: 320),
             expansion: .expanded, displays: [primary, external], primaryDisplayID: primary.id
@@ -66,7 +66,7 @@ struct ReaderWindowLayoutTests {
     }
 
     @Test func positionInDisplayGapFallsBackToPrimary() throws {
-        let result = try #require(ReaderWindowLayout.restoredDetachedPlacement(
+        let result = try #require(ReaderWindowGeometry.restoredDetachedPlacement(
             frame: CGRect(x: 2000, y: 400, width: 640, height: 320),
             displayID: nil, expandedSize: CGSize(width: 640, height: 320),
             expansion: .expanded, displays: [external, primary], primaryDisplayID: primary.id
@@ -76,7 +76,7 @@ struct ReaderWindowLayoutTests {
     }
 
     @Test func missingSavedDisplayUsesActualIntersection() throws {
-        let result = try #require(ReaderWindowLayout.restoredDetachedPlacement(
+        let result = try #require(ReaderWindowGeometry.restoredDetachedPlacement(
             frame: CGRect(x: 3400, y: 500, width: 640, height: 320),
             displayID: 99, expandedSize: CGSize(width: 640, height: 320),
             expansion: .expanded, displays: [primary, external], primaryDisplayID: primary.id
@@ -86,7 +86,7 @@ struct ReaderWindowLayoutTests {
     }
 
     @Test func disconnectedDisplayPlacementRemainsReachable() throws {
-        let result = try #require(ReaderWindowLayout.restoredDetachedPlacement(
+        let result = try #require(ReaderWindowGeometry.restoredDetachedPlacement(
             frame: CGRect(x: 3400, y: 500, width: 640, height: 320),
             displayID: external.id, expandedSize: CGSize(width: 640, height: 320),
             expansion: .expanded, displays: [primary], primaryDisplayID: primary.id
@@ -101,7 +101,7 @@ struct ReaderWindowLayoutTests {
             visibleFrame: CGRect(x: -1920, y: -140, width: 1920, height: 996),
             safeAreaTop: 0, notchWidth: 0
         )
-        let result = try #require(ReaderWindowLayout.restoredDetachedPlacement(
+        let result = try #require(ReaderWindowGeometry.restoredDetachedPlacement(
             frame: CGRect(x: -2100, y: -400, width: 640, height: 320),
             displayID: left.id, expandedSize: CGSize(width: 640, height: 320),
             expansion: .expanded, displays: [primary, left], primaryDisplayID: primary.id
@@ -117,7 +117,7 @@ struct ReaderWindowLayoutTests {
             visibleFrame: CGRect(x: 0, y: 20, width: 300, height: 176),
             safeAreaTop: 0, notchWidth: 0
         )
-        let result = try #require(ReaderWindowLayout.restoredDetachedPlacement(
+        let result = try #require(ReaderWindowGeometry.restoredDetachedPlacement(
             frame: CGRect(x: 900, y: 800, width: 1000, height: 700),
             displayID: small.id, expandedSize: CGSize(width: 1000, height: 700),
             expansion: .expanded, displays: [small], primaryDisplayID: small.id
@@ -127,42 +127,42 @@ struct ReaderWindowLayoutTests {
 
     @Test func collapseAndExpansionUseSavedExpandedTopEdge() {
         let expanded = CGRect(x: 400, y: 400, width: 700, height: 400)
-        let collapsed = ReaderWindowLayout.detachedFrame(
+        let collapsed = ReaderWindowGeometry.detachedFrame(
             fromExpandedFrame: expanded, expansion: .collapsed, on: primary
         )
-        let restored = ReaderWindowLayout.detachedFrame(
+        let restored = ReaderWindowGeometry.detachedFrame(
             fromExpandedFrame: expanded, expansion: .expanded, on: primary
         )
         #expect(collapsed.maxY == expanded.maxY)
-        #expect(collapsed.height == ReaderWindowLayout.collapsedHeight)
+        #expect(collapsed.height == ReaderWindowLayoutConstants.collapsedHeight)
         #expect(restored == expanded)
     }
 
     @Test func malformedSavedGeometryFallsBackToSafeDefaults() throws {
-        let result = try #require(ReaderWindowLayout.restoredDetachedPlacement(
+        let result = try #require(ReaderWindowGeometry.restoredDetachedPlacement(
             frame: CGRect(x: CGFloat.nan, y: 0, width: -4, height: CGFloat.infinity),
             displayID: nil, expandedSize: CGSize(width: CGFloat.nan, height: -1),
             expansion: .expanded, displays: [external, primary], primaryDisplayID: primary.id
         ))
         #expect(result.displayID == primary.id)
         #expect(primary.visibleFrame.contains(result.frame))
-        #expect(result.frame.size == ReaderWindowLayout.defaultExpandedSize)
+        #expect(result.frame.size == ReaderWindowLayoutConstants.defaultExpandedSize)
     }
 
     @Test func collapsedPlacementRetainsTopWhenHiddenExpandedGeometryIsOffscreen() throws {
         let saved = CGRect(x: 400, y: -200, width: 700, height: 600)
-        let collapsed = try #require(ReaderWindowLayout.restoredDetachedPlacement(
+        let collapsed = try #require(ReaderWindowGeometry.restoredDetachedPlacement(
             frame: saved, displayID: primary.id, expandedSize: saved.size,
             expansion: .collapsed, displays: [primary], primaryDisplayID: primary.id
         ))
         let savedExpanded = CGRect(x: collapsed.frame.minX,
                                    y: collapsed.frame.maxY - saved.height,
                                    width: collapsed.frame.width, height: saved.height)
-        let reopened = try #require(ReaderWindowLayout.restoredDetachedPlacement(
+        let reopened = try #require(ReaderWindowGeometry.restoredDetachedPlacement(
             frame: savedExpanded, displayID: primary.id, expandedSize: saved.size,
             expansion: .collapsed, displays: [primary], primaryDisplayID: primary.id
         ))
-        let expanded = try #require(ReaderWindowLayout.restoredDetachedPlacement(
+        let expanded = try #require(ReaderWindowGeometry.restoredDetachedPlacement(
             frame: savedExpanded, displayID: primary.id, expandedSize: saved.size,
             expansion: .expanded, displays: [primary], primaryDisplayID: primary.id
         ))
@@ -173,18 +173,18 @@ struct ReaderWindowLayoutTests {
     }
 
     @Test func negativeSavedDimensionsAreRejectedRatherThanStandardized() throws {
-        let result = try #require(ReaderWindowLayout.restoredDetachedPlacement(
+        let result = try #require(ReaderWindowGeometry.restoredDetachedPlacement(
             frame: CGRect(x: 400, y: 500, width: -700, height: -300),
-            displayID: primary.id, expandedSize: ReaderWindowLayout.defaultExpandedSize,
+            displayID: primary.id, expandedSize: ReaderWindowLayoutConstants.defaultExpandedSize,
             expansion: .expanded, displays: [primary], primaryDisplayID: primary.id
         ))
-        #expect(result.frame.size == ReaderWindowLayout.defaultExpandedSize)
+        #expect(result.frame.size == ReaderWindowLayoutConstants.defaultExpandedSize)
         #expect(primary.visibleFrame.contains(result.frame))
     }
 
     @Test func noScreensProducesNoPlacement() {
-        #expect(ReaderWindowLayout.restoredDetachedPlacement(
-            frame: nil, displayID: nil, expandedSize: ReaderWindowLayout.defaultExpandedSize,
+        #expect(ReaderWindowGeometry.restoredDetachedPlacement(
+            frame: nil, displayID: nil, expandedSize: ReaderWindowLayoutConstants.defaultExpandedSize,
             expansion: .expanded, displays: [], primaryDisplayID: nil
         ) == nil)
     }
@@ -199,19 +199,19 @@ struct ReaderWindowLayoutTests {
             safeAreaTop: 0, notchWidth: 0
         )
         let saved = CGRect(x: 4000, y: 300, width: 640, height: 320)
-        let result = try #require(ReaderWindowLayout.restoredDetachedPlacement(
+        let result = try #require(ReaderWindowGeometry.restoredDetachedPlacement(
             frame: saved, displayID: invalidVisibleFrame.id,
-            expandedSize: ReaderWindowLayout.defaultExpandedSize,
+            expandedSize: ReaderWindowLayoutConstants.defaultExpandedSize,
             expansion: .expanded, displays: [invalidFrame, invalidVisibleFrame, primary],
             primaryDisplayID: invalidFrame.id
         ))
 
         #expect(result.displayID == primary.id)
         #expect(primary.visibleFrame.contains(result.frame))
-        #expect(result.frame.size == ReaderWindowLayout.defaultExpandedSize)
-        #expect(ReaderWindowLayout.restoredDetachedPlacement(
+        #expect(result.frame.size == ReaderWindowLayoutConstants.defaultExpandedSize)
+        #expect(ReaderWindowGeometry.restoredDetachedPlacement(
             frame: saved, displayID: invalidVisibleFrame.id,
-            expandedSize: ReaderWindowLayout.defaultExpandedSize,
+            expandedSize: ReaderWindowLayoutConstants.defaultExpandedSize,
             expansion: .expanded, displays: [invalidFrame, invalidVisibleFrame],
             primaryDisplayID: invalidFrame.id
         ) == nil)

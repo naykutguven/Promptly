@@ -1,5 +1,5 @@
 //
-//  ReaderWindowPreferencesTests.swift
+//  ReaderWindowStateStoreTests.swift
 //  PromptlyTests
 //
 //  Created by Aykut Güven on 26.10.26.
@@ -11,12 +11,12 @@ import Testing
 @testable import Promptly
 
 @MainActor
-struct ReaderWindowPreferencesTests {
+struct ReaderWindowStateStoreTests {
     @Test func isolatedPreferencesRoundTripAllPlacementState() throws {
-        let suiteName = "PromptlyTests.ReaderWindowPreferences.\(UUID().uuidString)"
+        let suiteName = "PromptlyTests.ReaderWindowStateStore.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
         defer { defaults.removePersistentDomain(forName: suiteName) }
-        let preferences = ReaderWindowPreferences(defaults: defaults)
+        let preferences = ReaderWindowStateStore(defaults: defaults)
         #expect(try preferences.load() == ReaderWindowState())
         var state = ReaderWindowState()
         state.placement = .detached
@@ -27,18 +27,18 @@ struct ReaderWindowPreferencesTests {
         state.displayID = 123
 
         try preferences.save(state)
-        let reopened = ReaderWindowPreferences(defaults: defaults)
+        let reopened = ReaderWindowStateStore(defaults: defaults)
         #expect(try reopened.load() == state)
     }
 
     @Test func corruptPayloadReportsFailureWithoutDiscardingOriginalData() throws {
-        let suiteName = "PromptlyTests.ReaderWindowPreferences.\(UUID().uuidString)"
+        let suiteName = "PromptlyTests.ReaderWindowStateStore.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
         defer { defaults.removePersistentDomain(forName: suiteName) }
         let key = "reader.windowPlacement.v1"
         let original = Data("invalid placement".utf8)
         defaults.set(original, forKey: key)
-        let preferences = ReaderWindowPreferences(defaults: defaults)
+        let preferences = ReaderWindowStateStore(defaults: defaults)
 
         do {
             _ = try preferences.load()
@@ -53,11 +53,11 @@ struct ReaderWindowPreferencesTests {
     }
 
     @Test func encodingFailurePreservesLastGoodPlacement() throws {
-        let suiteName = "PromptlyTests.ReaderWindowPreferences.\(UUID().uuidString)"
+        let suiteName = "PromptlyTests.ReaderWindowStateStore.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
         defer { defaults.removePersistentDomain(forName: suiteName) }
         let key = "reader.windowPlacement.v1"
-        let preferences = ReaderWindowPreferences(defaults: defaults)
+        let preferences = ReaderWindowStateStore(defaults: defaults)
         var saved = ReaderWindowState()
         saved.expandedSize = CGSize(width: 720, height: 400)
         try preferences.save(saved)
@@ -76,6 +76,6 @@ struct ReaderWindowPreferencesTests {
         }
 
         #expect(defaults.data(forKey: key) == original)
-        #expect(try ReaderWindowPreferences(defaults: defaults).load() == saved)
+        #expect(try ReaderWindowStateStore(defaults: defaults).load() == saved)
     }
 }

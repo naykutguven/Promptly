@@ -17,7 +17,7 @@ struct ReaderView: View {
         VStack(spacing: 0) {
             Color.clear.frame(height: controller.topInset).accessibilityHidden(true)
             controls
-                .frame(height: ReaderWindowLayout.collapsedHeight)
+                .frame(height: ReaderWindowLayoutConstants.collapsedHeight)
             if !controller.state.isCollapsed {
                 // Resizing changes the viewport and wrapping, never the script or its font size.
                 GeometryReader { _ in

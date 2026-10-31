@@ -31,9 +31,9 @@ struct ReaderWindowControllerTests {
         let expanded = fixture.panel.frame
 
         fixture.controller.toggleExpansion()
-        #expect(fixture.panel.frame.height == ReaderWindowLayout.collapsedHeight + Self.primary.safeAreaTop)
+        #expect(fixture.panel.frame.height == ReaderWindowLayoutConstants.collapsedHeight + Self.primary.safeAreaTop)
         #expect(fixture.panel.frame.maxY == expanded.maxY)
-        #expect(fixture.controller.state.expandedSize == ReaderWindowLayout.defaultExpandedSize)
+        #expect(fixture.controller.state.expandedSize == ReaderWindowLayoutConstants.defaultExpandedSize)
 
         fixture.controller.toggleExpansion()
         #expect(fixture.panel.frame == expanded)
@@ -51,7 +51,7 @@ struct ReaderWindowControllerTests {
         fixture.controller.toggleLock()
         #expect(!fixture.panel.isMovable)
         #expect(!fixture.panel.styleMask.contains(.resizable))
-        #expect(fixture.panel.frame.height == ReaderWindowLayout.collapsedHeight)
+        #expect(fixture.panel.frame.height == ReaderWindowLayoutConstants.collapsedHeight)
 
         fixture.controller.returnToNotch()
         #expect(fixture.controller.state.placement == .anchored)
@@ -73,7 +73,7 @@ struct ReaderWindowControllerTests {
         let fixture = try Fixture(savedState: saved)
         defer { fixture.close() }
         fixture.controller.start()
-        #expect(fixture.panel.frame.height == ReaderWindowLayout.collapsedHeight)
+        #expect(fixture.panel.frame.height == ReaderWindowLayoutConstants.collapsedHeight)
         #expect(fixture.controller.state.detachedFrame == saved.detachedFrame)
 
         fixture.controller.toggleExpansion()
@@ -91,7 +91,7 @@ struct ReaderWindowControllerTests {
         fixture.controller.toggleExpansion()
         let bottomStrip = CGRect(x: 400, y: Self.primary.visibleFrame.minY,
                                  width: fixture.panel.frame.width,
-                                 height: ReaderWindowLayout.collapsedHeight)
+                                 height: ReaderWindowLayoutConstants.collapsedHeight)
         fixture.panel.setFrame(bottomStrip, display: false)
         fixture.controller.finishMoving()
         #expect(fixture.panel.frame == bottomStrip)
@@ -173,7 +173,7 @@ struct ReaderWindowControllerTests {
 
         // No suspension occurs between moving and hiding; the debounce cannot commit first.
         fixture.controller.hide()
-        let reopened = try ReaderWindowPreferences(defaults: fixture.defaults).load()
+        let reopened = try ReaderWindowStateStore(defaults: fixture.defaults).load()
         #expect(reopened.placement == .detached)
         #expect(reopened.detachedFrame == latest)
         #expect(reopened.expandedSize == latest.size)
@@ -199,7 +199,7 @@ struct ReaderWindowControllerTests {
         #expect(try fixture.preferences.load().detachedFrame != latest)
 
         fixture.controller.stop()
-        let reopened = try ReaderWindowPreferences(defaults: fixture.defaults).load()
+        let reopened = try ReaderWindowStateStore(defaults: fixture.defaults).load()
         #expect(reopened.placement == .detached)
         #expect(reopened.detachedFrame == latest)
         #expect(reopened.expandedSize == latest.size)
@@ -226,7 +226,7 @@ struct ReaderWindowControllerTests {
 
         #expect(fixture.controller.state == saved)
         #expect(fixture.panel.frame == collapsedFrame)
-        #expect(fixture.panel.frame.height == ReaderWindowLayout.collapsedHeight)
+        #expect(fixture.panel.frame.height == ReaderWindowLayoutConstants.collapsedHeight)
         #expect(!fixture.panel.isMovable)
         #expect(!fixture.panel.styleMask.contains(.resizable))
         #expect(fixture.controller.visibility == .visible)
@@ -245,7 +245,7 @@ struct ReaderWindowControllerTests {
         NotificationCenter.default.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
         #expect(fixture.panel.frame.midX == Self.external.frame.midX)
         #expect(fixture.panel.frame.maxY == Self.external.visibleFrame.maxY)
-        #expect(fixture.panel.frame.height == ReaderWindowLayout.collapsedHeight)
+        #expect(fixture.panel.frame.height == ReaderWindowLayoutConstants.collapsedHeight)
         #expect(fixture.controller.topInset == 0)
         #expect(fixture.controller.state.isCollapsed)
         #expect(fixture.controller.state.isLocked)
@@ -254,7 +254,7 @@ struct ReaderWindowControllerTests {
         NotificationCenter.default.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
         #expect(fixture.panel.frame.midX == Self.primary.frame.midX)
         #expect(fixture.panel.frame.maxY == Self.primary.frame.maxY)
-        #expect(fixture.panel.frame.height == ReaderWindowLayout.collapsedHeight + Self.primary.safeAreaTop)
+        #expect(fixture.panel.frame.height == ReaderWindowLayoutConstants.collapsedHeight + Self.primary.safeAreaTop)
         #expect(fixture.controller.topInset == Self.primary.safeAreaTop)
         #expect(fixture.controller.state.placement == .anchored)
         #expect(fixture.controller.state.isCollapsed)
@@ -275,7 +275,7 @@ struct ReaderWindowControllerTests {
     private struct Fixture {
         let suiteName: String
         let defaults: UserDefaults
-        let preferences: ReaderWindowPreferences
+        let preferences: ReaderWindowStateStore
         let panel: ReaderPanel
         let environment: DisplayEnvironment
         let controller: ReaderWindowController
@@ -285,7 +285,7 @@ struct ReaderWindowControllerTests {
              corruptPreferences: Bool = false) throws {
             suiteName = "PromptlyTests.ReaderWindowController.\(UUID().uuidString)"
             defaults = try #require(UserDefaults(suiteName: suiteName))
-            preferences = ReaderWindowPreferences(defaults: defaults)
+            preferences = ReaderWindowStateStore(defaults: defaults)
             if let savedState { try preferences.save(savedState) }
             if corruptPreferences {
                 defaults.set(Data("invalid placement".utf8), forKey: "reader.windowPlacement.v1")

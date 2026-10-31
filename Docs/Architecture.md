@@ -42,7 +42,6 @@ Promptly/
 │   └── PromptlyAppDelegate.swift
 ├── Domain/
 │   ├── DisplayGeometry.swift
-│   ├── ReaderWindowLayout.swift
 │   └── ReaderWindowState.swift
 ├── Features/Reader/
 │   ├── ReaderDragHandle.swift
@@ -52,7 +51,9 @@ Promptly/
 │   ├── ReaderHostingView.swift
 │   ├── ReaderPanel.swift
 │   ├── ReaderWindowController.swift
-│   └── ReaderWindowPreferences.swift
+│   ├── ReaderWindowGeometry.swift
+│   ├── ReaderWindowLayoutConstants.swift
+│   └── ReaderWindowStateStore.swift
 ├── Extensions/
 │   └── NSScreen+Extensions.swift
 └── Assets.xcassets/
@@ -61,6 +62,9 @@ Promptly/
 `PromptlyAppDelegate` currently supplies the composition root: it creates the
 window controller and injects the hosted `ReaderView` through `setContent(NSView)`.
 The controller manages panel mechanics without constructing a feature view.
+`ReaderWindowGeometry` calculates window frames using `ReaderWindowLayoutConstants`;
+both belong to windowing. The reader view also uses the constants to match its
+controls to the collapsed panel height.
 `ReaderDragHandle` is a reader-local AppKit bridge and stays with that feature.
 `App/PromptlyApp.swift` composes the menu-bar scene, including the app-wide Quit
 command; `ReaderMenu` supplies reader commands and preference warnings. A separate
@@ -130,9 +134,9 @@ points; preserve ownership when implementation details change.
 | 🗓️ | `Features/Library/` | First implementation of the approved Library/editor/Sections design, editing sessions, save-state presentation and Send to Prompter in milestone 2. Import/export and suggestions arrive later. |
 | ✅ | `Features/Reader/` | Reader content and controls. Add appearance, logical-position presentation, and playback controls with their milestones. Keep script-management UI in the Library. |
 | 🗓️ | `Features/Settings/` | Preference controls and synthetic appearance previews; capability-specific state stays with its owner. |
-| ✅ | `Domain/` | Current display geometry, placement policy, and independent window states. Retain the small flat layout until capability folders improve clarity. |
+| ✅ | `Domain/` | Current display geometry snapshots and independent window states. Retain the small flat layout until capability folders improve clarity. |
 | 🗓️ | `Domain/Scripts/`, `Sections/`, `Reader/`, `Playback/` | Stable script IDs/revisions, snapshots, section meaning, reading anchors, appearance values, and playback states/policies. These are capability folders under `Domain/`. |
-| ✅ | `Services/Windowing/` | Panel lifecycle, focus, display integration, geometry application, and placement preferences on `MainActor`. Owns window tasks and observers, not script storage or playback. |
+| ✅ | `Services/Windowing/` | Panel lifecycle, focus, display integration, reader layout constants and geometry calculations, and placement preferences on `MainActor`. Owns window tasks and observers, not script storage or playback. |
 | 🗓️ | `Services/Persistence/` | Isolated script store and recoverable container construction; `Models/`, `Schema/`, and `Migrations/` hold SwiftData representations and compatibility policy. Explicitly disable CloudKit. |
 | 🗓️ | `Services/Playback/` | One reader-session owner, starting with the sent snapshot at handoff. Add logical anchors, playback state, speed, count-in, and cancellable elapsed-time updates with their milestones; UI-bound scrolling stays on `MainActor`. |
 | ⚠️ | `Services/Files/` | Bounded import parsing, validation, staged export, and cleanup. Define supported formats and compatibility, and review export write access during the file milestone. |
@@ -162,7 +166,7 @@ work. This map creates no destinations or capabilities for them in advance.
 | SwiftData schema or migration | `Services/Persistence/Schema/` or `Migrations/` |
 | Foundation Models structured-output schema | `Services/Inference/Models/` |
 | Validated section suggestion with source revision/provenance | `Domain/Sections/` |
-| Panel mechanics, display callbacks, or applied window preferences | `Services/Windowing/` |
+| Panel mechanics, reader layout constants and calculations, display callbacks, or applied window preferences | `Services/Windowing/` |
 | Other persisted preferences | Owning capability under `Services/`; SwiftUI preference bindings remain in feature UI |
 | Raw image or color resource | `Assets.xcassets/` |
 | Reused semantic visual treatment | Matching folder under `DesignSystem/` |

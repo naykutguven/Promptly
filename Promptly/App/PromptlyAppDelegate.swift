@@ -13,7 +13,7 @@ final class PromptlyAppDelegate: NSObject, NSApplicationDelegate {
 
     override init() {
         let isUITest = ProcessInfo.processInfo.arguments.contains("--promptly-ui-testing")
-        reader = ReaderWindowController(preferences: ReaderWindowPreferences(defaults: isUITest ? nil : .standard))
+        reader = ReaderWindowController(preferences: ReaderWindowStateStore(defaults: isUITest ? nil : .standard))
         super.init()
     }
 

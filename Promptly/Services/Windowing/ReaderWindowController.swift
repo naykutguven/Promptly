@@ -16,10 +16,10 @@ final class ReaderWindowController: NSObject, NSWindowDelegate {
     private(set) var state: ReaderWindowState
     private(set) var visibility: Visibility = .hidden
     private(set) var topInset: CGFloat = 0
-    private(set) var preferenceFailure: ReaderWindowPreferences.Failure?
+    private(set) var preferenceFailure: ReaderWindowStateStore.Failure?
     private(set) var keyboardFocusRequest: UInt = 0
 
-    @ObservationIgnored private let preferences: ReaderWindowPreferences
+    @ObservationIgnored private let preferences: ReaderWindowStateStore
     @ObservationIgnored private let panel: ReaderPanel
     @ObservationIgnored private let displayProvider: () -> [DisplayGeometry]
     @ObservationIgnored private let primaryDisplayID: () -> UInt32
@@ -30,7 +30,7 @@ final class ReaderWindowController: NSObject, NSWindowDelegate {
     @ObservationIgnored private var preservesUnreadablePreferences = false
 
     init(
-        preferences: ReaderWindowPreferences,
+        preferences: ReaderWindowStateStore,
         panel: ReaderPanel = ReaderPanel(
             contentRect: .zero,
             styleMask: [.borderless, .nonactivatingPanel],
@@ -195,18 +195,18 @@ final class ReaderWindowController: NSObject, NSWindowDelegate {
         guard let primary = primaryDisplay else { return }
         applyingGeometry = true
         defer { applyingGeometry = false }
-        state.expandedSize = ReaderWindowLayout.sanitizedExpandedSize(state.expandedSize)
+        state.expandedSize = ReaderWindowGeometry.sanitizedExpandedSize(state.expandedSize)
         let frame: CGRect
         let bounds: CGRect
         switch state.placement {
         case .anchored:
-            frame = ReaderWindowLayout.anchoredFrame(on: primary, expandedSize: state.expandedSize,
-                                                     expansion: state.expansion)
-            topInset = min(primary.safeAreaTop, max(0, frame.height - ReaderWindowLayout.collapsedHeight))
+            frame = ReaderWindowGeometry.anchoredFrame(on: primary, expandedSize: state.expandedSize,
+                                                       expansion: state.expansion)
+            topInset = min(primary.safeAreaTop, max(0, frame.height - ReaderWindowLayoutConstants.collapsedHeight))
             bounds = primary.visibleFrame
             panel.level = .statusBar
         case .detached:
-            guard let placement = ReaderWindowLayout.restoredDetachedPlacement(
+            guard let placement = ReaderWindowGeometry.restoredDetachedPlacement(
                 frame: state.detachedFrame, displayID: state.displayID, expandedSize: state.expandedSize,
                 expansion: state.expansion, displays: displays, primaryDisplayID: primary.id
             ), let display = displays.first(where: { $0.id == placement.displayID }) else { return }
@@ -228,9 +228,9 @@ final class ReaderWindowController: NSObject, NSWindowDelegate {
         let canResize = state.placement == .detached && !state.isLocked && !state.isCollapsed
         if canResize { panel.styleMask.insert(.resizable) } else { panel.styleMask.remove(.resizable) }
         panel.isMovable = state.placement == .detached && !state.isLocked
-        panel.minSize = CGSize(width: min(ReaderWindowLayout.minimumExpandedSize.width, bounds.width),
-                               height: min(state.isCollapsed ? ReaderWindowLayout.collapsedHeight
-                                           : ReaderWindowLayout.minimumExpandedSize.height, bounds.height))
+        panel.minSize = CGSize(width: min(ReaderWindowLayoutConstants.minimumExpandedSize.width, bounds.width),
+                               height: min(state.isCollapsed ? ReaderWindowLayoutConstants.collapsedHeight
+                                           : ReaderWindowLayoutConstants.minimumExpandedSize.height, bounds.height))
         panel.maxSize = bounds.size
         panel.setFrame(frame, display: true)
     }

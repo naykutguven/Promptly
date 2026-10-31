@@ -1,5 +1,5 @@
 //
-//  ReaderWindowLayout.swift
+//  ReaderWindowGeometry.swift
 //  Promptly
 //
 //  Created by Aykut Güven on 26.10.26.
@@ -8,17 +8,15 @@
 import CoreGraphics
 import Foundation
 
-enum ReaderWindowLayout {
-    static let defaultExpandedSize = CGSize(width: 640, height: 320)
-    static let minimumExpandedSize = CGSize(width: 360, height: 200)
-    static let collapsedHeight: CGFloat = 58
-
+enum ReaderWindowGeometry {
     static func sanitizedExpandedSize(_ size: CGSize) -> CGSize {
         CGSize(
-            width: sanitizedDimension(size.width, fallback: defaultExpandedSize.width,
-                                      minimum: minimumExpandedSize.width),
-            height: sanitizedDimension(size.height, fallback: defaultExpandedSize.height,
-                                       minimum: minimumExpandedSize.height)
+            width: sanitizedDimension(size.width,
+                                      fallback: ReaderWindowLayoutConstants.defaultExpandedSize.width,
+                                      minimum: ReaderWindowLayoutConstants.minimumExpandedSize.width),
+            height: sanitizedDimension(size.height,
+                                       fallback: ReaderWindowLayoutConstants.defaultExpandedSize.height,
+                                       minimum: ReaderWindowLayoutConstants.minimumExpandedSize.height)
         )
     }
 
@@ -38,7 +36,7 @@ enum ReaderWindowLayout {
             : display.visibleFrame
         let notchWidth = display.notchWidth.isFinite ? max(0, display.notchWidth) : 0
         let width = min(max(size.width, hasNotch ? notchWidth + 96 : 0), bounds.width)
-        let bodyHeight = expansion == .collapsed ? collapsedHeight : size.height
+        let bodyHeight = expansion == .collapsed ? ReaderWindowLayoutConstants.collapsedHeight : size.height
         let height = min(bodyHeight + (hasNotch ? safeAreaTop : 0), bounds.height)
         let x = min(max(display.frame.midX - width / 2, bounds.minX), bounds.maxX - width)
         return CGRect(x: x, y: bounds.maxY - height, width: width, height: height)
@@ -90,7 +88,8 @@ enum ReaderWindowLayout {
         let size = sanitizedExpandedSize(frame.size)
         let bounds = display.visibleFrame
         let width = min(size.width, bounds.width)
-        let height = min(expansion == .collapsed ? collapsedHeight : size.height, bounds.height)
+        let height = min(expansion == .collapsed ? ReaderWindowLayoutConstants.collapsedHeight : size.height,
+                         bounds.height)
         // Preserve the top edge when expanding or collapsing; clamp against one real screen.
         let proposedX = frame.origin.x.isFinite ? frame.origin.x : bounds.midX - width / 2
         let proposedTop = frame.maxY.isFinite ? frame.maxY : bounds.maxY

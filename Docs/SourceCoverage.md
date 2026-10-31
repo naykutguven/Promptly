@@ -3,7 +3,8 @@
 Measured on 2026-10-26 for the milestone 1 implementation before the app-entry
 move and Quit-menu ownership cleanup. Source links follow the current layout;
 the counts below remain the historical measurement, including the former
-placement of Quit in `ReaderMenu`.
+placement of Quit in `ReaderMenu` and the combined reader layout implementation
+before its constants were separated.
 
 App source executable-line coverage increased from **95.73%
 (672/702)** to **96.58%
@@ -27,7 +28,7 @@ no percentage. These measurements do not establish minimum macOS 26.0 support.
 | App source file | Before | After | Covered/executable after |
 | --- | ---: | ---: | ---: |
 | [PromptlyAppDelegate.swift](../Promptly/App/PromptlyAppDelegate.swift) | 66.67% | 80.95% | 17/21 |
-| [ReaderWindowLayout.swift](../Promptly/Domain/ReaderWindowLayout.swift) | 99.04% | 100.00% | 104/104 |
+| [ReaderWindowGeometry.swift](../Promptly/Services/Windowing/ReaderWindowGeometry.swift), [ReaderWindowLayoutConstants.swift](../Promptly/Services/Windowing/ReaderWindowLayoutConstants.swift) | 99.04% | 100.00% | 104/104 |
 | [ReaderWindowState.swift](../Promptly/Domain/ReaderWindowState.swift) | 100.00% | 100.00% | 6/6 |
 | [NSScreen+Extensions.swift](../Promptly/Extensions/NSScreen+Extensions.swift) | 93.33% | 93.33% | 14/15 |
 | [ReaderDragHandle.swift](../Promptly/Features/Reader/ReaderDragHandle.swift) | 100.00% | 100.00% | 25/25 |
@@ -37,12 +38,12 @@ no percentage. These measurements do not establish minimum macOS 26.0 support.
 | [ReaderHostingView.swift](../Promptly/Services/Windowing/ReaderHostingView.swift) | 0.00% | 0.00% | 0/2 |
 | [ReaderPanel.swift](../Promptly/Services/Windowing/ReaderPanel.swift) | 100.00% | 100.00% | 10/10 |
 | [ReaderWindowController.swift](../Promptly/Services/Windowing/ReaderWindowController.swift) | 95.26% | 95.26% | 221/232 |
-| [ReaderWindowPreferences.swift](../Promptly/Services/Windowing/ReaderWindowPreferences.swift) | 95.00% | 100.00% | 20/20 |
+| [ReaderWindowStateStore.swift](../Promptly/Services/Windowing/ReaderWindowStateStore.swift) | 95.00% | 100.00% | 20/20 |
 | **Promptly.app total** | **95.73%** | **96.58%** | **678/702** |
 
 ## Tests added
 
-- [ReaderWindowPreferencesTests](../PromptlyTests/Services/Windowing/ReaderWindowPreferencesTests.swift):
+- [ReaderWindowStateStoreTests](../PromptlyTests/Services/Windowing/ReaderWindowStateStoreTests.swift):
   a failed encode reports the typed failure and preserves the last good bytes and
   reopened placement.
 - [ReaderWindowControllerTests](../PromptlyTests/Services/Windowing/ReaderWindowControllerTests.swift):
@@ -50,7 +51,7 @@ no percentage. These measurements do not establish minimum macOS 26.0 support.
   before debounce can finish, hide/show preserving detached/collapsed/locked
   state, and an anchored collapsed/locked reader following primary-display
   changes between notch and no-notch snapshots.
-- [ReaderWindowLayoutTests](../PromptlyTests/Domain/ReaderWindowLayoutTests.swift):
+- [ReaderWindowGeometryTests](../PromptlyTests/Services/Windowing/ReaderWindowGeometryTests.swift):
   invalid full-screen or visible-screen rectangles are excluded from restoration;
   a valid actual display is used even when the saved and primary IDs are invalid,
   and no placement is returned if no usable display remains.

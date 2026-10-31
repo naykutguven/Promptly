@@ -1,5 +1,5 @@
 //
-//  ReaderWindowPreferences.swift
+//  ReaderWindowStateStore.swift
 //  Promptly
 //
 //  Created by Aykut Güven on 26.10.26.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class ReaderWindowPreferences {
+final class ReaderWindowStateStore {
     enum Failure: Error {
         case unreadable
         case encodingFailed
