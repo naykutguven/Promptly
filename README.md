@@ -3,13 +3,15 @@
 Promptly is a native macOS teleprompter designed for private, offline use. The
 current prototype provides reader window behavior with synthetic text and local
 placement preferences. Script editing, persistence, handoff and scrolling
-remain planned. The approved Library designs guide its first implementation.
+remain planned. The approved Quiet Native Library and reader designs guide
+upcoming visual adoption.
 
 See the [roadmap](ROADMAP.md) for implementation scope and remaining milestones.
 The [architecture map](Docs/Architecture.md) documents current ownership, planned source destinations, and placement decisions.
-The [approved Library design](Docs/LibraryDesign.md) records the active
-and empty-library mockups and interaction contract; native adoption is planned
-separately from the current implementation below.
+The [approved Quiet Native baseline](Docs/QuietNativeDesign.md) records the Library
+and reader visuals. The [Library design contract](Docs/LibraryDesign.md) records
+its states and interactions; native adoption is planned separately from the
+current implementation below.
 
 ## Current implementation
 
@@ -39,7 +41,7 @@ not guaranteed.
 
 ### Approved Library design
 
-The Native active-script and empty-library designs are approved, with native
+The Quiet Native active-script and empty-library designs are approved, with native
 implementation from scratch and validation pending in
 [milestone 2](ROADMAP.md#2-scripts-and-safe-local-editing).
 The [design contract](Docs/LibraryDesign.md) retains both synthetic mockups

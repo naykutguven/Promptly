@@ -5,6 +5,11 @@ localization, or accessibility. Follow [AGENTS.md](../../AGENTS.md) and native
 macOS Human Interface Guidelines. Read [Concurrency and Playback](ConcurrencyAndPlayback.md)
 for scrolling and [Testing and Validation](TestingAndValidation.md) before verification.
 
+Use the [approved Quiet Native baseline](../QuietNativeDesign.md) for Library and
+reader styling. It includes SF Symbols, accent-colored filled pins, system-font
+section digits and smaller reader glyphs with accessible targets. Native adoption
+and validation remain pending.
+
 ## Native Mac interaction
 
 - Use native controls, menus, toolbars, text editing, search, and settings before

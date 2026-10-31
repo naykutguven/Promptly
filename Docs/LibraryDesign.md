@@ -1,6 +1,9 @@
 # Approved Library design
 
-**Status:** Design approved on 2026-10-27; recovery policy revised on 2026-10-28.
+**Status:** Quiet Native visuals approved on 2026-10-31, superseding the earlier
+Native visuals approved on 2026-10-27. The recovery policy revised on 2026-10-28
+is unchanged. The [shared Library and reader baseline](QuietNativeDesign.md)
+records the approved versions, final refinements and frozen images.
 The Library must be implemented from scratch in
 [roadmap milestone 2](../ROADMAP.md#2-scripts-and-safe-local-editing). No Library
 window, script editor/store or native Library test suite currently exists.
@@ -14,7 +17,7 @@ Library is the complete script workspace: managing, editing and sectioning
 scripts before sending them to the reader. The sidebar is one part of this
 feature, not a separate destination from its editor.
 
-The approved direction is Native: a restrained macOS window, a quiet Library
+The approved direction is Quiet Native: a restrained macOS window, a quiet Library
 sidebar, a spacious plain-text editor, and a compact, collapsible Sections
 inspector. Use native controls, system typography, semantic colors, and accessible
 hit areas. The images establish layout and hierarchy rather than fixed pixel
@@ -22,18 +25,19 @@ geometry or a custom replacement for native window chrome.
 
 ### Active script
 
-![Approved Native active-script mockup](Design/Library/Active-v6.png)
+![Approved Quiet Native active-script mockup](Design/QuietNative/2026-10-31/LibraryActive.jpg)
 
 ### Empty library
 
-![Approved Native empty-library mockup](Design/Library/EmptyLibrary-v7.png)
+![Approved Quiet Native empty-library mockup](Design/QuietNative/2026-10-31/LibraryEmpty.jpg)
 
-These are synthetic browser mockups of Native draft versions 6 and 7, respectively,
-not screenshots or validation of the macOS app. They retain the approved states
-independently of the [mutable design canvas](https://superdesign.dev/teams/4a28d3f6-da15-4afc-ad86-e77eeed9ee61/projects/b453dc3e-f71c-4a17-9200-42524e2552ea).
-The canvas's preview-scenario and design controls are review tools, not product UI.
-The recovery policy below supersedes older timer/history behavior in that
-interactive prototype. The frozen images remain the approved visual references.
+These are synthetic browser mockups, not screenshots or validation of the macOS
+app. The [approval record](QuietNativeDesign.md) freezes the current visuals
+independently of the mutable Superdesign canvas and records their versions.
+Earlier [Native active v6](Design/Library/Active-v6.png) and
+[empty v7](Design/Library/EmptyLibrary-v7.png) images remain unchanged as historical
+references. Canvas review controls are not product UI. The interaction and
+recovery contracts below remain authoritative, including the 10-second Undo window.
 
 ## Shared chrome and state
 
@@ -46,6 +50,10 @@ interactive prototype. The frozen images remain the approved visual references.
 - Omit an editor footer, its divider and reserved height, including Plain text
   and the repeated Send label/shortcut. Keep comfortable text padding and the
   caret reachable when feedback is visible.
+- Omit the old active sidebar's disk/On this Mac/script-count footer. Keep local
+  save status near the document title. Use SF Symbols, accent-colored `pin.fill`
+  indicators and proportional system-font section numbers as specified in the
+  [shared visual baseline](QuietNativeDesign.md).
 - Present saved, pending, saving, and failed-save states honestly near the
   document title. **Saved on this Mac** describes local storage. **Edits since
   last send** applies only when this script has a sent copy with newer library
@@ -66,7 +74,7 @@ both groups.
 | --- | --- |
 | Duplicate or delete | A short left swipe reveals separate, icon-only circular Duplicate and Delete controls on a neutral row background. Duplicate is neutral gray; Delete is red. |
 | Full-left delete | A deliberate full left swipe commits Delete on completion/release. Reversing before release can cancel the action. Use the time-limited Undo toast rather than a confirmation dialog. |
-| Pin or unpin | A right swipe reveals an amber circular Pin/Unpin control. A deliberate full right swipe can commit it. |
+| Pin or unpin | A right swipe reveals an accent-colored circular Pin/Unpin control. A deliberate full right swipe can commit it. |
 | Gesture alternatives | The row context menu and accessible menu/keyboard actions provide Pin/Unpin, Duplicate, and Delete. Trackpad swipes are an enhancement, not the only way to manage a script. |
 
 Every action targets the row's stable script ID, including an unselected row.

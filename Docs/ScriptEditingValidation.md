@@ -15,7 +15,7 @@ validate script editing, storage, sent-copy handoff or scrolling.
 
 | Area | Status |
 | --- | --- |
-| Active and empty-library mockups | Design approved; retained synthetic references are in LibraryDesign.md |
+| Active and empty-library mockups | Quiet Native approved on 2026-10-31; frozen synthetic references and versions are in QuietNativeDesign.md and linked from LibraryDesign.md |
 | Native Library implementation | Not implemented |
 | Script storage and initial schema | Not implemented; design and compatibility policy remain to be defined |
 | Library unit, AppKit and UI tests | Not implemented; no passing Library test counts are claimed |

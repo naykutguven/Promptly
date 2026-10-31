@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "status": "approved",
+  "approvedOn": "2026-10-31",
+  "timezone": "Europe/Berlin",
+  "scope": "Library and reader visual design; native adoption and validation pending",
+  "userApproval": "ok for now. approve the alternatives",
+  "projectId": "89aaf78f-5df9-4564-839f-711f4a8e486a",
+  "record": "../../../QuietNativeDesign.md",
+  "states": {
+    "quiet-native-overview": {
+      "draftId": "50c18ac7-db29-4798-9721-a06a6db6fa21",
+      "draftVersion": 4,
+      "image": "Overview.jpg",
+      "imageSHA256": "62b6c4abba35f229e64161e33b652bc46f88d6194cb9831ca874f741fb43650f",
+      "readerHeaderVersion": 3
+    },
+    "library-active": {
+      "draftId": "816df858-be9b-4fa8-be18-4d180e9b5048",
+      "draftVersion": 2,
+      "image": "LibraryActive.jpg",
+      "imageSHA256": "6ed28ce97e547224f0879177180a15023fbb80ba52504ad720ea70e42557146a"
+    },
+    "library-empty": {
+      "draftId": "a17a8156-0dac-4e52-b385-c41330f73296",
+      "draftVersion": 2,
+      "image": "LibraryEmpty.jpg",
+      "imageSHA256": "daf4b133fff26046dd397e5a42b62e71d2cd7942b64c136e29b2818a73e50261"
+    },
+    "reader-detached": {
+      "draftId": "7df8b1dc-2d2e-449b-9b1c-2f376b7b4e2a",
+      "draftVersion": 2,
+      "image": "ReaderDetached.jpg",
+      "imageSHA256": "e4f1a39ab0b917eea725b159fd7349f9ccd6f79f370a82f9e631d09b68facf77",
+      "readerHeaderVersion": 3
+    },
+    "reader-anchored": {
+      "draftId": "ffc5bbcf-d78a-418b-8cff-a665c1699f44",
+      "draftVersion": 2,
+      "image": "ReaderAnchored.jpg",
+      "imageSHA256": "96aa24d287953ab7737ab73c4f1ae56623b6a9d815e4aa2702a9d7d3503ed295",
+      "readerHeaderVersion": 3
+    }
+  },
+  "sharedComponents": {
+    "ReaderHeader": {
+      "id": "93e127ef-46a5-4991-93d2-dc3557611848",
+      "version": 3,
+      "glyphSize": 14,
+      "targetSize": 32,
+      "referenceUnit": "CSS pixels"
+    }
+  }
+}

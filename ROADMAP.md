@@ -6,7 +6,8 @@ window-behavior prototype now provides a menu-bar reader with synthetic text,
 notch anchoring, detachment, collapse, locking, and local placement restoration.
 Milestone 1 remains open for physical display, full-screen, VoiceOver, and
 sharing-app validation; see the [validation record](Docs/WindowBehaviorValidation.md).
-The active and empty-library designs are approved. Their first
+The [Quiet Native Library and reader designs](Docs/QuietNativeDesign.md) are
+approved; native visual adoption remains pending. The Library's first
 implementation belongs to milestone 2; Library code, storage and tests are
 not present. Milestones 2 onward remain planned work.
 
@@ -91,6 +92,9 @@ behavior. Browser mockup checks alone do not complete this milestone.
 
 **Goal:** Make scripts comfortable to read in both panel and floating modes.
 
+- Adopt the [approved Quiet Native reader styling](Docs/QuietNativeDesign.md#reader),
+  preserving existing window behavior. SF Symbols use smaller visible glyphs
+  with accessible targets; approval alone does not validate native behavior.
 - Adjust font family, size, color, alignment, line height, paragraph spacing,
   reading-column width, contrast, and background opacity.
 - Support Light, Dark, and system appearance, including accessibility settings.
