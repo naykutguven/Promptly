@@ -37,6 +37,12 @@ contains review labels outside the product windows; those labels are not app UI.
 
 - Retain the sidebar/editor/Sections layout, quiet toolbar, one Send action,
   honest title-level save status and approved empty-state hierarchy.
+- Allow horizontal resizing through native `NavigationSplitView` and `.inspector`
+  dividers. Set flexible minimum, ideal and maximum widths with
+  [`navigationSplitViewColumnWidth(min:ideal:max:)`](https://developer.apple.com/documentation/swiftui/view/navigationsplitviewcolumnwidth(min:ideal:max:))
+  and [`inspectorColumnWidth(min:ideal:max:)`](https://developer.apple.com/documentation/swiftui/view/inspectorcolumnwidth(min:ideal:max:));
+  custom drag handling is unnecessary. Fixed mockup widths are visual references,
+  not a requirement to lock native widths. Implementation remains pending.
 - Use system typography and proportional system digits for section order numbers.
   Do not introduce a code-style or monospaced font for those numbers.
 - Use `pin.fill` for the pinned-row indicator, tinted with the shared accent.
