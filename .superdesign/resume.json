@@ -1,0 +1,264 @@
+{
+  "schemaVersion": 1,
+  "targets": {
+    "quiet-native-overview": {
+      "targetKind": "new-ui",
+      "projectId": "89aaf78f-5df9-4564-839f-711f4a8e486a",
+      "designSystemPath": ".superdesign/design-system.md",
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        ".superdesign/init/theme.md",
+        "Docs/LibraryDesign.md",
+        "Promptly/Features/Reader/ReaderView.swift",
+        "Promptly/Features/Reader/ReaderDragHandle.swift",
+        "Promptly/Domain/ReaderWindowLayout.swift"
+      ],
+      "referenceIds": [
+        "7ceaff60-353d-4146-8b2a-f60b6197fca9",
+        "1ffdc52c-f3f5-4f9a-9b67-7e238b37be42",
+        "484b61c8-442a-40e5-97cb-6cad97d15a92"
+      ],
+      "components": [
+        {
+          "name": "ReaderHeader",
+          "id": "93e127ef-46a5-4991-93d2-dc3557611848",
+          "sourcePath": "Promptly/Features/Reader/ReaderView.swift",
+          "currentVersion": 3
+        }
+      ],
+      "updatedAt": "2026-10-31T10:39:26.480442+00:00",
+      "activeDraftId": "50c18ac7-db29-4798-9721-a06a6db6fa21",
+      "drafts": {
+        "50c18ac7-db29-4798-9721-a06a6db6fa21": {
+          "title": "Promptly \u2014 Quiet Native Exploration",
+          "currentVersion": 4,
+          "visualDirection": "Quiet Native with actual SF Symbols, accent-colored pin.fill, proportional system section digits and equal 12px resize-cue insets; 14px SF Symbol controls with 32px targets"
+        }
+      },
+      "fingerprints": {
+        ".superdesign/design-system.md": "26f03bac36d16653f152cfd4bc42b4b2181d02c15c3dbaf3736d45b8f2a2e501",
+        ".superdesign/init/theme.md": "a03d10cf573051523e57e29e42baf9c9617c52dd8d204d1ccd24e5dfb27fabb8",
+        "Docs/LibraryDesign.md": "adf4a98bb476accb14c50a5126ccf9561b42f2b2b4f5623cf26e6f55a7bdc958",
+        "Promptly/Features/Reader/ReaderView.swift": "d1b8584a6360aa8e9cbb60c4f4e07a544b8fd9ec703e72ea95f3cc271485d6cd",
+        "Promptly/Features/Reader/ReaderDragHandle.swift": "ea225296560e38d7716de07517173072cc09d7f83ad7d65300f37dc82c78255b",
+        "Promptly/Domain/ReaderWindowLayout.swift": "330508a7823d5dd55890bae05f9e831ae2577ea1a5d2c65f96e6760d01309cc9"
+      },
+      "approval": {
+        "status": "approved",
+        "approvedOn": "2026-10-31",
+        "draftVersion": 4,
+        "record": "Docs/QuietNativeDesign.md",
+        "snapshot": "Docs/Design/QuietNative/2026-10-31/Overview.jpg",
+        "readerHeaderVersion": 3
+      }
+    },
+    "library-active": {
+      "targetKind": "new-ui",
+      "projectId": "89aaf78f-5df9-4564-839f-711f4a8e486a",
+      "designSystemPath": ".superdesign/design-system.md",
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        ".superdesign/init/theme.md",
+        "Docs/LibraryDesign.md",
+        "Promptly/Features/Reader/ReaderView.swift",
+        "Promptly/Features/Reader/ReaderDragHandle.swift",
+        "Promptly/Domain/ReaderWindowLayout.swift"
+      ],
+      "referenceIds": [
+        "7ceaff60-353d-4146-8b2a-f60b6197fca9",
+        "1ffdc52c-f3f5-4f9a-9b67-7e238b37be42",
+        "484b61c8-442a-40e5-97cb-6cad97d15a92"
+      ],
+      "components": [
+        {
+          "name": "ReaderHeader",
+          "id": "93e127ef-46a5-4991-93d2-dc3557611848",
+          "sourcePath": "Promptly/Features/Reader/ReaderView.swift",
+          "currentVersion": 3
+        }
+      ],
+      "updatedAt": "2026-10-31T10:39:26.480606+00:00",
+      "activeDraftId": "816df858-be9b-4fa8-be18-4d180e9b5048",
+      "drafts": {
+        "816df858-be9b-4fa8-be18-4d180e9b5048": {
+          "title": "Quiet Native \u2014 Library \u00b7 Active",
+          "currentVersion": 2,
+          "visualDirection": "Quiet Native with actual SF Symbols, accent-colored pin.fill, proportional system section digits and equal 12px resize-cue insets",
+          "parentDraftId": "50c18ac7-db29-4798-9721-a06a6db6fa21"
+        }
+      },
+      "fingerprints": {
+        ".superdesign/design-system.md": "26f03bac36d16653f152cfd4bc42b4b2181d02c15c3dbaf3736d45b8f2a2e501",
+        ".superdesign/init/theme.md": "a03d10cf573051523e57e29e42baf9c9617c52dd8d204d1ccd24e5dfb27fabb8",
+        "Docs/LibraryDesign.md": "adf4a98bb476accb14c50a5126ccf9561b42f2b2b4f5623cf26e6f55a7bdc958",
+        "Promptly/Features/Reader/ReaderView.swift": "d1b8584a6360aa8e9cbb60c4f4e07a544b8fd9ec703e72ea95f3cc271485d6cd",
+        "Promptly/Features/Reader/ReaderDragHandle.swift": "ea225296560e38d7716de07517173072cc09d7f83ad7d65300f37dc82c78255b",
+        "Promptly/Domain/ReaderWindowLayout.swift": "330508a7823d5dd55890bae05f9e831ae2577ea1a5d2c65f96e6760d01309cc9"
+      },
+      "approval": {
+        "status": "approved",
+        "approvedOn": "2026-10-31",
+        "draftVersion": 2,
+        "record": "Docs/QuietNativeDesign.md",
+        "snapshot": "Docs/Design/QuietNative/2026-10-31/LibraryActive.jpg",
+        "readerHeaderVersion": null
+      }
+    },
+    "library-empty": {
+      "targetKind": "new-ui",
+      "projectId": "89aaf78f-5df9-4564-839f-711f4a8e486a",
+      "designSystemPath": ".superdesign/design-system.md",
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        ".superdesign/init/theme.md",
+        "Docs/LibraryDesign.md",
+        "Promptly/Features/Reader/ReaderView.swift",
+        "Promptly/Features/Reader/ReaderDragHandle.swift",
+        "Promptly/Domain/ReaderWindowLayout.swift"
+      ],
+      "referenceIds": [
+        "7ceaff60-353d-4146-8b2a-f60b6197fca9",
+        "1ffdc52c-f3f5-4f9a-9b67-7e238b37be42",
+        "484b61c8-442a-40e5-97cb-6cad97d15a92"
+      ],
+      "components": [
+        {
+          "name": "ReaderHeader",
+          "id": "93e127ef-46a5-4991-93d2-dc3557611848",
+          "sourcePath": "Promptly/Features/Reader/ReaderView.swift",
+          "currentVersion": 3
+        }
+      ],
+      "updatedAt": "2026-10-31T10:39:26.480691+00:00",
+      "activeDraftId": "a17a8156-0dac-4e52-b385-c41330f73296",
+      "drafts": {
+        "a17a8156-0dac-4e52-b385-c41330f73296": {
+          "title": "Quiet Native \u2014 Library \u00b7 Empty",
+          "currentVersion": 2,
+          "visualDirection": "Quiet Native with actual SF Symbols, accent-colored pin.fill, proportional system section digits and equal 12px resize-cue insets",
+          "parentDraftId": "50c18ac7-db29-4798-9721-a06a6db6fa21"
+        }
+      },
+      "fingerprints": {
+        ".superdesign/design-system.md": "26f03bac36d16653f152cfd4bc42b4b2181d02c15c3dbaf3736d45b8f2a2e501",
+        ".superdesign/init/theme.md": "a03d10cf573051523e57e29e42baf9c9617c52dd8d204d1ccd24e5dfb27fabb8",
+        "Docs/LibraryDesign.md": "adf4a98bb476accb14c50a5126ccf9561b42f2b2b4f5623cf26e6f55a7bdc958",
+        "Promptly/Features/Reader/ReaderView.swift": "d1b8584a6360aa8e9cbb60c4f4e07a544b8fd9ec703e72ea95f3cc271485d6cd",
+        "Promptly/Features/Reader/ReaderDragHandle.swift": "ea225296560e38d7716de07517173072cc09d7f83ad7d65300f37dc82c78255b",
+        "Promptly/Domain/ReaderWindowLayout.swift": "330508a7823d5dd55890bae05f9e831ae2577ea1a5d2c65f96e6760d01309cc9"
+      },
+      "approval": {
+        "status": "approved",
+        "approvedOn": "2026-10-31",
+        "draftVersion": 2,
+        "record": "Docs/QuietNativeDesign.md",
+        "snapshot": "Docs/Design/QuietNative/2026-10-31/LibraryEmpty.jpg",
+        "readerHeaderVersion": null
+      }
+    },
+    "reader-detached": {
+      "targetKind": "new-ui",
+      "projectId": "89aaf78f-5df9-4564-839f-711f4a8e486a",
+      "designSystemPath": ".superdesign/design-system.md",
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        ".superdesign/init/theme.md",
+        "Docs/LibraryDesign.md",
+        "Promptly/Features/Reader/ReaderView.swift",
+        "Promptly/Features/Reader/ReaderDragHandle.swift",
+        "Promptly/Domain/ReaderWindowLayout.swift"
+      ],
+      "referenceIds": [
+        "7ceaff60-353d-4146-8b2a-f60b6197fca9",
+        "1ffdc52c-f3f5-4f9a-9b67-7e238b37be42",
+        "484b61c8-442a-40e5-97cb-6cad97d15a92"
+      ],
+      "components": [
+        {
+          "name": "ReaderHeader",
+          "id": "93e127ef-46a5-4991-93d2-dc3557611848",
+          "sourcePath": "Promptly/Features/Reader/ReaderView.swift",
+          "currentVersion": 3
+        }
+      ],
+      "updatedAt": "2026-10-31T10:39:26.480774+00:00",
+      "activeDraftId": "7df8b1dc-2d2e-449b-9b1c-2f376b7b4e2a",
+      "drafts": {
+        "7df8b1dc-2d2e-449b-9b1c-2f376b7b4e2a": {
+          "title": "Quiet Native \u2014 Reader \u00b7 Detached",
+          "currentVersion": 2,
+          "visualDirection": "Quiet Native with actual SF Symbols, accent-colored pin.fill, proportional system section digits and equal 12px resize-cue insets; 14px SF Symbol controls with 32px targets",
+          "parentDraftId": "50c18ac7-db29-4798-9721-a06a6db6fa21"
+        }
+      },
+      "fingerprints": {
+        ".superdesign/design-system.md": "26f03bac36d16653f152cfd4bc42b4b2181d02c15c3dbaf3736d45b8f2a2e501",
+        ".superdesign/init/theme.md": "a03d10cf573051523e57e29e42baf9c9617c52dd8d204d1ccd24e5dfb27fabb8",
+        "Docs/LibraryDesign.md": "adf4a98bb476accb14c50a5126ccf9561b42f2b2b4f5623cf26e6f55a7bdc958",
+        "Promptly/Features/Reader/ReaderView.swift": "d1b8584a6360aa8e9cbb60c4f4e07a544b8fd9ec703e72ea95f3cc271485d6cd",
+        "Promptly/Features/Reader/ReaderDragHandle.swift": "ea225296560e38d7716de07517173072cc09d7f83ad7d65300f37dc82c78255b",
+        "Promptly/Domain/ReaderWindowLayout.swift": "330508a7823d5dd55890bae05f9e831ae2577ea1a5d2c65f96e6760d01309cc9"
+      },
+      "approval": {
+        "status": "approved",
+        "approvedOn": "2026-10-31",
+        "draftVersion": 2,
+        "record": "Docs/QuietNativeDesign.md",
+        "snapshot": "Docs/Design/QuietNative/2026-10-31/ReaderDetached.jpg",
+        "readerHeaderVersion": 3
+      }
+    },
+    "reader-anchored": {
+      "targetKind": "new-ui",
+      "projectId": "89aaf78f-5df9-4564-839f-711f4a8e486a",
+      "designSystemPath": ".superdesign/design-system.md",
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        ".superdesign/init/theme.md",
+        "Docs/LibraryDesign.md",
+        "Promptly/Features/Reader/ReaderView.swift",
+        "Promptly/Features/Reader/ReaderDragHandle.swift",
+        "Promptly/Domain/ReaderWindowLayout.swift"
+      ],
+      "referenceIds": [
+        "7ceaff60-353d-4146-8b2a-f60b6197fca9",
+        "1ffdc52c-f3f5-4f9a-9b67-7e238b37be42",
+        "484b61c8-442a-40e5-97cb-6cad97d15a92"
+      ],
+      "components": [
+        {
+          "name": "ReaderHeader",
+          "id": "93e127ef-46a5-4991-93d2-dc3557611848",
+          "sourcePath": "Promptly/Features/Reader/ReaderView.swift",
+          "currentVersion": 3
+        }
+      ],
+      "updatedAt": "2026-10-31T10:39:26.480856+00:00",
+      "activeDraftId": "ffc5bbcf-d78a-418b-8cff-a665c1699f44",
+      "drafts": {
+        "ffc5bbcf-d78a-418b-8cff-a665c1699f44": {
+          "title": "Quiet Native \u2014 Reader \u00b7 Anchored",
+          "currentVersion": 2,
+          "visualDirection": "Quiet Native with actual SF Symbols, accent-colored pin.fill, proportional system section digits and equal 12px resize-cue insets; 14px SF Symbol controls with 32px targets",
+          "parentDraftId": "50c18ac7-db29-4798-9721-a06a6db6fa21"
+        }
+      },
+      "fingerprints": {
+        ".superdesign/design-system.md": "26f03bac36d16653f152cfd4bc42b4b2181d02c15c3dbaf3736d45b8f2a2e501",
+        ".superdesign/init/theme.md": "a03d10cf573051523e57e29e42baf9c9617c52dd8d204d1ccd24e5dfb27fabb8",
+        "Docs/LibraryDesign.md": "adf4a98bb476accb14c50a5126ccf9561b42f2b2b4f5623cf26e6f55a7bdc958",
+        "Promptly/Features/Reader/ReaderView.swift": "d1b8584a6360aa8e9cbb60c4f4e07a544b8fd9ec703e72ea95f3cc271485d6cd",
+        "Promptly/Features/Reader/ReaderDragHandle.swift": "ea225296560e38d7716de07517173072cc09d7f83ad7d65300f37dc82c78255b",
+        "Promptly/Domain/ReaderWindowLayout.swift": "330508a7823d5dd55890bae05f9e831ae2577ea1a5d2c65f96e6760d01309cc9"
+      },
+      "approval": {
+        "status": "approved",
+        "approvedOn": "2026-10-31",
+        "draftVersion": 2,
+        "record": "Docs/QuietNativeDesign.md",
+        "snapshot": "Docs/Design/QuietNative/2026-10-31/ReaderAnchored.jpg",
+        "readerHeaderVersion": 3
+      }
+    }
+  }
+}
