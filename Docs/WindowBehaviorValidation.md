@@ -76,6 +76,42 @@ existing journey verifies menu recovery and graceful Quit after the ownership
 change. The full suite and coverage measurement were not repeated for this
 cleanup; the coverage figures above describe the earlier source layout.
 
+Reader-window ownership refactor on 2026-10-31 separated the observable
+`ReaderWindowController` from the native `ReaderPanelController`. The former owns
+state, placement policy, preference recovery and saving; the latter owns panel
+configuration, focus, display observation and window-delegate callbacks. The
+app delegate composes both. Preference keys/payloads, geometry calculations and
+reader visuals are unchanged. All new state and callbacks remain on `MainActor`.
+
+Validation used the Promptly scheme on My Mac (arm64), Swift 6.4.2, macOS SDK
+27.2 and host macOS 27.2. Effective settings for all three targets retained the
+macOS 26.0 deployment target and configured Swift/concurrency baseline.
+
+| Refactor check | Result | Evidence / limitation |
+| --- | --- | --- |
+| Debug app and both test targets | Passed | Xcode `BuildProject(buildForTesting: true)`; no compiler warnings |
+| Release app | Passed | Unsigned CLI build below; no warnings. The restricted-shell attempt could not launch compiler macro plug-ins; the same command passed outside that shell sandbox |
+| Unit and AppKit tests | Passed: 40 | Xcode `GetTestList` then `RunSomeTests`; 16 coordinator tests use a fake panel, and four adapter tests exercise native geometry feedback, resize/collapse/lock, display-observer restart, and close/save routing |
+| Five reader UI journeys | Not run | The runner failed to initialize with “Timed out while enabling automation mode.” An isolated retry stalled and was stopped; keyboard/mouse journeys remain unverified for this refactor |
+| Targeted Thread Sanitizer run | No runtime result | Instrumented targets compiled with a duplicate `@executable_path` rpath linker warning, but the test manager reported a 120-second control-session timeout and produced no test results. The stalled run was stopped |
+
+```sh
+set -o pipefail
+xcodebuild -project Promptly.xcodeproj -scheme Promptly -configuration Release \
+  -destination 'platform=macOS' -derivedDataPath /private/tmp/Promptly-Window-Modularity-Release \
+  CODE_SIGNING_ALLOWED=NO build 2>&1 | xcsift -f toon -w
+xcodebuild -project Promptly.xcodeproj -scheme Promptly -configuration Debug \
+  -destination 'platform=macOS' -derivedDataPath /private/tmp/Promptly-Window-Modularity-TSan \
+  -enableThreadSanitizer YES -enableCodeCoverage NO -parallel-testing-enabled NO \
+  -only-testing:PromptlyTests/ReaderWindowControllerTests \
+  -only-testing:PromptlyTests/ReaderPanelControllerTests test 2>&1 | xcsift -f toon -w
+```
+
+Coverage was not remeasured. These checks do not establish minimum-OS, physical
+display, cross-app focus, VoiceOver, full-screen or capture compatibility, and
+there is no passing sanitizer claim for this refactor. The earlier evidence and
+open release gates remain separate.
+
 Drag verification on 2026-10-26 reproduced a dead area in the header: only the
 small title text originally accepted dragging. The regression failed before the
 fix. The drag target now covers the title and empty leading header area at full

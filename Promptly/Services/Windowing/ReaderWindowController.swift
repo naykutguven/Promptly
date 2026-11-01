@@ -5,12 +5,13 @@
 //  Created by Aykut Güven on 26.10.26.
 //
 
-import AppKit
 import CoreGraphics
+import Foundation
 import Observation
 
+@MainActor
 @Observable
-final class ReaderWindowController: NSObject, NSWindowDelegate {
+final class ReaderWindowController {
     enum Visibility { case visible, hidden }
 
     private(set) var state: ReaderWindowState
@@ -20,30 +21,17 @@ final class ReaderWindowController: NSObject, NSWindowDelegate {
     private(set) var keyboardFocusRequest: UInt = 0
 
     @ObservationIgnored private let preferences: ReaderWindowStateStore
-    @ObservationIgnored private let panel: ReaderPanel
-    @ObservationIgnored private let displayProvider: () -> [DisplayGeometry]
-    @ObservationIgnored private let primaryDisplayID: () -> UInt32
-    @ObservationIgnored private var applyingGeometry = false
+    @ObservationIgnored private let panel: any ReaderPanelControlling
     @ObservationIgnored private var started = false
     @ObservationIgnored private var saveTask: Task<Void, Never>?
-    @ObservationIgnored private var previouslyFocusedApplication: NSRunningApplication?
     @ObservationIgnored private var preservesUnreadablePreferences = false
 
     init(
         preferences: ReaderWindowStateStore,
-        panel: ReaderPanel = ReaderPanel(
-            contentRect: .zero,
-            styleMask: [.borderless, .nonactivatingPanel],
-            backing: .buffered,
-            defer: true
-        ),
-        displayProvider: @escaping () -> [DisplayGeometry] = { NSScreen.screens.compactMap(\.displayGeometry) },
-        primaryDisplayID: @escaping () -> UInt32 = { CGMainDisplayID() }
+        panel: any ReaderPanelControlling
     ) {
         self.preferences = preferences
         self.panel = panel
-        self.displayProvider = displayProvider
-        self.primaryDisplayID = primaryDisplayID
         do {
             state = try preferences.load()
         } catch {
@@ -51,78 +39,42 @@ final class ReaderWindowController: NSObject, NSWindowDelegate {
             preferenceFailure = error
             preservesUnreadablePreferences = true
         }
-        super.init()
-        panel.delegate = self
-        panel.title = "Promptly Reader"
-        panel.setAccessibilityIdentifier("reader.window")
-        panel.isReleasedWhenClosed = false
-        panel.isOpaque = false
-        panel.backgroundColor = .clear
-        panel.hasShadow = true
-        panel.hidesOnDeactivate = false
-        panel.becomesKeyOnlyIfNeeded = true
-        panel.isFloatingPanel = true
-        panel.collectionBehavior = [.canJoinAllSpaces, .canJoinAllApplications, .fullScreenAuxiliary, .ignoresCycle]
-        panel.isRestorable = false
-        panel.animationBehavior = .none
-        panel.onRelinquishFocus = { [weak self] in self?.releaseKeyboardFocus() }
-    }
-
-    func setContent(_ view: NSView) {
-        panel.contentView = view
+        panel.onEvent = { [weak self] event in self?.handlePanelEvent(event) }
     }
 
     func start() {
         guard !started else { return }
         started = true
-        NotificationCenter.default.addObserver(self, selector: #selector(displaysChanged),
-                                              name: NSApplication.didChangeScreenParametersNotification,
-                                              object: nil)
+        panel.startObservingDisplays()
         show()
     }
 
     func stop() {
         guard started else { return }
-        saveTask?.cancel()
-        saveTask = nil
         savePreferences()
-        NotificationCenter.default.removeObserver(self)
-        panel.orderOut(nil)
+        panel.stopObservingDisplays()
+        panel.hide()
         visibility = .hidden
         started = false
     }
 
     func show() {
         applyGeometry()
-        panel.orderFrontRegardless()
+        panel.show()
         visibility = .visible
     }
 
     func hide() {
-        panel.orderOut(nil)
+        panel.hide()
         visibility = .hidden
         savePreferences()
     }
 
     func focus() {
-        let frontmost = NSWorkspace.shared.frontmostApplication
-        if frontmost?.processIdentifier != ProcessInfo.processInfo.processIdentifier {
-            previouslyFocusedApplication = frontmost
-        }
-        show()
-        panel.allowsKeyboardFocus = true
-        NSApplication.shared.activate()
-        panel.makeKeyAndOrderFront(nil)
+        applyGeometry()
+        panel.focus()
+        visibility = .visible
         keyboardFocusRequest &+= 1
-    }
-
-    private func releaseKeyboardFocus() {
-        panel.allowsKeyboardFocus = false
-        // Ordering out releases WindowServer keyboard ownership; resignKey is only a notification hook.
-        panel.orderOut(nil)
-        if visibility == .visible { panel.orderFrontRegardless() }
-        previouslyFocusedApplication?.activate()
-        previouslyFocusedApplication = nil
     }
 
     func toggleExpansion() {
@@ -141,9 +93,10 @@ final class ReaderWindowController: NSObject, NSWindowDelegate {
         guard state.placement == .anchored else { return }
         state.placement = .detached
         // First detachment starts near the camera, within the display's usable bounds.
-        state.detachedFrame = CGRect(x: panel.frame.minX, y: panel.frame.maxY - topInset - state.expandedSize.height,
-                                     width: panel.frame.width, height: state.expandedSize.height)
-        state.displayID = primaryDisplay?.id
+        let frame = panel.frame
+        state.detachedFrame = CGRect(x: frame.minX, y: frame.maxY - topInset - state.expandedSize.height,
+                                     width: frame.width, height: state.expandedSize.height)
+        state.displayID = primaryDisplay(in: panel.displays)?.id
         applyGeometry()
         savePreferences()
     }
@@ -157,44 +110,40 @@ final class ReaderWindowController: NSObject, NSWindowDelegate {
     }
 
     func finishMoving() {
+        finishMoving(frame: panel.frame, displayID: panel.displayID)
+    }
+
+    private func finishMoving(frame: CGRect, displayID: UInt32?) {
         guard state.placement == .detached, !state.isLocked else { return }
-        recordDetachedFrame()
+        recordDetachedFrame(frame, displayID: displayID)
         applyGeometry()
         savePreferences()
     }
 
-    func windowDidMove(_ notification: Notification) {
-        guard !applyingGeometry, state.placement == .detached, !state.isLocked else { return }
-        recordDetachedFrame()
-        scheduleSave()
+    private func handlePanelEvent(_ event: ReaderPanelEvent) {
+        guard started else { return }
+        switch event {
+        case let .moved(frame, displayID):
+            guard state.placement == .detached, !state.isLocked else { return }
+            recordDetachedFrame(frame, displayID: displayID)
+            scheduleSave()
+        case let .resized(frame, displayID):
+            finishMoving(frame: frame, displayID: displayID)
+        case .displaysChanged:
+            applyGeometry()
+            scheduleSave()
+        case .closeRequested:
+            hide()
+        }
     }
 
-    func windowDidEndLiveResize(_ notification: Notification) {
-        finishMoving()
-    }
-
-    func windowShouldClose(_ sender: NSWindow) -> Bool {
-        hide()
-        return false
-    }
-
-    private var displays: [DisplayGeometry] { displayProvider() }
-
-    private var primaryDisplay: DisplayGeometry? {
-        let available = displays
-        // NSScreen.main follows keyboard focus; CGMainDisplayID follows the configured primary display.
-        return available.first { $0.id == primaryDisplayID() } ?? available.first
-    }
-
-    @objc private func displaysChanged() {
-        applyGeometry()
-        scheduleSave()
+    private func primaryDisplay(in displays: [DisplayGeometry]) -> DisplayGeometry? {
+        displays.first { $0.id == panel.primaryDisplayID } ?? displays.first
     }
 
     private func applyGeometry() {
-        guard let primary = primaryDisplay else { return }
-        applyingGeometry = true
-        defer { applyingGeometry = false }
+        let displays = panel.displays
+        guard let primary = primaryDisplay(in: displays) else { return }
         state.expandedSize = ReaderWindowGeometry.sanitizedExpandedSize(state.expandedSize)
         let frame: CGRect
         let bounds: CGRect
@@ -204,7 +153,6 @@ final class ReaderWindowController: NSObject, NSWindowDelegate {
                                                        expansion: state.expansion)
             topInset = min(primary.safeAreaTop, max(0, frame.height - ReaderWindowLayoutConstants.collapsedHeight))
             bounds = primary.visibleFrame
-            panel.level = .statusBar
         case .detached:
             guard let placement = ReaderWindowGeometry.restoredDetachedPlacement(
                 frame: state.detachedFrame, displayID: state.displayID, expandedSize: state.expandedSize,
@@ -223,20 +171,21 @@ final class ReaderWindowController: NSObject, NSWindowDelegate {
             }
             topInset = 0
             bounds = display.visibleFrame
-            panel.level = .floating
         }
         let canResize = state.placement == .detached && !state.isLocked && !state.isCollapsed
-        if canResize { panel.styleMask.insert(.resizable) } else { panel.styleMask.remove(.resizable) }
-        panel.isMovable = state.placement == .detached && !state.isLocked
-        panel.minSize = CGSize(width: min(ReaderWindowLayoutConstants.minimumExpandedSize.width, bounds.width),
-                               height: min(state.isCollapsed ? ReaderWindowLayoutConstants.collapsedHeight
-                                           : ReaderWindowLayoutConstants.minimumExpandedSize.height, bounds.height))
-        panel.maxSize = bounds.size
-        panel.setFrame(frame, display: true)
+        panel.apply(ReaderPanelLayout(
+            frame: frame,
+            placement: state.placement,
+            isMovable: state.placement == .detached && !state.isLocked,
+            isResizable: canResize,
+            minimumSize: CGSize(width: min(ReaderWindowLayoutConstants.minimumExpandedSize.width, bounds.width),
+                                height: min(state.isCollapsed ? ReaderWindowLayoutConstants.collapsedHeight
+                                            : ReaderWindowLayoutConstants.minimumExpandedSize.height, bounds.height)),
+            maximumSize: bounds.size
+        ))
     }
 
-    private func recordDetachedFrame() {
-        let live = panel.frame
+    private func recordDetachedFrame(_ live: CGRect, displayID: UInt32?) {
         if state.isCollapsed {
             let expandedHeight = state.detachedFrame?.height ?? state.expandedSize.height
             state.detachedFrame = CGRect(x: live.minX, y: live.maxY - expandedHeight,
@@ -245,7 +194,7 @@ final class ReaderWindowController: NSObject, NSWindowDelegate {
             state.detachedFrame = live
             state.expandedSize = live.size
         }
-        state.displayID = panel.screen?.displayGeometry?.id ?? primaryDisplay?.id
+        state.displayID = displayID ?? primaryDisplay(in: panel.displays)?.id
     }
 
     private func scheduleSave() {

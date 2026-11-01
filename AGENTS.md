@@ -109,17 +109,25 @@ Grow toward this shape without reorganizing unrelated files:
 ```text
 Promptly/
   App/                    Composition, lifecycle, routing
-  Features/<Feature>/     Feature UI and presentation
-  Domain/                 Shared value types and policies
-  Services/<Capability>/  Persistence, files, windowing, speech, inference
+  Features/<Feature>/     SwiftUI/AppKit UI, windows, presentation, UI workflows
+  Domain/                 Shared values, identities, snapshots, and policies
+  Services/<Capability>/  Non-UI storage, preferences, playback, files, inference
   DesignSystem/           Reused app-specific visuals only
   Extensions/             Focused native-type extensions
 ```
 
 - The app composition root creates long-lived dependencies once and injects them.
   Avoid service locators and mutable global singletons.
-- Views render state and send intents; framework integration belongs in injected
-  capability services.
+- Views render state and send intents. Feature-specific native UI integration
+  belongs in feature-owned adapters; non-UI effects belong in injected services.
+- Keep panels, window controllers/delegates, hosting views, focus, native editor
+  and scrolling adapters, and feature layout policy under the owning feature.
+  An AppKit import does not make a type a service. Shared native-type extensions
+  and genuinely reused visuals may live in Extensions and DesignSystem.
+- Keep preference serialization, script persistence, file processing, model/speech
+  sessions, and shared non-UI reader-session state under Services. Shared persisted
+  value contracts stay in Domain so services never depend on feature UI types.
+  Services does not imply background execution; preserve explicit isolation.
 - Maintain one-way dependencies: features depend on domain contracts/services;
   services do not depend on feature views or control feature presentation.
 - Add a protocol where a consumer needs substitution, not for every concrete type.
@@ -131,11 +139,15 @@ Promptly/
 - Long operations use explicit legal transitions, cancellation/retry, a stable
   generation ID, and a last safe commit point. Revalidate identity/revision after
   each relevant `await`.
-- Keep one primary type per file, named `TypeName.swift`. Put native extensions in
-  `Promptly/Extensions/TypeName+Extensions.swift`.
+- Keep one primary type per file, named `TypeName.swift`. Put focused shared native
+  extensions in `Promptly/Extensions/TypeName+Extensions.swift`; keep feature-only
+  UI bridges and interaction extensions with their feature.
 - Mirror source folders under `PromptlyTests/`, using `TypeNameTests.swift` or
   `TypeName+ExtensionsTests.swift`. Keep UI journey tests under `PromptlyUITests/`
   with names such as `FeatureUITests.swift`.
+- Each test target may have its own `Extensions/` folder for focused test-only
+  type extensions. Keep those files in the owning test target; do not add
+  test-only conveniences to the app target. Create these folders only as needed.
 - Avoid generic `Utils`, `Helpers`, and `Manager` dumping grounds.
 - Add a target/package only for a real ownership, reuse, or dependency boundary.
 

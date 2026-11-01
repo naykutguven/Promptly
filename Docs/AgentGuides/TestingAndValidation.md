@@ -38,6 +38,9 @@ Follow [AGENTS.md](../../AGENTS.md) and the relevant domain guides.
 - Keep `XCTestCase` subclasses `nonisolated` under default `MainActor` isolation;
   annotate UI test methods with `@MainActor`. XCTest initializers and lifecycle
   overrides must retain their base-class isolation; do not weaken app settings.
+- Use `PromptlyTests/Extensions/` or `PromptlyUITests/Extensions/` when the owning
+  test target needs focused type extensions. Keep these conveniences
+  test-only and target-local; create the folder with its first real file.
 - Current tests cover window state, layout, preferences, AppKit behavior, and
   reader UI journeys. See the [validation record](../WindowBehaviorValidation.md)
   and [coverage report](../SourceCoverage.md) for evidence and remaining gaps;

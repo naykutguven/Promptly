@@ -5,7 +5,6 @@
 //  Created by Aykut Güven on 26.10.26.
 //
 
-import AppKit
 import CoreGraphics
 import Foundation
 import Testing
@@ -24,7 +23,7 @@ struct ReaderWindowControllerTests {
         safeAreaTop: 0, notchWidth: 0
     )
 
-    @Test func anchoredCollapseUsesRealPanelHeightAndRestoresExpandedSize() throws {
+    @Test func anchoredCollapseUsesCollapsedPanelHeightAndRestoresExpandedSize() throws {
         let fixture = try Fixture()
         defer { fixture.close() }
         fixture.controller.start()
@@ -45,12 +44,12 @@ struct ReaderWindowControllerTests {
         fixture.controller.start()
         fixture.controller.detach()
         #expect(fixture.panel.isMovable)
-        #expect(fixture.panel.styleMask.contains(.resizable))
+        #expect(fixture.panel.isResizable)
 
         fixture.controller.toggleExpansion()
         fixture.controller.toggleLock()
         #expect(!fixture.panel.isMovable)
-        #expect(!fixture.panel.styleMask.contains(.resizable))
+        #expect(!fixture.panel.isResizable)
         #expect(fixture.panel.frame.height == ReaderWindowLayoutConstants.collapsedHeight)
 
         fixture.controller.returnToNotch()
@@ -92,7 +91,7 @@ struct ReaderWindowControllerTests {
         let bottomStrip = CGRect(x: 400, y: Self.primary.visibleFrame.minY,
                                  width: fixture.panel.frame.width,
                                  height: ReaderWindowLayoutConstants.collapsedHeight)
-        fixture.panel.setFrame(bottomStrip, display: false)
+        fixture.panel.move(to: bottomStrip)
         fixture.controller.finishMoving()
         #expect(fixture.panel.frame == bottomStrip)
 
@@ -116,7 +115,7 @@ struct ReaderWindowControllerTests {
         #expect(fixture.controller.topInset == Self.primary.safeAreaTop)
     }
 
-    @Test func topologyChangesRepairDetachedPlacementAndStopRemovesObserver() throws {
+    @Test func topologyChangesRepairDetachedPlacementAndStopIgnoresEvents() throws {
         var saved = ReaderWindowState()
         saved.placement = .detached
         saved.detachedFrame = CGRect(x: 2200, y: 300, width: 640, height: 320)
@@ -127,16 +126,16 @@ struct ReaderWindowControllerTests {
         fixture.controller.start()
         #expect(fixture.controller.state.displayID == Self.external.id)
 
-        fixture.environment.displays = [Self.primary]
-        NotificationCenter.default.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        fixture.panel.displays = [Self.primary]
+        fixture.panel.onEvent?(.displaysChanged)
         #expect(fixture.controller.state.displayID == Self.primary.id)
         #expect(Self.primary.visibleFrame.contains(fixture.panel.frame))
 
         fixture.controller.stop()
         let stoppedFrame = fixture.panel.frame
-        fixture.environment.displays = [Self.external]
-        fixture.environment.primaryID = Self.external.id
-        NotificationCenter.default.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        fixture.panel.displays = [Self.external]
+        fixture.panel.primaryDisplayID = Self.external.id
+        fixture.panel.onEvent?(.displaysChanged)
         #expect(fixture.panel.frame == stoppedFrame)
         #expect(fixture.controller.visibility == .hidden)
         #expect(!fixture.panel.isVisible)
@@ -164,10 +163,7 @@ struct ReaderWindowControllerTests {
         fixture.controller.start()
         fixture.controller.detach()
         let latest = CGRect(x: 360, y: 300, width: 700, height: 400)
-        fixture.panel.setFrame(latest, display: false)
-        if fixture.controller.state.detachedFrame != latest {
-            fixture.controller.windowDidMove(Notification(name: NSWindow.didMoveNotification, object: fixture.panel))
-        }
+        fixture.panel.move(to: latest)
         #expect(fixture.controller.state.detachedFrame == latest)
         #expect(try fixture.preferences.load().detachedFrame != latest)
 
@@ -191,10 +187,7 @@ struct ReaderWindowControllerTests {
         fixture.controller.start()
         fixture.controller.detach()
         let latest = CGRect(x: 390, y: 310, width: 680, height: 380)
-        fixture.panel.setFrame(latest, display: false)
-        if fixture.controller.state.detachedFrame != latest {
-            fixture.controller.windowDidMove(Notification(name: NSWindow.didMoveNotification, object: fixture.panel))
-        }
+        fixture.panel.move(to: latest)
         #expect(fixture.controller.state.detachedFrame == latest)
         #expect(try fixture.preferences.load().detachedFrame != latest)
 
@@ -228,7 +221,7 @@ struct ReaderWindowControllerTests {
         #expect(fixture.panel.frame == collapsedFrame)
         #expect(fixture.panel.frame.height == ReaderWindowLayoutConstants.collapsedHeight)
         #expect(!fixture.panel.isMovable)
-        #expect(!fixture.panel.styleMask.contains(.resizable))
+        #expect(!fixture.panel.isResizable)
         #expect(fixture.controller.visibility == .visible)
         #expect(try fixture.preferences.load() == saved)
     }
@@ -241,8 +234,8 @@ struct ReaderWindowControllerTests {
         fixture.controller.toggleLock()
         let expandedSize = fixture.controller.state.expandedSize
 
-        fixture.environment.primaryID = Self.external.id
-        NotificationCenter.default.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        fixture.panel.primaryDisplayID = Self.external.id
+        fixture.panel.onEvent?(.displaysChanged)
         #expect(fixture.panel.frame.midX == Self.external.frame.midX)
         #expect(fixture.panel.frame.maxY == Self.external.visibleFrame.maxY)
         #expect(fixture.panel.frame.height == ReaderWindowLayoutConstants.collapsedHeight)
@@ -250,8 +243,8 @@ struct ReaderWindowControllerTests {
         #expect(fixture.controller.state.isCollapsed)
         #expect(fixture.controller.state.isLocked)
 
-        fixture.environment.primaryID = Self.primary.id
-        NotificationCenter.default.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        fixture.panel.primaryDisplayID = Self.primary.id
+        fixture.panel.onEvent?(.displaysChanged)
         #expect(fixture.panel.frame.midX == Self.primary.frame.midX)
         #expect(fixture.panel.frame.maxY == Self.primary.frame.maxY)
         #expect(fixture.panel.frame.height == ReaderWindowLayoutConstants.collapsedHeight + Self.primary.safeAreaTop)
@@ -262,13 +255,141 @@ struct ReaderWindowControllerTests {
         #expect(fixture.controller.state.expandedSize == expandedSize)
     }
 
-    private final class DisplayEnvironment {
-        var displays: [DisplayGeometry]
-        var primaryID: UInt32
+    @Test func repeatedStartStopAndRestartKeepOneDisplaySubscription() throws {
+        let fixture = try Fixture()
+        defer { fixture.close() }
+        fixture.controller.start()
+        fixture.controller.start()
+        #expect(fixture.panel.observationStarts == 1)
 
-        init(displays: [DisplayGeometry], primaryID: UInt32) {
+        fixture.controller.stop()
+        fixture.controller.stop()
+        #expect(fixture.panel.observationStops == 1)
+
+        fixture.controller.start()
+        #expect(fixture.panel.observationStarts == 2)
+        #expect(fixture.controller.visibility == .visible)
+        fixture.panel.move(to: CGRect(x: 400, y: 300, width: 640, height: 320))
+        // Anchored movement notifications must never replace detached preferences.
+        #expect(fixture.controller.state.detachedFrame == nil)
+    }
+
+    @Test func focusShowsHiddenReaderAndRequestsControlFocusEachTime() throws {
+        let fixture = try Fixture()
+        defer { fixture.close() }
+        fixture.controller.start()
+        fixture.controller.toggleExpansion()
+        fixture.controller.toggleLock()
+        let state = fixture.controller.state
+        fixture.controller.hide()
+
+        fixture.controller.focus()
+        #expect(fixture.panel.isVisible)
+        #expect(fixture.controller.visibility == .visible)
+        #expect(fixture.controller.keyboardFocusRequest == 1)
+        fixture.controller.focus()
+        #expect(fixture.panel.focusRequests == 2)
+        #expect(fixture.controller.keyboardFocusRequest == 2)
+        #expect(fixture.controller.state == state)
+    }
+
+    @Test func resizeEventCommitsActualFrameAndDisplayBeforeCollapse() throws {
+        let fixture = try Fixture(displays: [Self.primary, Self.external])
+        defer { fixture.close() }
+        fixture.controller.start()
+        fixture.controller.detach()
+        let resized = CGRect(x: 2200, y: 300, width: 720, height: 400)
+
+        fixture.panel.resize(to: resized, displayID: Self.external.id)
+        #expect(fixture.controller.state.detachedFrame == resized)
+        #expect(fixture.controller.state.expandedSize == resized.size)
+        #expect(fixture.controller.state.displayID == Self.external.id)
+        #expect(try fixture.preferences.load() == fixture.controller.state)
+
+        fixture.controller.toggleExpansion()
+        #expect(fixture.panel.frame.maxY == resized.maxY)
+        fixture.controller.toggleExpansion()
+        #expect(fixture.panel.frame == resized)
+    }
+
+    @Test func closeRequestFlushesPendingMovementAndLateEventsAfterStopAreIgnored() throws {
+        let fixture = try Fixture()
+        defer { fixture.close() }
+        fixture.controller.start()
+        fixture.controller.detach()
+        let moved = CGRect(x: 400, y: 300, width: 700, height: 400)
+        fixture.panel.move(to: moved)
+        fixture.panel.onEvent?(.closeRequested)
+        #expect(!fixture.panel.isVisible)
+        #expect(fixture.controller.visibility == .hidden)
+        #expect(try fixture.preferences.load().detachedFrame == moved)
+
+        fixture.controller.stop()
+        let stoppedState = fixture.controller.state
+        fixture.panel.move(to: moved.offsetBy(dx: 20, dy: 20))
+        fixture.panel.resize(to: CGRect(x: 200, y: 200, width: 800, height: 500))
+        #expect(fixture.controller.state == stoppedState)
+        #expect(try fixture.preferences.load() == stoppedState)
+    }
+
+    @Test func eventSubscriptionDoesNotRetainCoordinator() {
+        let panel = FakePanel(displays: [Self.primary], primaryDisplayID: Self.primary.id)
+        weak var releasedController: ReaderWindowController?
+        do {
+            let controller = ReaderWindowController(preferences: ReaderWindowStateStore(defaults: nil), panel: panel)
+            releasedController = controller
+            controller.start()
+            controller.stop()
+        }
+        #expect(releasedController == nil)
+        panel.onEvent?(.displaysChanged)
+    }
+
+    private final class FakePanel: ReaderPanelControlling {
+        var displays: [DisplayGeometry]
+        var primaryDisplayID: UInt32
+        var onEvent: (@MainActor (ReaderPanelEvent) -> Void)?
+        private(set) var frame: CGRect = .zero
+        private(set) var displayID: UInt32?
+        private(set) var layout: ReaderPanelLayout?
+        private(set) var isVisible = false
+        private(set) var observationStarts = 0
+        private(set) var observationStops = 0
+        private(set) var focusRequests = 0
+
+        var isMovable: Bool { layout?.isMovable == true }
+        var isResizable: Bool { layout?.isResizable == true }
+
+        init(displays: [DisplayGeometry], primaryDisplayID: UInt32) {
             self.displays = displays
-            self.primaryID = primaryID
+            self.primaryDisplayID = primaryDisplayID
+        }
+
+        func startObservingDisplays() { observationStarts += 1 }
+        func stopObservingDisplays() { observationStops += 1 }
+        func show() { isVisible = true }
+        func hide() { isVisible = false }
+
+        func focus() {
+            focusRequests += 1
+            show()
+        }
+
+        func apply(_ layout: ReaderPanelLayout) {
+            self.layout = layout
+            frame = layout.frame
+        }
+
+        func move(to frame: CGRect, displayID: UInt32? = nil) {
+            self.frame = frame
+            self.displayID = displayID
+            onEvent?(.moved(frame: frame, displayID: displayID))
+        }
+
+        func resize(to frame: CGRect, displayID: UInt32? = nil) {
+            self.frame = frame
+            self.displayID = displayID
+            onEvent?(.resized(frame: frame, displayID: displayID))
         }
     }
 
@@ -276,8 +397,7 @@ struct ReaderWindowControllerTests {
         let suiteName: String
         let defaults: UserDefaults
         let preferences: ReaderWindowStateStore
-        let panel: ReaderPanel
-        let environment: DisplayEnvironment
+        let panel: FakePanel
         let controller: ReaderWindowController
 
         init(savedState: ReaderWindowState? = nil,
@@ -290,20 +410,13 @@ struct ReaderWindowControllerTests {
             if corruptPreferences {
                 defaults.set(Data("invalid placement".utf8), forKey: "reader.windowPlacement.v1")
             }
-            panel = ReaderPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel],
-                                backing: .buffered, defer: true)
-            environment = DisplayEnvironment(displays: displays, primaryID: ReaderWindowControllerTests.primary.id)
-            let environment = environment
-            controller = ReaderWindowController(preferences: preferences, panel: panel,
-                                                displayProvider: { environment.displays },
-                                                primaryDisplayID: { environment.primaryID })
+            panel = FakePanel(displays: displays, primaryDisplayID: ReaderWindowControllerTests.primary.id)
+            controller = ReaderWindowController(preferences: preferences, panel: panel)
         }
 
         func close() {
             controller.stop()
-            panel.orderOut(nil)
-            panel.delegate = nil
-            panel.close()
+            panel.hide()
             defaults.removePersistentDomain(forName: suiteName)
         }
     }

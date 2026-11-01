@@ -10,10 +10,14 @@ import SwiftUI
 
 final class PromptlyAppDelegate: NSObject, NSApplicationDelegate {
     let reader: ReaderWindowController
+    private let readerPanel: ReaderPanelController
 
     override init() {
         let isUITest = ProcessInfo.processInfo.arguments.contains("--promptly-ui-testing")
-        reader = ReaderWindowController(preferences: ReaderWindowStateStore(defaults: isUITest ? nil : .standard))
+        let panel = ReaderPanelController()
+        readerPanel = panel
+        reader = ReaderWindowController(preferences: ReaderWindowStateStore(defaults: isUITest ? nil : .standard),
+                                        panel: panel)
         super.init()
     }
 
@@ -21,7 +25,7 @@ final class PromptlyAppDelegate: NSObject, NSApplicationDelegate {
         // Hosted unit tests must not restore or write the user's window preferences.
         let isUITest = ProcessInfo.processInfo.arguments.contains("--promptly-ui-testing")
         guard isUITest || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
-        reader.setContent(ReaderHostingView(rootView: ReaderView(controller: reader)))
+        readerPanel.setContent(ReaderHostingView(rootView: ReaderView(controller: reader)))
         reader.start()
     }
 

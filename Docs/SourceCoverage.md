@@ -4,7 +4,10 @@ Measured on 2026-10-26 for the milestone 1 implementation before the app-entry
 move and Quit-menu ownership cleanup. Source links follow the current layout;
 the counts below remain the historical measurement, including the former
 placement of Quit in `ReaderMenu` and the combined reader layout implementation
-before its constants were separated.
+before its constants were separated. The later `ReaderPanelController` extraction
+also changes the source and test boundaries; these percentages do not measure the
+current split. See the [window validation record](WindowBehaviorValidation.md) for
+its verification.
 
 App source executable-line coverage increased from **95.73%
 (672/702)** to **96.58%
