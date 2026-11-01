@@ -169,7 +169,10 @@ and manual editing/playback remain useful offline when the model is unavailable.
   capture controls, and reliable manual playback fallback.
 - **Local MCP interface:** Separate script-scoped read, edit, and playback
   permissions, revocation, and revision-safe edits. Explain that external agents
-  may process retrieved text remotely despite the local transport.
+  may process retrieved text remotely despite the local transport. The
+  [Swift SDK evaluation](Docs/MCPSwiftSDKEvaluation.md) identifies a preferred
+  candidate with protocol compatibility and integration validation still open;
+  no dependency or MCP implementation is present.
 - **TipKit:** Contextual onboarding once the core interactions have settled.
 
 ## Throughout

@@ -122,7 +122,7 @@ save/send, section anchoring, local privacy and data-preservation behavior.
 - **Display placement:** The main display means the primary display configured in macOS, not whichever display contains the key window. Restore detached placement against actual visible screen bounds, including display disconnection; a bounding rectangle around multiple screens may contain gaps.
 - **Playback timing:** Derive motion from elapsed time, give manual scrolling precedence, and stop playback updates when idle or the reader closes. Keep logical reading anchors independent of pixel offsets.
 - **Model availability:** Check on-device model availability before offering AI section suggestions. macOS manages Apple Intelligence model downloads. An unavailable model may also indicate that Apple Intelligence is disabled or unsupported; show guidance appropriate to the reported state.
-- **MCP transport:** Prefer a stdio MCP helper that communicates with Promptly through XPC or a Unix domain socket, without a network-facing API. The detailed interface will be specified later.
+- **MCP transport:** Prefer a stdio MCP helper that communicates with Promptly through XPC or a Unix domain socket, without a network-facing API. The [Swift SDK evaluation](Docs/MCPSwiftSDKEvaluation.md) records a conditional SDK recommendation and protocol, bounded-work, and sandbox validation gates. The detailed interface will be specified later.
 - **Agent privacy boundary:** Local transport does not guarantee that an external agent processes retrieved scripts locally. Make that distinction clear when granting script-reading access.
 
 ## References

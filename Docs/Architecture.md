@@ -344,8 +344,9 @@ adapter. Native file pickers, window delegates, editor undo and NSScrollView
 integration are UI. Foundation Models sessions, SwiftData and file transactions
 are non-UI. Feature specificity alone is not the deciding factor.
 
-Future MCP implementation requires protocol, sandbox and lifecycle validation.
-No service may add analytics, accounts, cloud sync or remote inference.
+Future MCP implementation must satisfy the [SDK evaluation](MCPSwiftSDKEvaluation.md).
+Its candidate recommendation does not add a dependency, helper target or
+capability. No service may add analytics, accounts, cloud sync or remote inference.
 Core editing/playback remain useful offline without model or speech assets.
 
 </details>
