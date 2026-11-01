@@ -112,6 +112,22 @@ display, cross-app focus, VoiceOver, full-screen or capture compatibility, and
 there is no passing sanitizer claim for this refactor. The earlier evidence and
 open release gates remain separate.
 
+Source-layout migration on 2026-11-01 moved 12 app files and five unit/AppKit test
+files into the feature, domain and preference folders recorded in the
+[architecture map](Architecture.md). All 24 Swift files and both tracked Xcode
+project files retained their original bytes; preference keys, payloads,
+concurrency settings and runtime behavior are unchanged.
+
+Validation used the Promptly scheme, Debug configuration and My Mac (arm64),
+Swift 6.4.2, macOS SDK 27.2 and host macOS 27.2. Xcode
+`BuildProject(buildForTesting: true)` built the app and both test targets.
+`GetTestList` discovered all 45 tests at their current paths, and `RunSomeTests`
+passed all 40 unit/AppKit tests and all five reader UI journeys, with no failures,
+skips or unrun tests. File-integrity, local documentation-link and whitespace
+checks also passed. Release, sanitizers and coverage were not repeated for this
+file relocation. The physical-display, minimum-OS, cross-app focus, VoiceOver,
+full-screen and capture checks remain separate release gates.
+
 Drag verification on 2026-10-26 reproduced a dead area in the header: only the
 small title text originally accepted dragging. The regression failed before the
 fix. The drag target now covers the title and empty leading header area at full

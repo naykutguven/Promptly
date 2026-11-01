@@ -31,30 +31,30 @@ no percentage. These measurements do not establish minimum macOS 26.0 support.
 | App source file | Before | After | Covered/executable after |
 | --- | ---: | ---: | ---: |
 | [PromptlyAppDelegate.swift](../Promptly/App/PromptlyAppDelegate.swift) | 66.67% | 80.95% | 17/21 |
-| [ReaderWindowGeometry.swift](../Promptly/Services/Windowing/ReaderWindowGeometry.swift), [ReaderWindowLayoutConstants.swift](../Promptly/Services/Windowing/ReaderWindowLayoutConstants.swift) | 99.04% | 100.00% | 104/104 |
-| [ReaderWindowState.swift](../Promptly/Domain/ReaderWindowState.swift) | 100.00% | 100.00% | 6/6 |
+| [ReaderWindowGeometry.swift](../Promptly/Features/Reader/Windowing/ReaderWindowGeometry.swift), [ReaderWindowLayoutConstants.swift](../Promptly/Features/Reader/Windowing/ReaderWindowLayoutConstants.swift) | 99.04% | 100.00% | 104/104 |
+| [ReaderWindowState.swift](../Promptly/Domain/Windowing/ReaderWindowState.swift) | 100.00% | 100.00% | 6/6 |
 | [NSScreen+Extensions.swift](../Promptly/Extensions/NSScreen+Extensions.swift) | 93.33% | 93.33% | 14/15 |
 | [ReaderDragHandle.swift](../Promptly/Features/Reader/ReaderDragHandle.swift) | 100.00% | 100.00% | 25/25 |
 | [ReaderMenu.swift](../Promptly/Features/Reader/ReaderMenu.swift) | 78.12% | 81.25% | 26/32 |
 | [ReaderView.swift](../Promptly/Features/Reader/ReaderView.swift) | 100.00% | 100.00% | 227/227 |
 | [PromptlyApp.swift](../Promptly/App/PromptlyApp.swift) | 100.00% | 100.00% | 8/8 |
-| [ReaderHostingView.swift](../Promptly/Services/Windowing/ReaderHostingView.swift) | 0.00% | 0.00% | 0/2 |
-| [ReaderPanel.swift](../Promptly/Services/Windowing/ReaderPanel.swift) | 100.00% | 100.00% | 10/10 |
-| [ReaderWindowController.swift](../Promptly/Services/Windowing/ReaderWindowController.swift) | 95.26% | 95.26% | 221/232 |
-| [ReaderWindowStateStore.swift](../Promptly/Services/Windowing/ReaderWindowStateStore.swift) | 95.00% | 100.00% | 20/20 |
+| [ReaderHostingView.swift](../Promptly/Features/Reader/Windowing/ReaderHostingView.swift) | 0.00% | 0.00% | 0/2 |
+| [ReaderPanel.swift](../Promptly/Features/Reader/Windowing/ReaderPanel.swift) | 100.00% | 100.00% | 10/10 |
+| [ReaderWindowController.swift](../Promptly/Features/Reader/Windowing/ReaderWindowController.swift) | 95.26% | 95.26% | 221/232 |
+| [ReaderWindowStateStore.swift](../Promptly/Services/Preferences/ReaderWindowStateStore.swift) | 95.00% | 100.00% | 20/20 |
 | **Promptly.app total** | **95.73%** | **96.58%** | **678/702** |
 
 ## Tests added
 
-- [ReaderWindowStateStoreTests](../PromptlyTests/Services/Windowing/ReaderWindowStateStoreTests.swift):
+- [ReaderWindowStateStoreTests](../PromptlyTests/Services/Preferences/ReaderWindowStateStoreTests.swift):
   a failed encode reports the typed failure and preserves the last good bytes and
   reopened placement.
-- [ReaderWindowControllerTests](../PromptlyTests/Services/Windowing/ReaderWindowControllerTests.swift):
+- [ReaderWindowControllerTests](../PromptlyTests/Features/Reader/Windowing/ReaderWindowControllerTests.swift):
   four tests cover immediate hide/stop flushing the newest moved/resized frame
   before debounce can finish, hide/show preserving detached/collapsed/locked
   state, and an anchored collapsed/locked reader following primary-display
   changes between notch and no-notch snapshots.
-- [ReaderWindowGeometryTests](../PromptlyTests/Services/Windowing/ReaderWindowGeometryTests.swift):
+- [ReaderWindowGeometryTests](../PromptlyTests/Features/Reader/Windowing/ReaderWindowGeometryTests.swift):
   invalid full-screen or visible-screen rectangles are excluded from restoration;
   a valid actual display is used even when the saved and primary IDs are invalid,
   and no placement is returned if no usable display remains.

@@ -25,7 +25,6 @@ implemented features or permission to build adjacent work.
 | Marker | Meaning |
 | --- | --- |
 | ✅ | Exists at the stated current path in the working tree |
-| 🔀 | Existing implementation has an intended move; the migration table gives its current path |
 | 🗓️ | Planned destination, created only with the corresponding roadmap work |
 | ⚠️ | Destination is conditional on a product, compatibility, privacy or feasibility decision |
 
@@ -68,10 +67,10 @@ Never pass live SwiftData models or contexts across actors.
 
 ## Current source snapshot
 
-This is the working tree, including the reader-controller extraction. It still
-implements only window behavior with synthetic text and UserDefaults placement.
+This is the working tree after the reader-controller extraction and ownership
+folder migration. It still implements only window behavior with synthetic text
+and UserDefaults placement.
 Library, script storage, handoff, appearance settings and scrolling are planned.
-The paths below have **not** moved as part of this documentation refinement.
 
 ```text
 Promptly/
@@ -81,33 +80,35 @@ Promptly/
 ├── Features/Reader/
 │   ├── ReaderView.swift                      ✅
 │   ├── ReaderMenu.swift                      ✅
-│   └── ReaderDragHandle.swift                ✅
-├── Domain/
-│   ├── DisplayGeometry.swift                 🔀
-│   └── ReaderWindowState.swift               🔀
-├── Services/Windowing/
-│   ├── ReaderHostingView.swift               🔀
-│   ├── ReaderPanel.swift                     🔀
-│   ├── ReaderPanelControlling.swift          🔀
-│   ├── ReaderPanelController.swift           🔀
-│   ├── ReaderPanelEvent.swift                🔀
-│   ├── ReaderPanelLayout.swift               🔀
-│   ├── ReaderWindowController.swift          🔀
-│   ├── ReaderWindowGeometry.swift            🔀
-│   ├── ReaderWindowLayoutConstants.swift     🔀
-│   └── ReaderWindowStateStore.swift          🔀
+│   ├── ReaderDragHandle.swift                ✅
+│   └── Windowing/
+│       ├── ReaderHostingView.swift           ✅
+│       ├── ReaderPanel.swift                 ✅
+│       ├── ReaderPanelControlling.swift      ✅
+│       ├── ReaderPanelController.swift       ✅
+│       ├── ReaderPanelEvent.swift            ✅
+│       ├── ReaderPanelLayout.swift           ✅
+│       ├── ReaderWindowController.swift      ✅
+│       ├── ReaderWindowGeometry.swift        ✅
+│       └── ReaderWindowLayoutConstants.swift ✅
+├── Domain/Windowing/
+│   ├── DisplayGeometry.swift                 ✅
+│   └── ReaderWindowState.swift               ✅
+├── Services/Preferences/
+│   └── ReaderWindowStateStore.swift          ✅
 ├── Extensions/
 │   └── NSScreen+Extensions.swift             ✅
 └── Assets.xcassets/                          ✅
 
 PromptlyTests/
-├── Domain/
-│   └── ReaderWindowStateTests.swift          🔀
-└── Services/Windowing/
-    ├── ReaderPanelControllerTests.swift      🔀
-    ├── ReaderWindowControllerTests.swift     🔀
-    ├── ReaderWindowGeometryTests.swift       🔀
-    └── ReaderWindowStateStoreTests.swift     🔀
+├── Features/Reader/Windowing/
+│   ├── ReaderPanelControllerTests.swift      ✅
+│   ├── ReaderWindowControllerTests.swift     ✅
+│   └── ReaderWindowGeometryTests.swift       ✅
+├── Domain/Windowing/
+│   └── ReaderWindowStateTests.swift          ✅
+└── Services/Preferences/
+    └── ReaderWindowStateStoreTests.swift     ✅
 
 PromptlyUITests/
 └── ReaderWindowUITests.swift                 ✅
@@ -116,8 +117,8 @@ PromptlyUITests/
 `PromptlyAppDelegate` currently creates one `ReaderPanelController` and injects
 it into the observable `ReaderWindowController`, then attaches the hosted
 `ReaderView`. `ReaderView` and `ReaderMenu` share that controller. The split
-between presentation policy and native panel mechanics remains useful; the
-`Services/Windowing` location is the part this plan corrects.
+between presentation policy and native panel mechanics remains useful; both
+owners now live in `Features/Reader/Windowing`.
 
 The window controller owns placement/collapse/lock state, preference recovery,
 focus requests and debounced saves. The panel controller owns native effects and
@@ -175,8 +176,8 @@ Promptly/
 
 ## Destination layout
 
-Paths in each table are relative to its named folder. 🔀 identifies code that
-exists elsewhere; it does not claim that the destination path already exists.
+Paths in each table are relative to its named folder. ✅ identifies existing
+code at that path; planned destinations are created with their roadmap work.
 
 <details open>
 <summary><strong><code>App/</code></strong> — composition and coordination</summary>
@@ -235,15 +236,15 @@ wrappers for every view.
 | ✅ | `ReaderView.swift` | Reader shell and control presentation. Evolves to render the sent snapshot through the viewport. |
 | ✅ | `ReaderMenu.swift` | Reader commands and preference warnings. Later playback commands use the same shared session as the panel controls. |
 | ✅ | `ReaderDragHandle.swift` | Reader-local AppKit drag bridge; stays feature-owned. |
-| 🔀 | `Windowing/ReaderWindowController.swift` | Observable placement, visibility, collapse/lock policy, preference restore/recovery, focus requests and save debounce. Never becomes the script or playback owner. |
-| 🔀 | `Windowing/ReaderPanelController.swift` | Panel configuration, display observation, native focus and NSWindowDelegate. Owns programmatic-geometry feedback suppression. |
-| 🔀 | `Windowing/ReaderPanel.swift` | Native nonactivating panel and explicit keyboard-focus/Escape hooks. |
-| 🔀 | `Windowing/ReaderHostingView.swift` | Native hosting and first-mouse/key policy for Reader content. |
-| 🔀 | `Windowing/ReaderPanelControlling.swift` | Feature-local substitution boundary between window policy and native effects. |
-| 🔀 | `Windowing/ReaderPanelEvent.swift` | Native frame/display/close events delivered to the feature owner. |
-| 🔀 | `Windowing/ReaderPanelLayout.swift` | Frame and interaction constraints consumed by the native adapter. |
-| 🔀 | `Windowing/ReaderWindowGeometry.swift` | Pure Reader UI placement calculations; being pure does not make feature layout a shared domain policy or service. |
-| 🔀 | `Windowing/ReaderWindowLayoutConstants.swift` | Reader window/control sizing shared by its view and geometry. Feature-specific, not a design-system token set. |
+| ✅ | `Windowing/ReaderWindowController.swift` | Observable placement, visibility, collapse/lock policy, preference restore/recovery, focus requests and save debounce. Never becomes the script or playback owner. |
+| ✅ | `Windowing/ReaderPanelController.swift` | Panel configuration, display observation, native focus and NSWindowDelegate. Owns programmatic-geometry feedback suppression. |
+| ✅ | `Windowing/ReaderPanel.swift` | Native nonactivating panel and explicit keyboard-focus/Escape hooks. |
+| ✅ | `Windowing/ReaderHostingView.swift` | Native hosting and first-mouse/key policy for Reader content. |
+| ✅ | `Windowing/ReaderPanelControlling.swift` | Feature-local substitution boundary between window policy and native effects. |
+| ✅ | `Windowing/ReaderPanelEvent.swift` | Native frame/display/close events delivered to the feature owner. |
+| ✅ | `Windowing/ReaderPanelLayout.swift` | Frame and interaction constraints consumed by the native adapter. |
+| ✅ | `Windowing/ReaderWindowGeometry.swift` | Pure Reader UI placement calculations; being pure does not make feature layout a shared domain policy or service. |
+| ✅ | `Windowing/ReaderWindowLayoutConstants.swift` | Reader window/control sizing shared by its view and geometry. Feature-specific, not a design-system token set. |
 | 🗓️ | `Viewport/ReaderViewport.swift` | Reading text surface, guide/highlight, clicked-paragraph navigation and accessibility presentation. |
 | 🗓️ | `Viewport/ReaderScrollController.swift` | Native text layout, scrolling, display-driven updates and mapping between logical anchors and pixel offsets. Feeds reading-position changes to the shared session. |
 | 🗓️ | `Playback/ReaderPlaybackControls.swift` | Play/pause/restart/rewind/section controls, pace presets and slider, and count-in presentation. |
@@ -285,8 +286,8 @@ view state and native geometry policies stay with their feature even when pure.
 
 | Status | Path | Responsibility |
 | --- | --- | --- |
-| 🔀 | `Windowing/DisplayGeometry.swift` | Immutable display snapshot used by placement calculations and native adapters. |
-| 🔀 | `Windowing/ReaderWindowState.swift` | Shared Codable placement value used by Reader UI and preference storage, preserving its payload compatibility. Keeping it here prevents Services depending on Features. |
+| ✅ | `Windowing/DisplayGeometry.swift` | Immutable display snapshot used by placement calculations and native adapters. |
+| ✅ | `Windowing/ReaderWindowState.swift` | Shared Codable placement value used by Reader UI and preference storage, preserving its payload compatibility. Keeping it here prevents Services depending on Features. |
 | 🗓️ | `Scripts/ScriptID.swift` | Stable opaque script identity, independent of SwiftData identity and private text. |
 | 🗓️ | `Scripts/ScriptRevision.swift` | Exact revision tokens for saves, handoff, generated work and agent edits; define content/metadata revision treatment before storage implementation. |
 | 🗓️ | `Scripts/ScriptSnapshot.swift` | Immutable saved or proposed script values, including sections, passed across ownership boundaries. |
@@ -318,7 +319,7 @@ construct windows, reach into an editor, navigate, or choose feature presentatio
 
 | Status | Path | Responsibility |
 | --- | --- | --- |
-| 🔀 | `Preferences/ReaderWindowStateStore.swift` | Existing UserDefaults codec/storage for placement, preserving `reader.windowPlacement.v1`, payload compatibility and typed failures. ReaderWindowController owns restore/reset policy and save debounce. |
+| ✅ | `Preferences/ReaderWindowStateStore.swift` | Existing UserDefaults codec/storage for placement, preserving `reader.windowPlacement.v1`, payload compatibility and typed failures. ReaderWindowController owns restore/reset policy and save debounce. |
 | 🗓️ | `Preferences/ReaderAppearanceStore.swift` | Typed local appearance preferences used by feature controls and Reader. `@AppStorage` may bind preferences, never script storage. |
 | 🗓️ | `Preferences/PlaybackPreferencesStore.swift` | Persisted pace/count-in/assumed speaking-rate preferences as defined in their milestones; not the live playback state. |
 | 🗓️ | `Persistence/ModelContainerFactory.swift` | Recoverable container creation with CloudKit explicitly disabled, including tests/previews. Never resets a failed store. |
@@ -492,14 +493,13 @@ Native focus, physical displays, capture apps, minimum macOS 26.0 and accessibil
 need their recorded real-Mac evidence. A path change or passing unit suite cannot
 establish those checks. Keep the existing validation history when tests move.
 
-## Migration from the current layout
+## Completed layout migration
 
-These are intended relocations, not completed work. Preserve the existing
-controller/panel split, runtime behavior, concurrency settings and preference
-payloads. The source move can be a focused implementation change before Library
-work; it need not wait for playback or add a new module.
+The source and test relocation below was completed on 2026-11-01. File contents,
+the controller/panel split, runtime behavior, concurrency settings and preference
+payloads are unchanged. Previous paths remain here as a migration record.
 
-| Current path | Intended destination |
+| Previous path | Current destination |
 | --- | --- |
 | `Promptly/Services/Windowing/ReaderWindowController.swift` | `Promptly/Features/Reader/Windowing/ReaderWindowController.swift` |
 | `Promptly/Services/Windowing/ReaderPanelController.swift` | `Promptly/Features/Reader/Windowing/ReaderPanelController.swift` |
@@ -512,11 +512,12 @@ work; it need not wait for playback or add a new module.
 | `PromptlyTests/Services/Windowing/ReaderWindowStateStoreTests.swift` | `PromptlyTests/Services/Preferences/ReaderWindowStateStoreTests.swift` |
 | `PromptlyTests/Domain/ReaderWindowStateTests.swift` | `PromptlyTests/Domain/Windowing/ReaderWindowStateTests.swift` |
 
-Update source links and this snapshot with the move, remove empty old directories,
-and validate affected app/test targets plus window journeys. Do not change
-UserDefaults keys, reset preferences or claim fresh compatibility evidence from
-file relocation. Leave Services independent of Features: moving the Codable
-placement contract into Reader UI would break that direction.
+The source links and snapshot follow the new locations, and empty old Windowing
+directories were removed. No project membership edits, UserDefaults key changes
+or preference resets were needed. See the [window validation record](WindowBehaviorValidation.md)
+for validation; file relocation alone supplies no fresh compatibility evidence.
+Services remain independent of Features: moving the Codable placement contract
+into Reader UI would break that direction.
 
 ## Decisions to settle with implementation
 

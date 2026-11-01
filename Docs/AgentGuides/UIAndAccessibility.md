@@ -16,8 +16,8 @@ and validation remain pending.
   adapters and layout policy in `Features/<Feature>/`. These are UI even when
   implemented in AppKit. App-wide scenes/coordination belong in `App/`; non-UI
   preference codecs, storage and processing belong in `Services/`. Follow the
-  [architecture map](../Architecture.md) and its current-to-intended migration
-  table; planned moves are not evidence that source files have already moved.
+  [architecture map](../Architecture.md), its current source snapshot and completed
+  migration record; planned destinations are created with their roadmap work.
 - Use native controls, menus, toolbars, text editing, search, and settings before
   custom replicas. Views render state and send intents to injected capabilities.
 - Keep presentation state on `MainActor`. Use enums for mutually exclusive
