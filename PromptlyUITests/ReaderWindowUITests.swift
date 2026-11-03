@@ -133,7 +133,8 @@ nonisolated final class ReaderWindowUITests: XCTestCase {
     }
 
     @MainActor
-    func testMenuRecoveryAndKeyboardControls() {
+    func testMenuRecoveryKeepsPointerControlsAvailable() {
+        continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = ["--promptly-ui-testing"]
         app.launch()
@@ -145,16 +146,15 @@ nonisolated final class ReaderWindowUITests: XCTestCase {
         let statusItem = app.statusItems.firstMatch
         XCTAssertTrue(statusItem.waitForExistence(timeout: 2))
         statusItem.click()
-        app.menuItems["Focus Prompter"].click()
+        let show = statusItem.menuItems["Show Prompter"]
+        XCTAssertTrue(show.waitForExistence(timeout: 2))
+        XCTAssertFalse(statusItem.menuItems["Focus Prompter"].exists)
+        show.click()
         XCTAssertTrue(collapse.waitForExistence(timeout: 2))
-        collapse.typeKey(XCUIKeyboardKey.space, modifierFlags: [])
+        collapse.click()
         XCTAssertEqual(collapse.label, "Expand Prompter")
-        collapse.typeKey(XCUIKeyboardKey.tab, modifierFlags: [])
         let lock = app.buttons["reader.lock"]
-        lock.typeKey(XCUIKeyboardKey.space, modifierFlags: [])
-        XCTAssertEqual(lock.label, "Unlock Position")
-        lock.typeKey(XCUIKeyboardKey.escape, modifierFlags: [])
-        lock.typeKey(XCUIKeyboardKey.space, modifierFlags: [])
+        lock.click()
         XCTAssertEqual(lock.label, "Unlock Position")
         XCTAssertTrue(collapse.exists)
     }

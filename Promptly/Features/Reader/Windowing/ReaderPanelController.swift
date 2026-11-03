@@ -17,7 +17,6 @@ final class ReaderPanelController: NSObject, ReaderPanelControlling, NSWindowDel
     private let notificationCenter: NotificationCenter
     private var applyingGeometry = false
     private var observingDisplays = false
-    private var previouslyFocusedApplication: NSRunningApplication?
 
     init(
         panel: ReaderPanel = ReaderPanel(
@@ -48,7 +47,6 @@ final class ReaderPanelController: NSObject, ReaderPanelControlling, NSWindowDel
         panel.collectionBehavior = [.canJoinAllSpaces, .canJoinAllApplications, .fullScreenAuxiliary, .ignoresCycle]
         panel.isRestorable = false
         panel.animationBehavior = .none
-        panel.onRelinquishFocus = { [weak self] in self?.releaseKeyboardFocus() }
     }
 
     func setContent(_ view: NSView) {
@@ -88,17 +86,6 @@ final class ReaderPanelController: NSObject, ReaderPanelControlling, NSWindowDel
         panel.orderOut(nil)
     }
 
-    func focus() {
-        let frontmost = NSWorkspace.shared.frontmostApplication
-        if frontmost?.processIdentifier != ProcessInfo.processInfo.processIdentifier {
-            previouslyFocusedApplication = frontmost
-        }
-        show()
-        panel.allowsKeyboardFocus = true
-        NSApplication.shared.activate()
-        panel.makeKeyAndOrderFront(nil)
-    }
-
     func windowDidMove(_ notification: Notification) {
         guard !applyingGeometry else { return }
         onEvent?(.moved(frame: frame, displayID: displayID))
@@ -116,15 +103,5 @@ final class ReaderPanelController: NSObject, ReaderPanelControlling, NSWindowDel
 
     @objc private func displaysChanged() {
         onEvent?(.displaysChanged)
-    }
-
-    private func releaseKeyboardFocus() {
-        panel.allowsKeyboardFocus = false
-        let wasVisible = panel.isVisible
-        // Ordering out releases WindowServer keyboard ownership; resignKey is only a notification hook.
-        panel.orderOut(nil)
-        if wasVisible { panel.orderFrontRegardless() }
-        previouslyFocusedApplication?.activate()
-        previouslyFocusedApplication = nil
     }
 }

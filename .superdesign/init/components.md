@@ -2,7 +2,7 @@
 
 Promptly is a native macOS 26.0+ app built with SwiftUI and AppKit, not a web app. There is no React/Vue frontend, package manifest, CSS, Tailwind, routing library, third-party UI library, or cross-feature shared component system. `DesignSystem/` is planned and absent. SwiftUI supplies Button, Label, Text, Divider, HStack/VStack and semantic typography.
 
-The private `control` helper in `ReaderView.swift` supplies icon-only borderless buttons with 30×30-point hit regions, explicit keyboard focus, Space activation, help, and stable accessibility IDs. Its entire source is included with ReaderView in layouts.md; it is not a shared exported primitive.
+The private `control` helper in `ReaderView.swift` supplies icon-only borderless buttons with 30×30-point hit regions, help, and stable accessibility IDs. Keyboard commands are available through the menu-bar extra. Its entire source is included with ReaderView in layouts.md; it is not a shared exported primitive.
 
 The following actual source files are reader-local native adapters rather than reusable web visual components. They preserve pointer/focus behavior; do not invent browser equivalents as implemented app functionality.
 
@@ -91,19 +91,7 @@ final class ReaderHostingView<Content: View>: NSHostingView<Content> {
 import AppKit
 
 final class ReaderPanel: NSPanel {
-    var allowsKeyboardFocus = false
-    var onRelinquishFocus: (() -> Void)?
-
-    override var canBecomeKey: Bool { allowsKeyboardFocus }
+    override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
-
-    override func resignKey() {
-        super.resignKey()
-        allowsKeyboardFocus = false
-    }
-
-    override func cancelOperation(_ sender: Any?) {
-        onRelinquishFocus?()
-    }
 }
 ```

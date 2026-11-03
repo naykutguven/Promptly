@@ -6,7 +6,7 @@ Pending checks are release gates, not evidence that a configuration works.
 
 ## Accepted behavior
 
-- Promptly is a menu-bar app. Its menu provides a recovery path to show and focus
+- Promptly is a menu-bar app. Its menu provides a recovery path to show
   the reader, expand it, unlock its position, return it to the notch, and quit.
 - The anchored reader visually merges with and wraps around the primary display's
   notch; text and controls stay below the camera housing. Without a notch, it is
@@ -14,7 +14,7 @@ Pending checks are release gates, not evidence that a configuration works.
   configured in macOS, not the display containing the key window.
 - The reader is intended to remain visible across Spaces and over full-screen
   presenting apps. Routine pointer interactions preserve the presenting app's
-  focus; keyboard access uses an explicit focus action.
+  focus; keyboard access uses the menu-bar commands.
 - Detaching enables dragging and resizing. Collapse preserves placement mode and
   expanded size, leaving a compact strip with usable controls. Lock prevents
   movement and resizing while keeping controls available. Return to Notch is an
@@ -55,16 +55,18 @@ with the minimum macOS 26.0 release.
 | Local pointer focus | Partial | TextEdit's empty synthetic document retained its focused text field after a reader control click; does not establish compatibility with presenting apps |
 | Physical notch and no-notch placement | Pending | MacBook Pro and external display |
 | Scaling, arrangement, and disconnection | Pending | Record display configuration before and after |
-| Keyboard and VoiceOver | Partial | UI test covers menu recovery, explicit Focus, Space activation, Tab to Lock, and Escape release. Physical keyboard menu-bar navigation and VoiceOver remain pending |
+| Keyboard and VoiceOver | Partial | The historical direct-focus keyboard journey was removed on 2026-11-03. Physical keyboard menu-bar navigation and VoiceOver remain pending |
 | Minimum macOS 26.0 runtime | Pending | Requires that runtime |
 | Sharing applications | Not tested | Matrix below |
 
 The native journey test uses mouse events to drag the detached header and resize
 the lower edge, then collapses, locks, expands, and returns while locked. It keeps
-an attachment containing only the synthetic anchored reader. The keyboard test
-recovers a hidden reader through the menu-bar item, focuses Collapse, activates it
-with Space, tabs to Lock, and confirms Space no longer changes the control after
-Escape. These do not replace physical accessibility or presenting-app checks.
+an attachment containing only the synthetic anchored reader. The former keyboard
+test recovered a hidden reader through the menu-bar item, focused Collapse,
+activated it with Space, tabbed to Lock, and confirmed Space no longer changed the
+control after Escape. This historical journey predates removal of direct reader
+focus on 2026-11-03. These checks do not replace physical accessibility or
+presenting-app checks.
 
 App/menu ownership cleanup on 2026-10-26 moved `PromptlyApp.swift` into `App/`
 and moved the final divider and Quit command from `ReaderMenu` into the app's
@@ -169,6 +171,36 @@ launching; the Release build passed outside that shell sandbox. Sanitizer passin
 is evidence for these lifecycle tests, not proof of thread safety. Window state
 and native callbacks remain owned by MainActor.
 
+## Focus flow removal — 2026-11-03
+
+Removed Focus Prompter and its ⌥⌘F menu shortcut, programmatic app activation,
+control-focus requests, custom Space handling, and Escape-based focus release.
+Show Prompter still reveals the reader; keyboard commands remain in the native
+menu-bar menu. The existing panel now always rejects key-window status rather
+than switching into an explicit keyboard mode. Apple documents that
+[`canBecomeKey == false`](https://developer.apple.com/documentation/appkit/nswindow/canbecomekey)
+rejects attempts to make a window key; the existing
+[`becomesKeyOnlyIfNeeded`](https://developer.apple.com/documentation/appkit/nspanel/becomeskeyonlyifneeded)
+policy is retained. No replacement window infrastructure was needed.
+
+Validation used the Promptly scheme, Debug configuration and My Mac (arm64),
+Swift 6.4.2, macOS SDK 27.2 and host macOS 27.2. Xcode
+`BuildProject(buildForTesting: true)` compiled the app and both test targets.
+`GetTestList` discovered 44 tests after removing the obsolete focus-request test.
+`RunSomeTests` selected 19 controller/AppKit tests and all five reader UI
+journeys: 23 passed, and the resize test failed because its first automated drag
+reduced the height by 39 points against a strict greater-than-40-point threshold.
+An immediate isolated rerun passed without changes; the cause of the initial
+drag discrepancy remains unresolved. The updated menu-recovery journey passed,
+checking that Focus Prompter is absent and that Show, Collapse and Lock remain
+usable by pointer.
+
+Preference payloads, privacy permissions and concurrency settings are unchanged.
+Release, sanitizers and coverage were not repeated. Physical keyboard menu-bar
+navigation, presenting-app focus, VoiceOver, minimum macOS 26.0, display and
+capture checks remain open; automated clicks do not establish physical-input
+focus behavior.
+
 ## Manual window journey
 
 For each check, record Pass, Fail, or Not tested with a short observation.
@@ -186,9 +218,9 @@ For each check, record Pass, Fail, or Not tested with a short observation.
    use Unlock and Return to Notch from the panel and the menu. Verify the escape
    commands remain usable and return works while locked.
 5. Focus a presenting app and click reader text and controls. Verify routine
-   interactions do not unexpectedly divert keyboard input. Use Focus Prompter
-   and reach every control by keyboard; press Escape and confirm the
-   presenting app is usable again. Repeat with VoiceOver enabled.
+   interactions do not unexpectedly divert keyboard input. Use macOS keyboard
+   menu-bar navigation to reach Promptly's reader commands, including Show and
+   Hide, and confirm the presenting app remains usable. Repeat with VoiceOver enabled.
 6. Change Spaces, enter and leave a presenting app's full-screen Space, and
    exercise Stage Manager if used. Confirm the reader stays reachable without
    activating Promptly unexpectedly or covering essential presenting controls.

@@ -13,8 +13,6 @@ struct ReaderMenu: View {
     var body: some View {
         Button("Show Prompter", action: controller.show)
             .keyboardShortcut("o")
-        Button("Focus Prompter", action: controller.focus)
-            .keyboardShortcut("f", modifiers: [.command, .option])
         Divider()
         Button(controller.state.isCollapsed ? "Expand Prompter" : "Collapse Prompter",
                action: controller.toggleExpansion)

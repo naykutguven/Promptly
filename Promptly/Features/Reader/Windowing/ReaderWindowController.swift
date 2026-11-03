@@ -18,7 +18,6 @@ final class ReaderWindowController {
     private(set) var visibility: Visibility = .hidden
     private(set) var topInset: CGFloat = 0
     private(set) var preferenceFailure: ReaderWindowStateStore.Failure?
-    private(set) var keyboardFocusRequest: UInt = 0
 
     @ObservationIgnored private let preferences: ReaderWindowStateStore
     @ObservationIgnored private let panel: any ReaderPanelControlling
@@ -68,13 +67,6 @@ final class ReaderWindowController {
         panel.hide()
         visibility = .hidden
         savePreferences()
-    }
-
-    func focus() {
-        applyGeometry()
-        panel.focus()
-        visibility = .visible
-        keyboardFocusRequest &+= 1
     }
 
     func toggleExpansion() {

@@ -17,7 +17,7 @@ There is no centralized theme/token file, CSS variable set, Tailwind config, bre
 | Detached corners | top 20; bottom 24 |
 | Anchored corners | top 0; bottom 24 |
 | Header | height 58; horizontal padding 20; control gap 8 |
-| Icon hit regions | 30×30; borderless native Button; explicit focus |
+| Icon hit regions | 30×30; borderless native Button |
 | Reading insets | horizontal 28, top 12, bottom 24; stack spacing 16 |
 | Resize hint | 10-point system glyph rotated −45°; white opacity 0.5; padding 10 |
 | Window shadow | AppKit `panel.hasShadow = true`; OS-provided, no custom shadow parameters |

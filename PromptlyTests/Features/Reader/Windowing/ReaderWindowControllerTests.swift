@@ -274,25 +274,6 @@ struct ReaderWindowControllerTests {
         #expect(fixture.controller.state.detachedFrame == nil)
     }
 
-    @Test func focusShowsHiddenReaderAndRequestsControlFocusEachTime() throws {
-        let fixture = try Fixture()
-        defer { fixture.close() }
-        fixture.controller.start()
-        fixture.controller.toggleExpansion()
-        fixture.controller.toggleLock()
-        let state = fixture.controller.state
-        fixture.controller.hide()
-
-        fixture.controller.focus()
-        #expect(fixture.panel.isVisible)
-        #expect(fixture.controller.visibility == .visible)
-        #expect(fixture.controller.keyboardFocusRequest == 1)
-        fixture.controller.focus()
-        #expect(fixture.panel.focusRequests == 2)
-        #expect(fixture.controller.keyboardFocusRequest == 2)
-        #expect(fixture.controller.state == state)
-    }
-
     @Test func resizeEventCommitsActualFrameAndDisplayBeforeCollapse() throws {
         let fixture = try Fixture(displays: [Self.primary, Self.external])
         defer { fixture.close() }
@@ -355,7 +336,6 @@ struct ReaderWindowControllerTests {
         private(set) var isVisible = false
         private(set) var observationStarts = 0
         private(set) var observationStops = 0
-        private(set) var focusRequests = 0
 
         var isMovable: Bool { layout?.isMovable == true }
         var isResizable: Bool { layout?.isResizable == true }
@@ -369,11 +349,6 @@ struct ReaderWindowControllerTests {
         func stopObservingDisplays() { observationStops += 1 }
         func show() { isVisible = true }
         func hide() { isVisible = false }
-
-        func focus() {
-            focusRequests += 1
-            show()
-        }
 
         func apply(_ layout: ReaderPanelLayout) {
             self.layout = layout

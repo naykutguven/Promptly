@@ -8,18 +8,6 @@
 import AppKit
 
 final class ReaderPanel: NSPanel {
-    var allowsKeyboardFocus = false
-    var onRelinquishFocus: (() -> Void)?
-
-    override var canBecomeKey: Bool { allowsKeyboardFocus }
+    override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
-
-    override func resignKey() {
-        super.resignKey()
-        allowsKeyboardFocus = false
-    }
-
-    override func cancelOperation(_ sender: Any?) {
-        onRelinquishFocus?()
-    }
 }

@@ -11,7 +11,6 @@ struct ReaderView: View {
     let controller: ReaderWindowController
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
-    @FocusState private var focusedControl: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -56,9 +55,6 @@ struct ReaderView: View {
             }
         }
         .environment(\.colorScheme, .dark)
-        .onChange(of: controller.keyboardFocusRequest) {
-            focusedControl = "reader.collapse"
-        }
     }
 
     private var controls: some View {
@@ -105,13 +101,6 @@ struct ReaderView: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)
-        // Explicit focus also works when macOS's full keyboard navigation is disabled.
-        .focusable()
-        .focused($focusedControl, equals: id)
-        .onKeyPress(.space, phases: .down) { _ in
-            action()
-            return .handled
-        }
         .help(Text(title))
         .accessibilityIdentifier(id)
     }

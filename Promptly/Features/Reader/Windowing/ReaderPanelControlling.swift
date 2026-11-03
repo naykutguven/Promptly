@@ -14,5 +14,4 @@ protocol ReaderPanelControlling: AnyObject {
     func apply(_ layout: ReaderPanelLayout)
     func show()
     func hide()
-    func focus()
 }

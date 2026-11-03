@@ -4,7 +4,7 @@ This app has no URL routes, router config or browser navigation. Do not invent i
 
 | Native surface | Entry | Layout and behavior |
 | --- | --- | --- |
-| Promptly menu-bar extra | `Promptly/App/PromptlyApp.swift` → `Promptly/Features/Reader/ReaderMenu.swift` | Show/Focus, Collapse/Expand, Lock/Unlock, Detach/Return to Notch, Hide, Quit; local menu shortcuts rather than global hotkeys. |
+| Promptly menu-bar extra | `Promptly/App/PromptlyApp.swift` → `Promptly/Features/Reader/ReaderMenu.swift` | Show, Collapse/Expand, Lock/Unlock, Detach/Return to Notch, Hide, Quit; local menu shortcuts rather than global hotkeys. |
 | Reader panel | `Promptly/App/PromptlyAppDelegate.swift` → `Promptly/Features/Reader/ReaderView.swift` | Floating borderless nonactivating AppKit panel. Starts from local placement preferences; anchored or detached, expanded or collapsed, locked or unlocked. Fixed synthetic content; no playback or scrolling yet. |
 | Library (planned) | `Docs/LibraryDesign.md`; `Docs/QuietNativeDesign.md`; frozen `Docs/Design/QuietNative/2026-10-31/` images | Dedicated script sidebar/editor/Sections workspace. No implementation, script store, autosave, Send handoff, or native Library tests exist. |
 

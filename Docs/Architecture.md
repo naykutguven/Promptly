@@ -120,8 +120,8 @@ it into the observable `ReaderWindowController`, then attaches the hosted
 between presentation policy and native panel mechanics remains useful; both
 owners now live in `Features/Reader/Windowing`.
 
-The window controller owns placement/collapse/lock state, preference recovery,
-focus requests and debounced saves. The panel controller owns native effects and
+The window controller owns placement/collapse/lock state, preference recovery
+and debounced saves. The panel controller owns native effects and
 suppresses movement feedback during programmatic layout. Both are Reader UI
 owners. `ReaderWindowStateStore` only encodes and stores values, so it remains a
 service. See [window validation](WindowBehaviorValidation.md) and
@@ -187,7 +187,7 @@ code at that path; planned destinations are created with their roadmap work.
 | ✅ | `PromptlyApp.swift` | Entry point, scenes and menu-bar composition; owns app-wide Quit. Feature content remains in Features. |
 | ✅ | `PromptlyAppDelegate.swift` | Current composition root, launch/reopen/termination forwarding. It constructs the reader's native and observable owners once. |
 | 🗓️ | `Composition/AppComposition.swift` | Extract dependency construction when Library, repository and shared reader session make the delegate too large. No runtime lookup container. |
-| 🗓️ | `Navigation/AppCoordinator.swift` | Show Library, show/focus Reader, successful handoff presentation, and commands targeting the active editing/reader owner. Never duplicates drafts or playback state. |
+| 🗓️ | `Navigation/AppCoordinator.swift` | Show Library, show Reader, successful handoff presentation, and commands targeting the active editing/reader owner. Never duplicates drafts or playback state. |
 | 🗓️ | `Commands/PromptlyCommands.swift` | App-wide Show Library, New Script and Send command wiring, with contextual enablement and editor-safe shortcuts. Reader-specific menu content remains in Reader. |
 | 🗓️ | `Lifecycle/AppLifecycleCoordinator.swift` | When needed, coordinates safe close/quit with the editing owner and stops active work. Feature window delegates report requests; this type does not implement panel geometry. |
 
@@ -236,9 +236,9 @@ wrappers for every view.
 | ✅ | `ReaderView.swift` | Reader shell and control presentation. Evolves to render the sent snapshot through the viewport. |
 | ✅ | `ReaderMenu.swift` | Reader commands and preference warnings. Later playback commands use the same shared session as the panel controls. |
 | ✅ | `ReaderDragHandle.swift` | Reader-local AppKit drag bridge; stays feature-owned. |
-| ✅ | `Windowing/ReaderWindowController.swift` | Observable placement, visibility, collapse/lock policy, preference restore/recovery, focus requests and save debounce. Never becomes the script or playback owner. |
-| ✅ | `Windowing/ReaderPanelController.swift` | Panel configuration, display observation, native focus and NSWindowDelegate. Owns programmatic-geometry feedback suppression. |
-| ✅ | `Windowing/ReaderPanel.swift` | Native nonactivating panel and explicit keyboard-focus/Escape hooks. |
+| ✅ | `Windowing/ReaderWindowController.swift` | Observable placement, visibility, collapse/lock policy, preference restore/recovery and save debounce. Never becomes the script or playback owner. |
+| ✅ | `Windowing/ReaderPanelController.swift` | Panel configuration, display observation, nonactivating visibility and NSWindowDelegate. Owns programmatic-geometry feedback suppression. |
+| ✅ | `Windowing/ReaderPanel.swift` | Native nonactivating panel that cannot become the key or main window. |
 | ✅ | `Windowing/ReaderHostingView.swift` | Native hosting and first-mouse/key policy for Reader content. |
 | ✅ | `Windowing/ReaderPanelControlling.swift` | Feature-local substitution boundary between window policy and native effects. |
 | ✅ | `Windowing/ReaderPanelEvent.swift` | Native frame/display/close events delivered to the feature owner. |
@@ -376,7 +376,7 @@ feature-only interaction bridge belongs to its feature.
 | Library results, selection intent, search/load state | `LibraryModel` | Stable row IDs and bounded summaries |
 | Last successfully saved revision and durable metadata | `ScriptRepository` | Immutable snapshots/acknowledgments or typed failures |
 | Exact sent script, logical position, playback state and speed | `ReaderSession` | Observed values and narrow commands, shared across all control surfaces |
-| Window placement/collapse/lock/visibility and focus requests | Reader `ReaderWindowController` | Native layout requests and feature UI state |
+| Window placement/collapse/lock/visibility | Reader `ReaderWindowController` | Native layout requests and feature UI state |
 | Native panel, delegates and observer handles | Reader `ReaderPanelController` | Frame/display/close events; no duplicate saved window state |
 | Rendered pixels, layout caches and native scroll callbacks | Reader viewport/scroll owner | Logical anchor changes and viewport facts |
 | Active destructive recovery snapshot and deadline | Library recovery owner | The current toast's Undo/dismiss intents only |

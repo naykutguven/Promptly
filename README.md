@@ -19,9 +19,9 @@ Promptly opens a menu-bar reader with fixed synthetic sample text. There is no
 Library window, script editor, script store, autosave, Send to
 Prompter workflow or manual/automatic scrolling implementation yet.
 
-The reader wraps around the primary display's notch, or sits at the top center on a display without one. Choose **Detach Prompter**, then drag the title or empty header area to move it and resize its edges. Collapse, expand, lock, return to the notch, hide, and focus are available through the reader or menu. Lock prevents movement and resizing; Return to Notch remains available while locked.
+The reader wraps around the primary display's notch, or sits at the top center on a display without one. Choose **Detach Prompter**, then drag the title or empty header area to move it and resize its edges. Collapse, expand, lock, return to the notch, and hide are available through the reader or menu. Lock prevents movement and resizing; Return to Notch remains available while locked.
 
-Pointer interactions are intended to preserve the presenting app's focus. Choose Focus Prompter for keyboard control, then press Escape to release reader focus. Use macOS keyboard menu-bar navigation to reach Promptly's menu; its displayed keyboard shortcuts are local menu shortcuts, not global shortcuts.
+Pointer interactions are intended to preserve the presenting app's focus. Use macOS keyboard menu-bar navigation to reach Promptly's menu for keyboard control; its displayed keyboard shortcuts are local menu shortcuts, not global shortcuts.
 
 Reader placement preferences use local UserDefaults. No script schema, store
 filename, migration plan, editing-session cache or deletion-recovery buffer is
