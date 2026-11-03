@@ -75,6 +75,33 @@ Read the relevant guide completely before acting; tasks may need several:
   permissions scoped to explicitly authorized scripts. Local transport does not
   ensure an external agent processes retrieved text locally; explain that boundary.
 
+## Apple framework decisions
+
+- Before recommending or implementing framework architecture, native bridges,
+  workarounds, or claims about framework limitations, read the relevant official
+  Apple documentation and samples. Research alternatives proactively; do not wait
+  for the user to identify APIs. Reuse verified findings while their assumptions
+  remain valid; routine edits do not require repeating unrelated research.
+- Check native default behavior first. Compare viable SwiftUI APIs, a narrow
+  AppKit adapter, and broader AppKit ownership against the agreed requirements.
+  Choose the smallest approach that meets them; an existing implementation does
+  not establish a product requirement or justify retaining custom infrastructure.
+- Tie custom persistence, state, controllers, and bridges to a concrete gap in
+  native behavior. Keep product requirements distinct from implementation choices.
+- Verify macOS behavior and deployment-target availability. Check installed SDK
+  declarations when signatures, availability, or capability boundaries matter;
+  a newer SDK or runtime alone does not establish macOS 26.0 support.
+- Cite the official sources supporting material recommendations. Distinguish
+  documented behavior, observed behavior, and inference. State unresolved limits
+  precisely; an API not found in the checked sources is not proof of impossibility.
+- When a minimal native example reproduces a failure, investigate OS, input,
+  session, and tooling causes before escalating application complexity or
+  replacing the requested API. Separate physical-input and automation evidence.
+- For substantial framework or workaround decisions, obtain an independent
+  alternatives review when available; otherwise explicitly challenge the approach
+  against the simplest native candidate. Record the chosen approach, verified gap,
+  and remaining uncertainty briefly in the relevant task notes or handoff.
+
 ## Engineering standards
 
 - Prioritize correctness, data preservation, privacy, and thread safety, followed

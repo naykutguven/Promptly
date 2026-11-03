@@ -10,6 +10,33 @@ reader styling. It includes SF Symbols, accent-colored filled pins, system-font
 section digits and smaller reader glyphs with accessible targets. Native adoption
 and validation remain pending.
 
+## Native UI research checklist
+
+For the framework decisions covered by AGENTS.md, check these distinctions before
+choosing an integration:
+
+- Identify the observable user need. Window visibility, stacking level, app
+  activation, keyboard focus, and ongoing playback are separate capabilities;
+  establish which ones the requirement actually needs.
+- Check what the native scene or control already manages, including restoration
+  and user/system settings. Add custom persistence only for a requirement those
+  defaults do not satisfy.
+- Confirm whether a placement API affects initial creation, restoration, zooming,
+  or an already-open window. Distinguish view-layout coordinates from desktop
+  coordinates, and passing geometry or intents from applying native geometry.
+- Evaluate content-driven sizing and native interaction modifiers before manual
+  geometry or event handling. If integration remains necessary, identify the
+  smallest native operation and its ownership, lifetime, and MainActor boundary.
+- Use a small isolated probe when documentation leaves material runtime behavior
+  uncertain. Report separately what compilation, automation, physical interaction,
+  and different OS/display configurations establish. A probe that fails outside
+  the feature is evidence to investigate that broader failure boundary.
+
+Keep comparisons and evidence proportional to the decision. When revising this
+workflow, check that it would catch custom code duplicating native defaults,
+unsupported minimum-OS assumptions, and limitation claims without researched
+alternatives. These checks assess the instructions; they do not validate app UI.
+
 ## Native Mac interaction
 
 - Keep feature windows/panels, delegates, hosting, focus, native editor/scroll
