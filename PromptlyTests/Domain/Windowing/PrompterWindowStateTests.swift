@@ -1,5 +1,5 @@
 //
-//  ReaderWindowStateTests.swift
+//  PrompterWindowStateTests.swift
 //  PromptlyTests
 //
 //  Created by Aykut Güven on 26.10.26.
@@ -11,9 +11,9 @@ import Testing
 @testable import Promptly
 
 @MainActor
-struct ReaderWindowStateTests {
+struct PrompterWindowStateTests {
     @Test func windowStatesRoundTripWithoutLosingExpandedGeometry() throws {
-        var state = ReaderWindowState()
+        var state = PrompterWindowState()
         state.placement = .detached
         state.expansion = .collapsed
         state.positionLock = .locked
@@ -22,7 +22,7 @@ struct ReaderWindowStateTests {
         state.displayID = 42
 
         let restored = try JSONDecoder().decode(
-            ReaderWindowState.self, from: JSONEncoder().encode(state)
+            PrompterWindowState.self, from: JSONEncoder().encode(state)
         )
         #expect(restored == state)
         #expect(restored.isCollapsed)
@@ -31,11 +31,11 @@ struct ReaderWindowStateTests {
     }
 
     @Test func freshStateIsExpandedAndAnchored() {
-        let state = ReaderWindowState()
+        let state = PrompterWindowState()
         #expect(state.placement == .anchored)
         #expect(state.expansion == .expanded)
         #expect(state.positionLock == .unlocked)
         #expect(state.detachedFrame == nil)
-        #expect(state.expandedSize == ReaderWindowLayoutConstants.defaultExpandedSize)
+        #expect(state.expandedSize == PrompterWindowLayoutConstants.defaultExpandedSize)
     }
 }

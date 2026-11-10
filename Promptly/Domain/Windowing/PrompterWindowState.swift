@@ -1,5 +1,5 @@
 //
-//  ReaderWindowState.swift
+//  PrompterWindowState.swift
 //  Promptly
 //
 //  Created by Aykut Güven on 26.10.26.
@@ -8,7 +8,7 @@
 import CoreGraphics
 import Foundation
 
-struct ReaderWindowState: Codable, Equatable, Sendable {
+struct PrompterWindowState: Codable, Equatable, Sendable {
     enum Placement: String, Codable, Sendable {
         case anchored
         case detached
