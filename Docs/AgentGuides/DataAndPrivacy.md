@@ -32,7 +32,7 @@ ownership and [Testing and Validation](TestingAndValidation.md) before verificat
   storage metadata, exposed in library summaries, without a separate pin model.
   Follow the [pin metadata decision](../PersistencePolicy.md#pin-metadata-decision)
   when introducing the initial store and defining revisions and bounded queries.
-  A pin-only change must not mutate or misrepresent the reader's sent content.
+  A pin-only change must not mutate or misrepresent the prompter's sent content.
 
 ## Files, import, export, and deletion
 

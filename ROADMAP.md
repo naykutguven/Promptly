@@ -2,11 +2,11 @@
 
 Draft sequence based on the [planned feature set](README.md#planned-features).
 These milestones describe intended outcomes, not release dates. The first
-window-behavior prototype now provides a menu-bar reader with synthetic text,
+window-behavior prototype now provides a menu-bar prompter with synthetic text,
 notch anchoring, detachment, collapse, locking, and local placement restoration.
 Milestone 1 remains open for physical display, full-screen, VoiceOver, and
 sharing-app validation; see the [validation record](Docs/WindowBehaviorValidation.md).
-The [Quiet Native Library and reader designs](Docs/QuietNativeDesign.md) are
+The [Quiet Native Library and prompter designs](Docs/QuietNativeDesign.md) are
 approved; native visual adoption remains pending. The Library's first
 implementation belongs to milestone 2; Library code, storage and tests are
 not present. Milestones 2 onward remain planned work.
@@ -26,9 +26,9 @@ Use synthetic sample text so this milestone can stand on its own.
   display disconnection, and changes to a multiple-display arrangement.
   Restore detached placement against an actual screen's visible bounds rather
   than a bounding rectangle that can include gaps between displays.
-- Define activation and keyboard focus: reading interactions should not
-  unexpectedly steal focus from the presenting app, while controls remain
-  accessible by keyboard and VoiceOver.
+- Use native SwiftUI window activation and visibility. Normal prompter-window
+  activation is allowed; controls remain accessible by keyboard and VoiceOver.
+  Keep the removed Focus Prompter mode out of the workflow.
 - Investigate screen-sharing visibility early and record results for each actual
   sharing application and window/display capture method tested. A window-sharing
   flag alone is not evidence of capture exclusion.
@@ -76,23 +76,23 @@ guide the first implementation; design approval is not native validation.
   No schema version, store filename, cache limits or migration baseline is chosen
   yet. Validate writes/reopen and recovery before distributing durable stores.
 - Implement Send to Prompter: save the intended revision, revalidate identity and
-  revision before handoff, then close the Library and show the reader without
+  revision before handoff, then close the Library and show the prompter without
   automatic movement. Failure, cancellation or newer edits keep the Library
-  open and preserve the reader. Further edits reach it only through another Send.
+  open and preserve the prompter. Further edits reach it only through another Send.
 - Keep import/export and optional section suggestions in their later milestones.
 
 **Done when:** The [planned acceptance matrix](Docs/ScriptEditingValidation.md#approved-design-adoption-pending)
 passes for empty → create → edit → send and last-delete → empty → Undo journeys,
 including final recovery expiry, row actions, pin persistence, native section
 editing, keyboard/VoiceOver, appearance and failure recovery. Scripts and sections
-survive reopening without silent data loss. Preserve the existing reader-window
+survive reopening without silent data loss. Preserve the existing prompter-window
 behavior. Browser mockup checks alone do not complete this milestone.
 
-## 3. Reader appearance
+## 3. Prompter appearance
 
 **Goal:** Make scripts comfortable to read in both panel and floating modes.
 
-- Adopt the [approved Quiet Native reader styling](Docs/QuietNativeDesign.md#reader),
+- Adopt the [approved Quiet Native prompter styling](Docs/QuietNativeDesign.md#prompter),
   preserving existing window behavior. SF Symbols use smaller visible glyphs
   with accessible targets; approval alone does not validate native behavior.
 - Adjust font family, size, color, alignment, line height, paragraph spacing,
@@ -105,7 +105,7 @@ behavior. Browser mockup checks alone do not complete this milestone.
 - Evaluate OpenDyslexic as an optional font rather than a required dependency.
 
 **Done when:** Large text and narrow windows remain usable, and changing layout
-or appearance keeps the reader at the same logical place in the script.
+or appearance keeps the prompter at the same logical place in the script.
 
 ## 4. Playback and navigation
 
@@ -116,7 +116,7 @@ or appearance keeps the reader at the same logical place in the script.
   values between presets. Choose preset values through usability validation.
 - Add an optional, configurable count-in after Play, with skip/cancel controls.
   Sending a script does not start it. Define first-start versus resume behavior
-  during this milestone; closing the reader cancels pending count-in work.
+  during this milestone; closing the prompter cancels pending count-in work.
 - Add play, pause, restart, rewind a few lines, and previous/next section commands.
 - Highlight the current line, offer an adjustable reading guide, and resume from
   a clicked paragraph.
@@ -132,7 +132,7 @@ or appearance keeps the reader at the same logical place in the script.
   scripts, short scripts, and languages without space-separated words.
 
 **Done when:** A synthetic long script can be read end to end, navigation and
-pause/resume behave predictably, and closing the reader stops its ongoing work.
+pause/resume behave predictably, and closing the prompter stops its ongoing work.
 Preset and slider changes agree, count-in can be skipped/cancelled without losing
 the reading anchor, and the duration estimate explains its rate assumption rather
 than claiming to measure the speaker. Space and arrow keys retain normal behavior
@@ -148,7 +148,7 @@ while editing, and manual scrolling does not fight playback.
   the sandbox write access required for user-selected destinations.
 - Provide useful failure recovery and cancellation.
 
-**Done when:** Supported files work with an independent reader, and failed or
+**Done when:** Supported files work with an independent prompter, and failed or
 cancelled file operations preserve both existing scripts and destination files.
 
 ## 6. Optional AI section suggestions

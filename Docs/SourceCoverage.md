@@ -1,7 +1,8 @@
 # Source test coverage
 
 Measured on 2026-10-26 for the milestone 1 implementation before the app-entry
-move and Quit-menu ownership cleanup. Source links follow the current layout;
+move and Quit-menu ownership cleanup. Links for removed files point to the last
+panel-based revision; surviving source links follow the current layout;
 the counts below remain the historical measurement, including the former
 placement of Quit in `ReaderMenu` and the combined reader layout implementation
 before its constants were separated. The later `ReaderPanelController` extraction
@@ -14,6 +15,10 @@ App source executable-line coverage increased from **95.73%
 (678/702)** after adding seven tests.
 The baseline run passed all 29 tests (25 unit/AppKit, 4 UI); the final run passed
 all 36 tests (31 unit/AppKit, 5 UI), with no failures or skipped tests.
+
+The feature was renamed from Reader to Prompter on 2026-11-04.
+Historical symbol names and counts are retained; surviving local links
+point to the renamed source and tests.
 
 ## Measurement
 
@@ -31,34 +36,34 @@ no percentage. These measurements do not establish minimum macOS 26.0 support.
 | App source file | Before | After | Covered/executable after |
 | --- | ---: | ---: | ---: |
 | [PromptlyAppDelegate.swift](../Promptly/App/PromptlyAppDelegate.swift) | 66.67% | 80.95% | 17/21 |
-| [ReaderWindowGeometry.swift](../Promptly/Features/Reader/Windowing/ReaderWindowGeometry.swift), [ReaderWindowLayoutConstants.swift](../Promptly/Features/Reader/Windowing/ReaderWindowLayoutConstants.swift) | 99.04% | 100.00% | 104/104 |
-| [ReaderWindowState.swift](../Promptly/Domain/Windowing/ReaderWindowState.swift) | 100.00% | 100.00% | 6/6 |
+| [ReaderWindowGeometry.swift](../Promptly/Features/Prompter/Windowing/PrompterWindowGeometry.swift), [ReaderWindowLayoutConstants.swift](../Promptly/Features/Prompter/Windowing/PrompterWindowLayoutConstants.swift) | 99.04% | 100.00% | 104/104 |
+| [ReaderWindowState.swift](../Promptly/Domain/Windowing/PrompterWindowState.swift) | 100.00% | 100.00% | 6/6 |
 | [NSScreen+Extensions.swift](../Promptly/Extensions/NSScreen+Extensions.swift) | 93.33% | 93.33% | 14/15 |
-| [ReaderDragHandle.swift](../Promptly/Features/Reader/ReaderDragHandle.swift) | 100.00% | 100.00% | 25/25 |
-| [ReaderMenu.swift](../Promptly/Features/Reader/ReaderMenu.swift) | 78.12% | 81.25% | 26/32 |
-| [ReaderView.swift](../Promptly/Features/Reader/ReaderView.swift) | 100.00% | 100.00% | 227/227 |
+| [ReaderDragHandle.swift](https://github.com/naykutguven/Promptly/blob/7baada7/Promptly/Features/Reader/ReaderDragHandle.swift) | 100.00% | 100.00% | 25/25 |
+| [ReaderMenu.swift](../Promptly/Features/Prompter/PrompterMenu.swift) | 78.12% | 81.25% | 26/32 |
+| [ReaderView.swift](../Promptly/Features/Prompter/PrompterView.swift) | 100.00% | 100.00% | 227/227 |
 | [PromptlyApp.swift](../Promptly/App/PromptlyApp.swift) | 100.00% | 100.00% | 8/8 |
-| [ReaderHostingView.swift](../Promptly/Features/Reader/Windowing/ReaderHostingView.swift) | 0.00% | 0.00% | 0/2 |
-| [ReaderPanel.swift](../Promptly/Features/Reader/Windowing/ReaderPanel.swift) | 100.00% | 100.00% | 10/10 |
-| [ReaderWindowController.swift](../Promptly/Features/Reader/Windowing/ReaderWindowController.swift) | 95.26% | 95.26% | 221/232 |
-| [ReaderWindowStateStore.swift](../Promptly/Services/Preferences/ReaderWindowStateStore.swift) | 95.00% | 100.00% | 20/20 |
+| [ReaderHostingView.swift](https://github.com/naykutguven/Promptly/blob/7baada7/Promptly/Features/Reader/Windowing/ReaderHostingView.swift) | 0.00% | 0.00% | 0/2 |
+| [ReaderPanel.swift](https://github.com/naykutguven/Promptly/blob/7baada7/Promptly/Features/Reader/Windowing/ReaderPanel.swift) | 100.00% | 100.00% | 10/10 |
+| [ReaderWindowController.swift](../Promptly/Features/Prompter/Windowing/PrompterWindowController.swift) | 95.26% | 95.26% | 221/232 |
+| [ReaderWindowStateStore.swift](../Promptly/Services/Preferences/PrompterWindowStateStore.swift) | 95.00% | 100.00% | 20/20 |
 | **Promptly.app total** | **95.73%** | **96.58%** | **678/702** |
 
 ## Tests added
 
-- [ReaderWindowStateStoreTests](../PromptlyTests/Services/Preferences/ReaderWindowStateStoreTests.swift):
+- [ReaderWindowStateStoreTests](../PromptlyTests/Services/Preferences/PrompterWindowStateStoreTests.swift):
   a failed encode reports the typed failure and preserves the last good bytes and
   reopened placement.
-- [ReaderWindowControllerTests](../PromptlyTests/Features/Reader/Windowing/ReaderWindowControllerTests.swift):
+- [ReaderWindowControllerTests](../PromptlyTests/Features/Prompter/Windowing/PrompterWindowControllerTests.swift):
   four tests cover immediate hide/stop flushing the newest moved/resized frame
   before debounce can finish, hide/show preserving detached/collapsed/locked
   state, and an anchored collapsed/locked reader following primary-display
   changes between notch and no-notch snapshots.
-- [ReaderWindowGeometryTests](../PromptlyTests/Features/Reader/Windowing/ReaderWindowGeometryTests.swift):
+- [ReaderWindowGeometryTests](../PromptlyTests/Features/Prompter/Windowing/PrompterWindowGeometryTests.swift):
   invalid full-screen or visible-screen rectangles are excluded from restoration;
   a valid actual display is used even when the saved and primary IDs are invalid,
   and no placement is returned if no usable display remains.
-- [ReaderWindowUITests](../PromptlyUITests/ReaderWindowUITests.swift):
+- [ReaderWindowUITests](../PromptlyUITests/PrompterWindowUITests.swift):
   a native status-menu journey detaches, collapses, locks, hides, returns to the
   notch while hidden/locked, expands, unlocks, shows again, and quits gracefully.
   Menu queries are scoped to the status item because the app menu also has a

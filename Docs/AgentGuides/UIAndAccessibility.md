@@ -6,8 +6,8 @@ macOS Human Interface Guidelines. Read [Concurrency and Playback](ConcurrencyAnd
 for scrolling and [Testing and Validation](TestingAndValidation.md) before verification.
 
 Use the [approved Quiet Native baseline](../QuietNativeDesign.md) for Library and
-reader styling. It includes SF Symbols, accent-colored filled pins, system-font
-section digits and smaller reader glyphs with accessible targets. Native adoption
+prompter styling. It includes SF Symbols, accent-colored filled pins, system-font
+section digits and smaller prompter glyphs with accessible targets. Native adoption
 and validation remain pending.
 
 ## Native UI research checklist
@@ -82,15 +82,17 @@ milestone 2; no Library implementation or native validation is present.
 
 ## Panels, displays, and focus
 
-- Preserve the notch-anchored panel and detached, draggable, resizable
-  window without hard-coded screen geometry. Handle Macs without a notch,
+- Preserve the notch-anchored and detached, draggable, resizable SwiftUI
+  prompter window without hard-coded screen geometry. Handle Macs without a notch,
   multiple displays, scaling, and changing display arrangements.
 - Account for visible screen bounds and safe areas. Keep controls reachable after
   resizing, disconnecting a display, or restoring saved placement; provide the
   explicit return-to-notch command from the README.
-- Define activation and keyboard-focus behavior deliberately. Reading controls
-  should not unexpectedly steal focus from the user's presenting application;
-  script editing must still support normal keyboard access.
+- Define activation and keyboard-focus behavior deliberately. Normal native
+  window activation is allowed for the prompter (2026-11-03); do not reintroduce
+  the removed Focus Prompter mode. Script editing must support normal keyboard
+  access. SwiftUI owns prompter visibility; observe its window without replacing
+  its delegate or adding a second presentation owner.
 - Distinguish collapsed, position-locked, and playback states. Position locking
   must not trap users or hide the way to unlock or reposition the panel.
 - Validate screen-sharing visibility with actual applications and capture paths.

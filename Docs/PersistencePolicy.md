@@ -1,7 +1,7 @@
 # Planned script persistence policy
 
 **Status:** The Library feature and script persistence are not implemented. The
-current prototype uses synthetic reader text and local window-placement preferences.
+current prototype uses synthetic prompter text and local window-placement preferences.
 This document specifies requirements for the first implementation in
 [roadmap milestone 2](../ROADMAP.md#2-scripts-and-safe-local-editing); it does not
 record an existing script store, schema or passing persistence tests.
@@ -51,7 +51,7 @@ Boolean in immutable library summaries so grouping does not require loading
 script text.
 
 New and duplicated scripts start unpinned. A pin-only change must not alter the
-script's title, text or sections, mutate the reader's sent copy, or mark content
+script's title, text or sections, mutate the prompter's sent copy, or mark content
 as needing resending. Revision and query details must respect that distinction.
 
 Include this field in the first script schema. No migration step is needed for
@@ -67,19 +67,19 @@ duplication, deletion, normal close and quit must not silently discard unsaved
 work. Define failure recovery before allowing those transitions.
 
 An explicit Send must save and revalidate the intended script identity and
-revision before committing a stable reader copy. Later library edits and pin
+revision before committing a stable prompter copy. Later library edits and pin
 changes must not mutate that copy. Whether and how sent copies persist across
 relaunch, including startup behavior and compatibility, remains an implementation
 decision. If durable restoration is introduced, test it independently from newer
 library edits; a sent copy is not full version history or a reading-position
 checkpoint.
 
-Deleting the source of a sent copy must clear the matching active reader copy.
+Deleting the source of a sent copy must clear the matching active prompter copy.
 If a stored sent copy is introduced, define an all-or-nothing deletion boundary
 for that data too. A failed deletion must not publish partial state or allow a
 late save to recreate deleted content. Undo during the recovery window restores
 the library script, selection and pin state only; it does not resend a cleared
-reader copy.
+prompter copy.
 
 ## Approved design follow-up
 
@@ -117,4 +117,4 @@ The [planned acceptance checklist](ScriptEditingValidation.md#approved-design-ad
 requires initial-store creation/reopen, stale-write and deletion tests, injected
 failures and later migration tests when applicable. Real low-storage, process
 termination and filesystem faults require separate evidence. No such Library
-or persistence validation is established by the current reader-window prototype.
+or persistence validation is established by the current prompter-window prototype.

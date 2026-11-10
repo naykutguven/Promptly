@@ -2,19 +2,19 @@
 
 **Status:** Quiet Native visuals approved on 2026-10-31, superseding the earlier
 Native visuals approved on 2026-10-27. The recovery policy revised on 2026-10-28
-is unchanged. The [shared Library and reader baseline](QuietNativeDesign.md)
+is unchanged. The [shared Library and prompter baseline](QuietNativeDesign.md)
 records the approved versions, final refinements and frozen images.
 The Library must be implemented from scratch in
 [roadmap milestone 2](../ROADMAP.md#2-scripts-and-safe-local-editing). No Library
 window, script editor/store or native Library test suite currently exists.
 The [README's current implementation](../README.md#current-implementation)
-describes the reader-window prototype; the
+describes the prompter-window prototype; the
 [Library acceptance checklist](ScriptEditingValidation.md) is prospective.
 
 ## Visual baseline
 
 Library is the complete script workspace: managing, editing and sectioning
-scripts before sending them to the reader. The sidebar is one part of this
+scripts before sending them to the prompter. The sidebar is one part of this
 feature, not a separate destination from its editor.
 
 The approved direction is Quiet Native: a restrained macOS window, a quiet Library
@@ -59,9 +59,9 @@ recovery contracts below remain authoritative, including the 10-second Undo wind
   last send** applies only when this script has a sent copy with newer library
   edits; a first script has no sent-version hint. Save failures remain actionable
   with Retry Save and must not disappear as transient success feedback.
-- Implement the planned Library/reader lifecycle. Send saves an exact
+- Implement the planned Library/prompter lifecycle. Send saves an exact
   revision, closes the Library only after a successful handoff, and shows the
-  reader without automatic movement. Pinning, renaming, and autosave do not send.
+  prompter without automatic movement. Pinning, renaming, and autosave do not send.
 
 ## Library rows
 
@@ -80,7 +80,7 @@ both groups.
 Every action targets the row's stable script ID, including an unselected row.
 Pin/unpin retains the current selection, draft and editor context. Duplicate opens
 an independent, unpinned copy. Undo through the active toast restores the library
-script and its pin state; it does not restore or resend a cleared reader copy.
+script and its pin state; it does not restore or resend a cleared prompter copy.
 That recovery ends when the toast is closed or expires.
 
 Pins are local library metadata, stored as `isPinned: Bool = false` directly in
@@ -165,4 +165,4 @@ permission, network, dependency, platform, import/export or automatic-playback s
 The [planned acceptance matrix](ScriptEditingValidation.md#approved-design-adoption-pending)
 defines the first implementation's validation. Browser mockup approval and interaction
 checks do not establish native gesture fidelity, VoiceOver, minimum-OS support,
-persistence migration or reader-window compatibility.
+persistence migration or prompter-window compatibility.

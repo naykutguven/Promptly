@@ -1,12 +1,16 @@
 # Approved Quiet Native design
 
-**Status:** Approved by the user on **2026-10-31**, including the final reader
+**Status:** Approved by the user on **2026-10-31**, including the final prompter
 control-size refinement. Quiet Native is the current visual baseline for the
-Library and reader. Native adoption and validation remain pending.
+Library and prompter. Native adoption and validation remain pending.
 
 The [Library interaction contract](LibraryDesign.md), README product contracts,
 and roadmap still govern behavior, privacy, persistence and recovery. Approval
 does not authorize app implementation or complete a roadmap milestone.
+
+The feature is now named Prompter. Dated image filenames, remote
+draft titles and the ReaderHeader component name retain their
+original approval references.
 
 ## Approved versions
 
@@ -19,8 +23,8 @@ freeze their visual state independently of later canvas or component changes.
 | Overview | [Quiet Native Exploration](https://p.superdesign.dev/draft/50c18ac7-db29-4798-9721-a06a6db6fa21) | 4 | 3 |
 | Library active | [Library · Active](https://p.superdesign.dev/draft/816df858-be9b-4fa8-be18-4d180e9b5048) | 2 | — |
 | Library empty | [Library · Empty](https://p.superdesign.dev/draft/a17a8156-0dac-4e52-b385-c41330f73296) | 2 | — |
-| Reader detached | [Reader · Detached](https://p.superdesign.dev/draft/7df8b1dc-2d2e-449b-9b1c-2f376b7b4e2a) | 2 | 3 |
-| Reader anchored | [Reader · Anchored](https://p.superdesign.dev/draft/ffc5bbcf-d78a-418b-8cff-a665c1699f44) | 2 | 3 |
+| Prompter detached | [Reader · Detached](https://p.superdesign.dev/draft/7df8b1dc-2d2e-449b-9b1c-2f376b7b4e2a) | 2 | 3 |
+| Prompter anchored | [Reader · Anchored](https://p.superdesign.dev/draft/ffc5bbcf-d78a-418b-8cff-a665c1699f44) | 2 | 3 |
 
 The shared ReaderHeader is `93e127ef-46a5-4991-93d2-dc3557611848`.
 Its version matters separately from the draft version: the last refinement
@@ -56,11 +60,11 @@ contains review labels outside the product windows; those labels are not app UI.
 - Omit the earlier active sidebar's disk/On this Mac/script-count footer.
   Local-storage and save-state communication remains near the document title.
 
-## Reader
+## Prompter
 
-![Approved Quiet Native detached reader](Design/QuietNative/2026-10-31/ReaderDetached.jpg)
+![Approved Quiet Native detached prompter](Design/QuietNative/2026-10-31/ReaderDetached.jpg)
 
-![Approved Quiet Native anchored reader](Design/QuietNative/2026-10-31/ReaderAnchored.jpg)
+![Approved Quiet Native anchored prompter](Design/QuietNative/2026-10-31/ReaderAnchored.jpg)
 
 - Use the quiet script-title header, charcoal reading surface, softened white
   text, modest corners and shared system typography. Keep large reading text.
@@ -82,9 +86,9 @@ from AppKit SF Symbols; native code should use the named symbols to support
 native rendering and future symbol effects. Browser assets or CDN dependencies
 must not become runtime dependencies of the offline Mac app.
 
-The depicted charcoal reader is a visual default. Planned Light, Dark, system
+The depicted charcoal prompter is a visual default. Planned Light, Dark, system
 appearance and accessibility support remain required. Preserve existing native
-dragging, resizing, collapse, locking, focus and display behavior when adopting
+dragging, resizing, collapse, locking, native activation and display behavior when adopting
 the styling. Native keyboard, VoiceOver, reduced effects, notch and capture
 compatibility still require their documented validation.
 

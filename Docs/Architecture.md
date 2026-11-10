@@ -30,7 +30,7 @@ implemented features or permission to build adjacent work.
 
 ## Ownership and dependencies
 
-**Feature UI includes native UI infrastructure.** A reader panel, window
+**Feature UI includes native UI infrastructure.** A prompter panel, window
 controller, delegate, hosting view, text editor, scrolling adapter or focus policy
 belongs to the feature it presents. Importing AppKit does not make it a service.
 Conversely, a non-UI operation can belong in Services even when only one feature
@@ -41,8 +41,8 @@ currently uses it, such as Library section generation.
 | `App` | Entry point, composition, lifecycle, scenes, app-wide commands, and coordination between feature windows | Panel mechanics, editing state, persistence and playback implementation |
 | `Features/<Feature>/` | SwiftUI/AppKit views, feature windows and delegates, presentation state, UI workflows, selection, focus, accessibility, native editor/viewport adapters and feature layout policy | SwiftData contexts, file transactions, model/speech sessions and authoritative shared non-UI session state |
 | `Domain/<Capability>/` | Shared identities, revisions, immutable snapshots, persisted value contracts, logical anchors and pure product policies | SwiftUI/AppKit objects, SwiftData records and framework sessions |
-| `Services/<Capability>/` | Non-UI state owners and effects: storage, preference serialization, file processing, reader session, text analysis, inference, speech and authorized agent operations | Windows, views, native editor/scroll ownership, navigation and feature presentation |
-| `DesignSystem/` | App-specific visuals and semantic tokens reused by independent features | Feature workflows, reader placement policy and speculative control libraries |
+| `Services/<Capability>/` | Non-UI state owners and effects: storage, preference serialization, file processing, prompter session, text analysis, inference, speech and authorized agent operations | Windows, views, native editor/scroll ownership, navigation and feature presentation |
+| `DesignSystem/` | App-specific visuals and semantic tokens reused by independent features | Feature workflows, prompter placement policy and speculative control libraries |
 | `Extensions/` | Focused, shared extensions to native types | Feature workflows or generic helper collections |
 
 ```text
@@ -55,11 +55,11 @@ App ── composes and coordinates ──► Features ── intents/values ─
 Features may use domain values directly. Services may use narrower services and
 domain contracts, with explicit dependencies and no cycles back into Features or
 App. Features report navigation/handoff requests through injected callbacks or
-capabilities; Library does not construct Reader UI. App wires concrete owners
+capabilities; Library does not construct Prompter UI. App wires concrete owners
 once, without a service locator or mutable global singleton.
 
 Folder placement does not select an executor. UI, AppKit callbacks, focus and
-presentation stay on `MainActor`. A non-UI `ReaderSession` may also use
+presentation stay on `MainActor`. A non-UI `PrompterSession` may also use
 `MainActor` for synchronized commands and logical position. Expensive storage,
 parsing, analysis and inference need an explicit isolated owner or narrowly
 scoped concurrent worker under the configured Swift concurrency baseline.
@@ -67,8 +67,7 @@ Never pass live SwiftData models or contexts across actors.
 
 ## Current source snapshot
 
-This is the working tree after the reader-controller extraction and ownership
-folder migration. It still implements only window behavior with synthetic text
+This is the working tree after the SwiftUI prompter-window migration (2026-11-03). It still implements only window behavior with synthetic text
 and UserDefaults placement.
 Library, script storage, handoff, appearance settings and scrolling are planned.
 
@@ -77,55 +76,67 @@ Promptly/
 ├── App/
 │   ├── PromptlyApp.swift                     ✅
 │   └── PromptlyAppDelegate.swift             ✅
-├── Features/Reader/
-│   ├── ReaderView.swift                      ✅
-│   ├── ReaderMenu.swift                      ✅
-│   ├── ReaderDragHandle.swift                ✅
+├── Features/Prompter/
+│   ├── PrompterView.swift                      ✅
+│   ├── PrompterMenu.swift                      ✅
+│   ├── Viewport/
+│   │   ├── PrompterLineLayoutEngine.swift      ✅
+│   │   ├── PrompterLineLayoutDemoView.swift    ✅
+│   │   ├── PrompterLineLayoutDemoModel.swift   ✅
+│   │   └── PrompterLine.swift                  ✅
 │   └── Windowing/
-│       ├── ReaderHostingView.swift           ✅
-│       ├── ReaderPanel.swift                 ✅
-│       ├── ReaderPanelControlling.swift      ✅
-│       ├── ReaderPanelController.swift       ✅
-│       ├── ReaderPanelEvent.swift            ✅
-│       ├── ReaderPanelLayout.swift           ✅
-│       ├── ReaderWindowController.swift      ✅
-│       ├── ReaderWindowGeometry.swift        ✅
-│       └── ReaderWindowLayoutConstants.swift ✅
+│       ├── PrompterWindowContent.swift         ✅
+│       ├── PrompterWindowAttachment.swift      ✅
+│       ├── PrompterWindowAdapter.swift         ✅
+│       ├── PrompterWindowAccessing.swift       ✅
+│       ├── PrompterWindowEvent.swift           ✅
+│       ├── PrompterWindowLayout.swift          ✅
+│       ├── PrompterWindowController.swift      ✅
+│       ├── PrompterWindowGeometry.swift        ✅
+│       └── PrompterWindowLayoutConstants.swift ✅
 ├── Domain/Windowing/
 │   ├── DisplayGeometry.swift                 ✅
-│   └── ReaderWindowState.swift               ✅
+│   └── PrompterWindowState.swift               ✅
 ├── Services/Preferences/
-│   └── ReaderWindowStateStore.swift          ✅
+│   └── PrompterWindowStateStore.swift          ✅
 ├── Extensions/
 │   └── NSScreen+Extensions.swift             ✅
 └── Assets.xcassets/                          ✅
 
 PromptlyTests/
-├── Features/Reader/Windowing/
-│   ├── ReaderPanelControllerTests.swift      ✅
-│   ├── ReaderWindowControllerTests.swift     ✅
-│   └── ReaderWindowGeometryTests.swift       ✅
+├── Features/Prompter/Windowing/
+│   ├── PrompterWindowAdapterTests.swift      ✅
+│   ├── PrompterWindowControllerTests.swift     ✅
+│   └── PrompterWindowGeometryTests.swift       ✅
+├── Features/Prompter/Viewport/
+│   ├── PrompterLineLayoutEngineTests.swift     ✅
+│   └── PrompterLineLayoutDemoModelTests.swift  ✅
 ├── Domain/Windowing/
-│   └── ReaderWindowStateTests.swift          ✅
+│   └── PrompterWindowStateTests.swift          ✅
 └── Services/Preferences/
-    └── ReaderWindowStateStoreTests.swift     ✅
+    └── PrompterWindowStateStoreTests.swift     ✅
 
 PromptlyUITests/
-└── ReaderWindowUITests.swift                 ✅
+└── PrompterWindowUITests.swift                 ✅
 ```
 
-`PromptlyAppDelegate` currently creates one `ReaderPanelController` and injects
-it into the observable `ReaderWindowController`, then attaches the hosted
-`ReaderView`. `ReaderView` and `ReaderMenu` share that controller. The split
-between presentation policy and native panel mechanics remains useful; both
-owners now live in `Features/Reader/Windowing`.
+`PromptlyApp` declares the prompter's SwiftUI `Window` and the menu-bar extra.
+`PromptlyAppDelegate` creates one `PrompterWindowAdapter` and observable
+`PrompterWindowController`, keeping state alive across native hide/close/reopen.
+`PrompterWindowContent` observes fitted size constraints and native resize policy.
+`PrompterView` uses `WindowDragGesture` and a real `WindowVisibilityToggle` in its
+header; `PrompterMenu` uses SwiftUI `openWindow`/`dismissWindow` actions.
 
-The window controller owns placement/collapse/lock state, preference recovery
-and debounced saves. The panel controller owns native effects and
-suppresses movement feedback during programmatic layout. Both are Reader UI
-owners. `ReaderWindowStateStore` only encodes and stores values, so it remains a
-service. See [window validation](WindowBehaviorValidation.md) and
-[historical coverage](SourceCoverage.md) for actual evidence and gaps.
+`PrompterWindowAttachment` attaches the adapter to SwiftUI's existing `NSWindow`.
+It does not create a window or replace SwiftUI's delegate. The adapter applies
+live geometry/overlay policy and observes native frame, close, visibility and
+display notifications. The controller owns placement/collapse/lock policy,
+preference recovery and debounced saves; visibility remains owned by SwiftUI.
+`PrompterWindowStateStore` only serializes values. The existing preference key and
+payload remain compatible. See [window validation](WindowBehaviorValidation.md)
+for the native-toggle host-context probe, independent alternatives review,
+validation and remaining compatibility checks. [Coverage](SourceCoverage.md)
+remains historical.
 
 ## Destination overview
 
@@ -145,18 +156,18 @@ Promptly/
 │   │   ├── Recovery/            Toast presentation and its temporary recovery ownership
 │   │   ├── ImportExport/        File pickers and file-operation presentation
 │   │   └── SectionSuggestions/  Optional generation and review presentation
-│   ├── Reader/
-│   │   ├── Windowing/           Panel, delegates, hosting, focus and placement
+│   ├── Prompter/
+│   │   ├── Windowing/           SwiftUI window content, native geometry/display attachment and placement
 │   │   ├── Viewport/            Text layout, native scrolling and visual position
 │   │   ├── Playback/            Controls, count-in display and keyboard interaction
 │   │   ├── Appearance/          Appearance controls and synthetic preview
 │   │   ├── VoiceFollowing/     Future opt-in and capture presentation
-│   │   └── Tips/               Later contextual reader tips, if needed
+│   │   └── Tips/               Later contextual prompter tips, if needed
 │   └── Settings/               Settings shell and agent-access consent UI
 ├── Domain/
 │   ├── Scripts/                IDs, revisions, snapshots, summaries and duration values
 │   ├── Sections/               Section IDs, paragraph anchors, mapping and suggestions
-│   ├── Reader/                 Sent snapshot, logical reading anchor and appearance values
+│   ├── Prompter/                 Sent snapshot, logical reading anchor and appearance values
 │   ├── Playback/               Playback state, pace/count-in values and policies
 │   ├── Windowing/              Shared display and persisted placement values
 │   └── AgentAccess/            Future script-scoped permission and request values
@@ -164,7 +175,7 @@ Promptly/
 │   ├── Persistence/            Isolated repository, SwiftData models/schema/migrations
 │   ├── Preferences/            Local preference codecs and storage
 │   ├── Scripts/                Non-UI script operations and bounded duration analysis
-│   ├── Playback/               One reader-session owner and non-UI timing
+│   ├── Playback/               One prompter-session owner and non-UI timing
 │   ├── Files/                  Bounded import/export processing and safe file transactions
 │   ├── Inference/              Optional on-device section generation
 │   ├── Speech/                 Future on-device capture, recognition and matching
@@ -185,10 +196,10 @@ code at that path; planned destinations are created with their roadmap work.
 | Status | Path | Responsibility |
 | --- | --- | --- |
 | ✅ | `PromptlyApp.swift` | Entry point, scenes and menu-bar composition; owns app-wide Quit. Feature content remains in Features. |
-| ✅ | `PromptlyAppDelegate.swift` | Current composition root, launch/reopen/termination forwarding. It constructs the reader's native and observable owners once. |
-| 🗓️ | `Composition/AppComposition.swift` | Extract dependency construction when Library, repository and shared reader session make the delegate too large. No runtime lookup container. |
-| 🗓️ | `Navigation/AppCoordinator.swift` | Show Library, show Reader, successful handoff presentation, and commands targeting the active editing/reader owner. Never duplicates drafts or playback state. |
-| 🗓️ | `Commands/PromptlyCommands.swift` | App-wide Show Library, New Script and Send command wiring, with contextual enablement and editor-safe shortcuts. Reader-specific menu content remains in Reader. |
+| ✅ | `PromptlyAppDelegate.swift` | Composition root and termination forwarding. Constructs the prompter model and native-window adapter once; SwiftUI owns creation, visibility and reopening. |
+| 🗓️ | `Composition/AppComposition.swift` | Extract dependency construction when Library, repository and shared prompter session make the delegate too large. No runtime lookup container. |
+| 🗓️ | `Navigation/AppCoordinator.swift` | Show Library, show Prompter, successful handoff presentation, and commands targeting the active editing/prompter owner. Never duplicates drafts or playback state. |
+| 🗓️ | `Commands/PromptlyCommands.swift` | App-wide Show Library, New Script and Send command wiring, with contextual enablement and editor-safe shortcuts. Prompter-specific menu content remains in Prompter. |
 | 🗓️ | `Lifecycle/AppLifecycleCoordinator.swift` | When needed, coordinates safe close/quit with the editing owner and stops active work. Feature window delegates report requests; this type does not implement panel geometry. |
 
 Use native SwiftUI scenes for Library/Settings when sufficient; dedicated feature
@@ -229,34 +240,37 @@ wrappers for every view.
 </details>
 
 <details open>
-<summary><strong><code>Features/Reader/</code></strong> — window presentation and reading surfaces</summary>
+<summary><strong><code>Features/Prompter/</code></strong> — window presentation and reading surfaces</summary>
 
 | Status | Path | Responsibility |
 | --- | --- | --- |
-| ✅ | `ReaderView.swift` | Reader shell and control presentation. Evolves to render the sent snapshot through the viewport. |
-| ✅ | `ReaderMenu.swift` | Reader commands and preference warnings. Later playback commands use the same shared session as the panel controls. |
-| ✅ | `ReaderDragHandle.swift` | Reader-local AppKit drag bridge; stays feature-owned. |
-| ✅ | `Windowing/ReaderWindowController.swift` | Observable placement, visibility, collapse/lock policy, preference restore/recovery and save debounce. Never becomes the script or playback owner. |
-| ✅ | `Windowing/ReaderPanelController.swift` | Panel configuration, display observation, nonactivating visibility and NSWindowDelegate. Owns programmatic-geometry feedback suppression. |
-| ✅ | `Windowing/ReaderPanel.swift` | Native nonactivating panel that cannot become the key or main window. |
-| ✅ | `Windowing/ReaderHostingView.swift` | Native hosting and first-mouse/key policy for Reader content. |
-| ✅ | `Windowing/ReaderPanelControlling.swift` | Feature-local substitution boundary between window policy and native effects. |
-| ✅ | `Windowing/ReaderPanelEvent.swift` | Native frame/display/close events delivered to the feature owner. |
-| ✅ | `Windowing/ReaderPanelLayout.swift` | Frame and interaction constraints consumed by the native adapter. |
-| ✅ | `Windowing/ReaderWindowGeometry.swift` | Pure Reader UI placement calculations; being pure does not make feature layout a shared domain policy or service. |
-| ✅ | `Windowing/ReaderWindowLayoutConstants.swift` | Reader window/control sizing shared by its view and geometry. Feature-specific, not a design-system token set. |
-| 🗓️ | `Viewport/ReaderViewport.swift` | Reading text surface, guide/highlight, clicked-paragraph navigation and accessibility presentation. |
-| 🗓️ | `Viewport/ReaderScrollController.swift` | Native text layout, scrolling, display-driven updates and mapping between logical anchors and pixel offsets. Feeds reading-position changes to the shared session. |
-| 🗓️ | `Playback/ReaderPlaybackControls.swift` | Play/pause/restart/rewind/section controls, pace presets and slider, and count-in presentation. |
-| 🗓️ | `Playback/ReaderPlaybackSettings.swift` | Count-in and assumed speaking-rate preference controls hosted by Settings; these do not create another live playback owner. |
-| 🗓️ | `Appearance/ReaderAppearanceSettings.swift` | Typography, spacing, width, contrast, opacity, guide and Light/Dark/system controls for the Settings shell. |
-| 🗓️ | `Appearance/ReaderAppearancePreview.swift` | Live preview using synthetic text and the same rendering components, isolated from the active reader session. |
+| ✅ | `PrompterView.swift` | Prompter shell and control presentation. Evolves to render the sent snapshot through the viewport. |
+| ✅ | `PrompterMenu.swift` | Prompter commands and preference warnings. Later playback commands use the same shared session as the panel controls. |
+| ✅ | `Windowing/PrompterWindowContent.swift` | Observed, display-fitted content constraints and native resize/minimize/full-screen policy. |
+| ✅ | `Windowing/PrompterWindowController.swift` | Observable placement, collapse/lock policy, fitted size constraints, preference recovery and save debounce. No visibility state or presentation methods. |
+| ✅ | `Windowing/PrompterWindowAdapter.swift` | Weak attachment to SwiftUI's NSWindow, live geometry, overlay collection behavior and notification observation. No creation, show/hide ordering or delegate replacement. |
+| ✅ | `Windowing/PrompterWindowAttachment.swift` | Prompter-local NSViewRepresentable that reports native attachment/detachment by identity. |
+| ✅ | `Windowing/PrompterWindowAccessing.swift` | Substitution boundary for geometry and display effects. |
+| ✅ | `Windowing/PrompterWindowEvent.swift` | Native attachment, frame, display, hide and close notifications. |
+| ✅ | `Windowing/PrompterWindowLayout.swift` | Frame, movement policy and fitted minimum/maximum size for the adapter. |
+| ✅ | `Windowing/PrompterWindowGeometry.swift` | Pure Prompter UI placement calculations; being pure does not make feature layout a shared domain policy or service. |
+| ✅ | `Windowing/PrompterWindowLayoutConstants.swift` | Prompter window/control sizing shared by its view and geometry. Feature-specific, not a design-system token set. |
+| 🗓️ | `Viewport/PrompterViewport.swift` | Reading text surface, guide/highlight, clicked-paragraph navigation and accessibility presentation. |
+| ✅ | `Viewport/PrompterLineLayoutEngine.swift` | Standalone cancellable Core Text line breaking off the UI actor, returning source ranges and display text. No settings, scrolling or playback ownership. |
+| ✅ | `Viewport/PrompterLineLayoutDemoView.swift` | Isolated demo controls, source-identified SwiftUI rows and prepared wide/narrow previews; no app-window integration or saved preferences. |
+| ✅ | `Viewport/PrompterLineLayoutDemoModel.swift` | Demo request lifetime, last-good layout and source-anchor reconciliation across reflow/navigation. |
+| ✅ | `Viewport/PrompterLine.swift` | Derived row text and UTF-16 source range within one unchanged script input. |
+| 🗓️ | `Viewport/PrompterScrollController.swift` | Native text layout, scrolling, display-driven updates and mapping between logical anchors and pixel offsets. Feeds reading-position changes to the shared session. |
+| 🗓️ | `Playback/PrompterPlaybackControls.swift` | Play/pause/restart/rewind/section controls, pace presets and slider, and count-in presentation. |
+| 🗓️ | `Playback/PrompterPlaybackSettings.swift` | Count-in and assumed speaking-rate preference controls hosted by Settings; these do not create another live playback owner. |
+| 🗓️ | `Appearance/PrompterAppearanceSettings.swift` | Typography, spacing, width, contrast, opacity, guide and Light/Dark/system controls for the Settings shell. |
+| 🗓️ | `Appearance/PrompterAppearancePreview.swift` | Live preview using synthetic text and the same rendering components, isolated from the active prompter session. |
 | ⚠️ | `VoiceFollowing/VoiceFollowingControls.swift` | Future explicit opt-in, permission/asset state, active capture indication and manual fallback. |
-| 🗓️ | `Tips/` | Later Reader-specific contextual tips if TipKit is adopted; configuration belongs in App only when app-wide setup is needed. |
+| 🗓️ | `Tips/` | Later Prompter-specific contextual tips if TipKit is adopted; configuration belongs in App only when app-wide setup is needed. |
 
-Native frame scheduling and scroll views remain here. The non-UI reader session
+Native frame scheduling and scroll views remain here. The non-UI prompter session
 owns the sent snapshot, logical anchor and playback state; the viewport's pixel
-position/layout cache is a derived representation, not a second reader session.
+position/layout cache is a derived representation, not a second prompter session.
 Window placement, lock and collapse stay independent of playback.
 
 </details>
@@ -266,7 +280,7 @@ Window placement, lock and collapse stay independent of playback.
 
 | Status | Path | Responsibility |
 | --- | --- | --- |
-| 🗓️ | `SettingsView.swift` | Native settings shell. Hosts Reader appearance/playback settings and later capability-owned settings content through composition. |
+| 🗓️ | `SettingsView.swift` | Native settings shell. Hosts Prompter appearance/playback settings and later capability-owned settings content through composition. |
 | 🗓️ | `SettingsModel.swift` | Only shell-specific selection/presentation state if needed; not a second preference, playback, speech or inference owner. |
 | ⚠️ | `AgentAccess/AgentPermissionsView.swift` | Future script-scoped read/edit/playback grants and revocation, including the external-agent processing boundary. |
 
@@ -287,7 +301,7 @@ view state and native geometry policies stay with their feature even when pure.
 | Status | Path | Responsibility |
 | --- | --- | --- |
 | ✅ | `Windowing/DisplayGeometry.swift` | Immutable display snapshot used by placement calculations and native adapters. |
-| ✅ | `Windowing/ReaderWindowState.swift` | Shared Codable placement value used by Reader UI and preference storage, preserving its payload compatibility. Keeping it here prevents Services depending on Features. |
+| ✅ | `Windowing/PrompterWindowState.swift` | Shared Codable placement value used by Prompter UI and preference storage, preserving its payload compatibility. Keeping it here prevents Services depending on Features. |
 | 🗓️ | `Scripts/ScriptID.swift` | Stable opaque script identity, independent of SwiftData identity and private text. |
 | 🗓️ | `Scripts/ScriptRevision.swift` | Exact revision tokens for saves, handoff, generated work and agent edits; define content/metadata revision treatment before storage implementation. |
 | 🗓️ | `Scripts/ScriptSnapshot.swift` | Immutable saved or proposed script values, including sections, passed across ownership boundaries. |
@@ -297,9 +311,9 @@ view state and native geometry policies stay with their feature even when pure.
 | 🗓️ | `Sections/ParagraphAnchor.swift` | Stable section-boundary meaning across text edits. |
 | 🗓️ | `Sections/SectionAnchorMapping.swift` | Pure rules for paragraph edits, merges, deletions and their undo data; native editing transactions remain feature-owned. |
 | 🗓️ | `Sections/SectionSuggestion.swift` | Validated suggestion with operation/source revision and app-owned provenance, never a live Foundation Models response. |
-| 🗓️ | `Reader/SentScriptSnapshot.swift` | The immutable revision explicitly sent to the reader, distinct from the working draft and latest saved Library revision. |
-| 🗓️ | `Reader/ReadingAnchor.swift` | Logical content location preserved through viewport reflow and appearance changes. |
-| 🗓️ | `Reader/ReaderAppearance.swift` | Validated typography, spacing, width, alignment, contrast, opacity and guide values shared by Reader, settings and preview. |
+| 🗓️ | `Prompter/SentScriptSnapshot.swift` | The immutable revision explicitly sent to the prompter, distinct from the working draft and latest saved Library revision. |
+| 🗓️ | `Prompter/ReadingAnchor.swift` | Logical content location preserved through viewport reflow and appearance changes. |
+| 🗓️ | `Prompter/PrompterAppearance.swift` | Validated typography, spacing, width, alignment, contrast, opacity and guide values shared by Prompter, settings and preview. |
 | 🗓️ | `Playback/PlaybackState.swift` | Legal paused/count-in/playing workflow with associated operation state; window collapse/lock are separate. |
 | 🗓️ | `Playback/PlaybackPace.swift` | One scroll-speed value used by presets and slider; custom is derived rather than a competing setting. |
 | 🗓️ | `Playback/CountInPolicy.swift` | Configured countdown and start/resume semantics after the milestone's product decision. |
@@ -319,23 +333,23 @@ construct windows, reach into an editor, navigate, or choose feature presentatio
 
 | Status | Path | Responsibility |
 | --- | --- | --- |
-| ✅ | `Preferences/ReaderWindowStateStore.swift` | Existing UserDefaults codec/storage for placement, preserving `reader.windowPlacement.v1`, payload compatibility and typed failures. ReaderWindowController owns restore/reset policy and save debounce. |
-| 🗓️ | `Preferences/ReaderAppearanceStore.swift` | Typed local appearance preferences used by feature controls and Reader. `@AppStorage` may bind preferences, never script storage. |
+| ✅ | `Preferences/PrompterWindowStateStore.swift` | Existing UserDefaults codec/storage for placement, preserving `reader.windowPlacement.v1`, payload compatibility and typed failures. PrompterWindowController owns restore/reset policy and save debounce. |
+| 🗓️ | `Preferences/PrompterAppearanceStore.swift` | Typed local appearance preferences used by feature controls and Prompter. `@AppStorage` may bind preferences, never script storage. |
 | 🗓️ | `Preferences/PlaybackPreferencesStore.swift` | Persisted pace/count-in/assumed speaking-rate preferences as defined in their milestones; not the live playback state. |
 | 🗓️ | `Persistence/ModelContainerFactory.swift` | Recoverable container creation with CloudKit explicitly disabled, including tests/previews. Never resets a failed store. |
 | 🗓️ | `Persistence/ScriptRepository.swift` | One isolated persistence owner: bounded queries, serialized revision-checked content/metadata writes, deletes and recoverable failures. Introduce a substitutable repository contract here when consumers need it. |
 | 🗓️ | `Persistence/Models/` | SwiftData records for scripts and sections, including `isPinned: Bool = false` on script metadata. These are not UI models or cross-actor snapshots. |
 | 🗓️ | `Persistence/Schema/`, `Persistence/Migrations/` | Initial schema/compatibility design and later explicit migrations preserving IDs, revisions, text, sections and pins. |
-| 🗓️ | `Scripts/ScriptDeletionService.swift` | Coordinates committed deletion, stale-work invalidation and clearing the matching reader snapshot. Supports scoped restoration supplied by the live recovery workflow; retains no hidden Undo history. |
+| 🗓️ | `Scripts/ScriptDeletionService.swift` | Coordinates committed deletion, stale-work invalidation and clearing the matching prompter snapshot. Supports scoped restoration supplied by the live recovery workflow; retains no hidden Undo history. |
 | 🗓️ | `Scripts/ReadingDurationEstimator.swift` | Bounded language-aware text analysis returning an estimate and its rate assumption. Does not measure speech or derive scroll speed. |
-| 🗓️ | `Playback/ReaderSession.swift` | One non-UI owner of the exact sent snapshot, logical anchor, play/count-in state and speed; shared by Reader controls, menu commands and future authorized agents. No NSView/NSWindow references. |
-| 🗓️ | `Playback/PlaybackTiming.swift` | Elapsed-time/count-in calculation and cancellable timing through injected time as needed. Native frame callbacks and scroll application stay in Reader/Viewport. |
+| 🗓️ | `Playback/PrompterSession.swift` | One non-UI owner of the exact sent snapshot, logical anchor, play/count-in state and speed; shared by Prompter controls, menu commands and future authorized agents. No NSView/NSWindow references. |
+| 🗓️ | `Playback/PlaybackTiming.swift` | Elapsed-time/count-in calculation and cancellable timing through injected time as needed. Native frame callbacks and scroll application stay in Prompter/Viewport. |
 | ⚠️ | `Files/ScriptImporter.swift` | Bounded format parsing and validation before committing an import. Existing scripts and unsaved edits survive failure/cancellation. |
 | ⚠️ | `Files/ScriptExporter.swift` | Consistent snapshot export, staging, validation, safe destination replacement and cleanup; file formats and write access require decisions first. |
 | ⚠️ | `Files/UserSelectedFileAccess.swift` | Security-scoped access lifetime for authorized file operations, released on completion/cancellation. Does not show NSOpenPanel/NSSavePanel. |
 | 🗓️ | `Inference/SectionSuggestionService.swift` | Optional on-device availability, bounded model work, cancellation/refusal handling and output validation with operation/source identities. |
 | 🗓️ | `Inference/Models/` | Framework-specific structured-generation schemas converted to domain suggestions before review. App-owned prompt/format versions supply provenance. |
-| ⚠️ | `Speech/VoiceFollowingService.swift` | Future on-device capture/recognition/matching ownership, availability/assets and bounded buffers. Matches drive the same ReaderSession through authorized intents. |
+| ⚠️ | `Speech/VoiceFollowingService.swift` | Future on-device capture/recognition/matching ownership, availability/assets and bounded buffers. Matches drive the same PrompterSession through authorized intents. |
 | ⚠️ | `AgentAccess/ScriptAccessAuthorizer.swift` | Future script-scoped read/edit/playback checks and revocation at execution time, independent of consent UI. |
 | ⚠️ | `AgentAccess/AgentCommandService.swift` | Future authorized requests through the same repository/session and revision guards as normal workflows; no direct feature-view access. |
 | ⚠️ | `AgentAccess/Transport/` | Future local stdio-helper/XPC or Unix-socket integration after protocol, sandbox and lifecycle feasibility are established. No network-facing script API. |
@@ -357,7 +371,7 @@ Core editing/playback remain useful offline without model or speech assets.
 
 | Status | Path | Responsibility |
 | --- | --- | --- |
-| 🗓️ | `DesignSystem/Components/` | Components actually shared by independent features. A Reader-only control stays in Reader, and a Library-only toast stays in Library. |
+| 🗓️ | `DesignSystem/Components/` | Components actually shared by independent features. A Prompter-only control stays in Prompter, and a Library-only toast stays in Library. |
 | 🗓️ | `DesignSystem/Styling/` | Semantic visual treatments reused across features after native adoption demonstrates reuse. Prefer system controls/fonts/colors and the approved SF Symbols. |
 | ✅ | `Extensions/NSScreen+Extensions.swift` | Focused native display-to-value conversion; no window workflow or presentation ownership. |
 | ✅ | `Assets.xcassets/` | Raw app images and colors. No script-derived resources, identifiers or filenames. |
@@ -375,10 +389,11 @@ feature-only interaction bridge belongs to its feature.
 | Working title/text/sections, selection and native edit undo | Library `ScriptEditingSession` | Immutable revision-bearing save/send requests |
 | Library results, selection intent, search/load state | `LibraryModel` | Stable row IDs and bounded summaries |
 | Last successfully saved revision and durable metadata | `ScriptRepository` | Immutable snapshots/acknowledgments or typed failures |
-| Exact sent script, logical position, playback state and speed | `ReaderSession` | Observed values and narrow commands, shared across all control surfaces |
-| Window placement/collapse/lock/visibility | Reader `ReaderWindowController` | Native layout requests and feature UI state |
-| Native panel, delegates and observer handles | Reader `ReaderPanelController` | Frame/display/close events; no duplicate saved window state |
-| Rendered pixels, layout caches and native scroll callbacks | Reader viewport/scroll owner | Logical anchor changes and viewport facts |
+| Exact sent script, logical position, playback state and speed | `PrompterSession` | Observed values and narrow commands, shared across all control surfaces |
+| Window placement/collapse/lock and fitted constraints | Prompter `PrompterWindowController` | Native layout requests and feature UI state |
+| Prompter window creation and visibility | SwiftUI `Window` scene | Native open/dismiss/toggle actions |
+| Weak native window attachment and observer handles | Prompter `PrompterWindowAdapter` | Geometry/lifecycle/display events; no duplicate saved state or delegate ownership |
+| Rendered pixels, layout caches and native scroll callbacks | Prompter viewport/scroll owner | Logical anchor changes and viewport facts |
 | Active destructive recovery snapshot and deadline | Library recovery owner | The current toast's Undo/dismiss intents only |
 | File/model/speech operation and cancellation identity | Owning non-UI service | Bounded progress/results tied to source identity and revision |
 
@@ -406,17 +421,17 @@ remain planned; the source snapshot supplies no Library baseline.
   deterministic teardown. A later action must not restore the wrong script or
   overwrite newer section edits. Save failures remain persistent/retryable.
 
-### Library-to-reader handoff
+### Library-to-prompter handoff
 
 Keep the working draft, last good save and sent snapshot distinct. The Library's
 save/send workflow owner captures the intended revision and saves through the
 repository. After relevant suspension points it revalidates operation identity,
 script identity and the current draft revision. Before the final commit, a
-failure, cancellation, deletion or newer edit preserves the active reader and
+failure, cancellation, deletion or newer edit preserves the active prompter and
 keeps Library open with the draft intact.
 
-Only a successful final commit installs the stable snapshot into ReaderSession
-and permits App coordination to close Library and show Reader paused. Keep that
+Only a successful final commit installs the stable snapshot into PrompterSession
+and permits App coordination to close Library and show Prompter paused. Keep that
 last identity check and session/presentation commit serialized on MainActor.
 App must not start a second save workflow or treat opening a window as a save.
 Play is a separate intent; re-sending does not implicitly restart an already
@@ -425,8 +440,8 @@ replacement/anchor behavior must be specified when reading positions are built.
 
 Library coordinates save-before-delete against the intended latest draft and
 captures the corresponding recovery data; failure to save or delete preserves
-the draft, stored data and reader. Deleting the source script clears the matching
-active reader snapshot after a successful deletion. Undo restores Library data,
+the draft, stored data and prompter. Deleting the source script clears the matching
+active prompter snapshot after a successful deletion. Undo restores Library data,
 selection and pin state only; it does not resend.
 If durable sent copies are later approved, define and test their all-or-nothing
 deletion boundary too. Durable sent-copy restoration is still undecided.
@@ -434,15 +449,15 @@ deletion boundary too. Durable sent-copy restoration is still undecided.
 ### Reading, appearance and playback
 
 The shared session is the single source of truth for content, logical anchor,
-play/pause/count-in and speed. Reader UI applies those values to native layout;
+play/pause/count-in and speed. Prompter UI applies those values to native layout;
 settings preview uses synthetic content and never replaces the active snapshot.
 Resize, display and style changes reconcile the logical anchor. Native scrolling
 uses elapsed time, manual interaction takes precedence, and per-frame work stays
 local to the viewport. Do not persist every frame or invalidate unrelated views.
 
 Presets and slider modify the same speed. Count-in has skip/cancel and explicit
-start/resume policy. Closing the reader must stop automatic scrolling and cancel
-pending count-in; define Hide/show behavior during the playback milestone.
+start/resume policy. Closing the prompter must stop automatic scrolling and cancel
+pending count-in; define playback timing during native hide/close in the playback milestone.
 Window placement remains independently restorable.
 Duration estimation uses a displayed assumed speaking rate, with count-in
 separate; it is not a measurement of delivery or scroll duration.
@@ -475,8 +490,8 @@ test target, and avoid adding test-only conveniences to the app target.
 
 | Destination | Coverage |
 | --- | --- |
-| `PromptlyTests/Features/Reader/Windowing/` | Window policy with a fake panel, native panel integration, geometry, callback suppression, focus and observer lifecycle |
-| `PromptlyTests/Features/Reader/Viewport/` | Logical-anchor/pixel reconciliation under reflow, manual scroll and viewport changes |
+| `PromptlyTests/Features/Prompter/Windowing/` | Window policy with a fake window, native notification/geometry integration, delegate preservation, stale attachment filtering and observer lifecycle |
+| `PromptlyTests/Features/Prompter/Viewport/` | Logical-anchor/pixel reconciliation under reflow, manual scroll and viewport changes |
 | `PromptlyTests/Features/Library/` | Load/empty/search states, row IDs, native editing and section undo, save/send races, toast identity/expiry and close recovery |
 | `PromptlyTests/Services/Preferences/` | Existing payload compatibility, last-good preference bytes, failure preservation and reopen |
 | `PromptlyTests/Services/Persistence/` | Initial creation/reopen, revision ordering, deletion, low-storage/injected failures and later migrations |
@@ -486,7 +501,7 @@ test target, and avoid adding test-only conveniences to the app target.
 | Future `PromptlyTests/Services/AgentAccess/` | Script scope, separate grants, revocation, stale/revision-conflicting requests and local-transport lifecycle/limits |
 | `PromptlyTests/Domain/<Capability>/` | Shared value compatibility, section mapping, logical anchors and product policies |
 | `PromptlyTests/Extensions/` | Focused test-only type extensions shared within the unit/AppKit test target, when needed |
-| `PromptlyUITests/` | Reader, Library and Settings journeys on macOS, including keyboard/VoiceOver and synthetic screenshots where applicable |
+| `PromptlyUITests/` | Prompter, Library and Settings journeys on macOS, including keyboard/VoiceOver and synthetic screenshots where applicable |
 | `PromptlyUITests/Extensions/` | Focused test-only type extensions shared within the UI test target, when needed |
 
 Native focus, physical displays, capture apps, minimum macOS 26.0 and accessibility
@@ -494,6 +509,10 @@ need their recorded real-Mac evidence. A path change or passing unit suite canno
 establish those checks. Keep the existing validation history when tests move.
 
 ## Completed layout migration
+
+This historical record retains the Reader names used on 2026-11-01.
+The current snapshot and destinations use Prompter after the
+2026-11-04 feature rename.
 
 The source and test relocation below was completed on 2026-11-01. File contents,
 the controller/panel split, runtime behavior, concurrency settings and preference
@@ -525,7 +544,7 @@ into Reader UI would break that direction.
 | --- | --- |
 | Milestone 2 storage | Initial schema/version, private location/filename, compatibility policy, repository executor, bounds, content/metadata revisions, ordering, pagination and search |
 | Editing recovery | Safe switch/close/quit during unsaved edits or persistent failure; recovery replacement and retained draft bounds |
-| Reader handoff | Whether sent copies persist across relaunch, startup restoration/compatibility and same-script reading-anchor reconciliation |
+| Prompter handoff | Whether sent copies persist across relaunch, startup restoration/compatibility and same-script reading-anchor reconciliation |
 | Milestones 3–4 | Optional OpenDyslexic suitability/licensing, pace values, Hide/show behavior, first-start/resume count-in, duration tokenization/assumed rate/rounding |
 | Milestone 5 | Supported formats, section/style preservation, replacement policy and sandbox export write access; current selected-file access is read-only |
 | Milestone 6 | Foundation Models availability/asset behavior, input/output budgets and review validation; no remote fallback |

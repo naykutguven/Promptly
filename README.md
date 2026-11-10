@@ -1,29 +1,37 @@
 # Promptly
 
 Promptly is a native macOS teleprompter designed for private, offline use. The
-current prototype provides reader window behavior with synthetic text and local
+current prototype provides prompter window behavior with synthetic text and local
 placement preferences. Script editing, persistence, handoff and scrolling
-remain planned. The approved Quiet Native Library and reader designs guide
+remain planned. The approved Quiet Native Library and prompter designs guide
 upcoming visual adoption.
 
 See the [roadmap](ROADMAP.md) for implementation scope and remaining milestones.
 The [architecture map](Docs/Architecture.md) documents current ownership, planned source destinations, and placement decisions.
 The [approved Quiet Native baseline](Docs/QuietNativeDesign.md) records the Library
-and reader visuals. The [Library design contract](Docs/LibraryDesign.md) records
+and prompter visuals. The [Library design contract](Docs/LibraryDesign.md) records
 its states and interactions; native adoption is planned separately from the
 current implementation below.
 
 ## Current implementation
 
-Promptly opens a menu-bar reader with fixed synthetic sample text. There is no
+Promptly opens a menu-bar prompter with fixed synthetic sample text. There is no
 Library window, script editor, script store, autosave, Send to
 Prompter workflow or manual/automatic scrolling implementation yet.
 
-The reader wraps around the primary display's notch, or sits at the top center on a display without one. Choose **Detach Prompter**, then drag the title or empty header area to move it and resize its edges. Collapse, expand, lock, return to the notch, and hide are available through the reader or menu. Lock prevents movement and resizing; Return to Notch remains available while locked.
+A standalone [line-layout engine](Docs/LineLayoutEngine.md) derives display rows
+and source ranges using Core Text. A separate demonstration view and previews
+exercise its SwiftUI rows, local typography controls and source-position
+restoration. The main prompter, saved settings and playback are not connected;
+the native TextRenderer experiment remains separate.
 
-Pointer interactions are intended to preserve the presenting app's focus. Use macOS keyboard menu-bar navigation to reach Promptly's menu for keyboard control; its displayed keyboard shortcuts are local menu shortcuts, not global shortcuts.
+The prompter wraps around the primary display's notch, or sits at the top center on a display without one. Choose **Detach Prompter**, then drag the title or empty header area to move it and resize its edges. Collapse, expand, lock, return to the notch, and hide are available through the prompter or menu. Lock prevents movement and resizing; Return to Notch remains available while locked.
 
-Reader placement preferences use local UserDefaults. No script schema, store
+The prompter uses SwiftUI's native window behavior; normal activation when interacting with it is allowed. Use macOS keyboard menu-bar navigation to reach Promptly's menu for keyboard control; its displayed keyboard shortcuts are local menu shortcuts, not global shortcuts.
+
+The header Hide control uses WindowVisibilityToggle; the menu uses native openWindow/dismissWindow actions. Prompter state stays outside the window so hiding or closing and reopening it preserves placement, collapse and lock state.
+
+Prompter placement preferences use local UserDefaults. No script schema, store
 filename, migration plan, editing-session cache or deletion-recovery buffer is
 implemented. The [planned persistence requirements](Docs/PersistencePolicy.md)
 and [Library acceptance checklist](Docs/ScriptEditingValidation.md) guide
@@ -74,11 +82,11 @@ save/send, section anchoring, local privacy and data-preservation behavior.
 
 ### Library
 
-- **Library window:** Keep script management, editing, file import/export, manual sections, and optional section suggestions in a dedicated window, separate from the reader. **Show Library** opens or returns to this workspace.
+- **Library window:** Keep script management, editing, file import/export, manual sections, and optional section suggestions in a dedicated window, separate from the prompter. **Show Library** opens or returns to this workspace.
 - **Script management:** Support autosave, undo/redo, duplication, search, and the approved pinned-library workflow. File import/export remains a separate milestone; supported formats will be defined later.
 - **Sections:** Named paragraph-start boundaries are stored separately from script text. They move with edits; consuming a whole paragraph removes its boundary, and joining marked paragraphs keeps the earlier boundary. Native undo restores text and affected boundaries together.
 - **Optional AI section suggestions:** Use Foundation Models to suggest script sections. When the on-device model is unavailable, explain its availability status and provide setup guidance where applicable. Manual section editing remains available.
-- **Send to Prompter:** Save the latest edits and hand off a stable script revision before closing the Library window. Failed or cancelled handoffs keep the window open and edits intact. Open the reader paused; Play is a separate action. Reopening the Library restores the selected script, and further edits reach the reader only through another explicit send.
+- **Send to Prompter:** Save the latest edits and hand off a stable script revision before closing the Library window. Failed or cancelled handoffs keep the window open and edits intact. Open the prompter paused; Play is a separate action. Reopening the Library restores the selected script, and further edits reach the prompter only through another explicit send.
 - **Estimated reading duration:** Show approximate speaking time from script length and a displayed, adjustable assumed reading rate in words per minute. Label the assumption clearly; this is an estimate, not measured speech or automatic scrolling time. Keep count-in time separate.
 
 ### Reading and playback
@@ -107,26 +115,27 @@ save/send, section anchoring, local privacy and data-preservation behavior.
 
 - **Minimum deployment target:** macOS 26.0.
 - **Swift:** Swift 6.4 toolchain, strict concurrency checking, Approachable Concurrency enabled, and `MainActor` as the default isolation.
-- **SwiftUI:** Current reader interface and controls; Library and settings UI are planned.
-- **AppKit:** Current floating panel, window positioning, focus and display integration; native text editing and undo are planned.
+- **SwiftUI:** Current prompter Window scene, native visibility actions, header WindowVisibilityToggle, window dragging and resize behavior; Library and settings UI are planned.
+- **AppKit:** A narrow adapter positions the SwiftUI-owned window, observes geometry/display changes and preserves overlay collection behavior. There is no custom NSPanel, hosting view or window delegate; native text editing and undo are planned.
 - **SwiftData — planned:** Local script, section and pin storage with CloudKit disabled. The initial schema and compatibility policy are not implemented.
-- **UserDefaults:** Current reader placement preferences; `@AppStorage` bindings for future preference UI are planned.
+- **UserDefaults:** Current prompter placement preferences; `@AppStorage` bindings for future preference UI are planned.
 - **Foundation Models — planned:** Optional section suggestions using the on-device `SystemLanguageModel`.
 - **Speech framework — future:** On-device speech recognition for voice-following.
 - **TipKit — later:** Contextual onboarding and feature discovery.
 
 ## Implementation notes
 
-- **Library handoff — planned:** Revalidate the script identity and revision before committing a send. Newer edits or a failed save must not be discarded by closing the Library or replacing the active reader. Sending must not implicitly restart an already loaded script.
+- **Library handoff — planned:** Revalidate the script identity and revision before committing a send. Newer edits or a failed save must not be discarded by closing the Library or replacing the active prompter. Sending must not implicitly restart an already loaded script.
 - **Duration estimate:** Calculate approximate minutes as language-aware word count divided by the assumed words per minute. For example, 600 words at 150 words per minute is about four minutes. Define tokenization and the initial rate during implementation; account for languages without space-separated words and explain that pauses and delivery vary. This assumption is separate from the scroll-speed control.
 - **Display placement:** The main display means the primary display configured in macOS, not whichever display contains the key window. Restore detached placement against actual visible screen bounds, including display disconnection; a bounding rectangle around multiple screens may contain gaps.
-- **Playback timing:** Derive motion from elapsed time, give manual scrolling precedence, and stop playback updates when idle or the reader closes. Keep logical reading anchors independent of pixel offsets.
+- **Playback timing:** Derive motion from elapsed time, give manual scrolling precedence, and stop playback updates when idle or the prompter closes. Keep logical reading anchors independent of pixel offsets.
 - **Model availability:** Check on-device model availability before offering AI section suggestions. macOS manages Apple Intelligence model downloads. An unavailable model may also indicate that Apple Intelligence is disabled or unsupported; show guidance appropriate to the reported state.
 - **MCP transport:** Prefer a stdio MCP helper that communicates with Promptly through XPC or a Unix domain socket, without a network-facing API. The [Swift SDK evaluation](Docs/MCPSwiftSDKEvaluation.md) records a conditional SDK recommendation and protocol, bounded-work, and sandbox validation gates. The detailed interface will be specified later.
 - **Agent privacy boundary:** Local transport does not guarantee that an external agent processes retrieved scripts locally. Make that distinction clear when granting script-reading access.
 
 ## References
 
+- [Lyrisland scrolling evaluation](Docs/LyrislandScrollingEvaluation.md): source review and native API candidates for planned prompter appearance/playback work.
 - [Apple: Foundation Models availability](https://developer.apple.com/documentation/foundationmodels/generating-content-and-performing-tasks-with-foundation-models)
 - [Apple: Speech model assets](https://developer.apple.com/documentation/speech/assetinventory)
 - [Apple: Window-sharing limitations](https://developer.apple.com/documentation/appkit/nswindow/sharingtype-swift.enum/none)

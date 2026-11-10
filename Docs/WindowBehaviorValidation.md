@@ -4,17 +4,21 @@ This is the acceptance and compatibility record for [roadmap milestone 1](../ROA
 Use only synthetic sample text in tests, recordings, screenshots, and reports.
 Pending checks are release gates, not evidence that a configuration works.
 
+The feature was renamed from Reader to Prompter on 2026-11-04.
+Historical test identifiers, commands and type names below retain
+their original spelling; current source and tests use Prompter names.
+
 ## Accepted behavior
 
 - Promptly is a menu-bar app. Its menu provides a recovery path to show
-  the reader, expand it, unlock its position, return it to the notch, and quit.
-- The anchored reader visually merges with and wraps around the primary display's
+  the prompter, expand it, unlock its position, return it to the notch, and quit.
+- The anchored prompter visually merges with and wraps around the primary display's
   notch; text and controls stay below the camera housing. Without a notch, it is
   centered at the top of the usable display area. The primary display is the one
   configured in macOS, not the display containing the key window.
-- The reader is intended to remain visible across Spaces and over full-screen
-  presenting apps. Routine pointer interactions preserve the presenting app's
-  focus; keyboard access uses the menu-bar commands.
+- The prompter is intended to remain visible across Spaces and over full-screen
+  presenting apps. Normal native prompter-window activation is allowed as of
+  2026-11-03; keyboard access uses the menu-bar commands.
 - Detaching enables dragging and resizing. Collapse preserves placement mode and
   expanded size, leaving a compact strip with usable controls. Lock prevents
   movement and resizing while keeping controls available. Return to Notch is an
@@ -52,7 +56,7 @@ with the minimum macOS 26.0 release.
 | Native window, drag, resize, and menu/keyboard journeys | Passed: 5 | All five `ReaderWindowUITests` passed in the full 36-test coverage run on MacBook Pro (Mac16,8), macOS 27.0.1. An earlier missed initial Detach click remains recorded in the resize follow-up below |
 | App source line coverage before app/menu ownership cleanup | 96.58% (678/702) | Increased from 95.73% after seven tests; see the [source coverage report](SourceCoverage.md) for historical per-file results and limitations |
 | Controller lifecycle under Thread Sanitizer | Passed: 7 | Targeted CLI command below; no sanitizer findings; linker reported a duplicate `@executable_path` rpath warning |
-| Local pointer focus | Partial | TextEdit's empty synthetic document retained its focused text field after a reader control click; does not establish compatibility with presenting apps |
+| Local pointer focus | Partial | TextEdit's empty synthetic document retained its focused text field after a prompter control click; does not establish compatibility with presenting apps |
 | Physical notch and no-notch placement | Pending | MacBook Pro and external display |
 | Scaling, arrangement, and disconnection | Pending | Record display configuration before and after |
 | Keyboard and VoiceOver | Partial | The historical direct-focus keyboard journey was removed on 2026-11-03. Physical keyboard menu-bar navigation and VoiceOver remain pending |
@@ -61,10 +65,10 @@ with the minimum macOS 26.0 release.
 
 The native journey test uses mouse events to drag the detached header and resize
 the lower edge, then collapses, locks, expands, and returns while locked. It keeps
-an attachment containing only the synthetic anchored reader. The former keyboard
-test recovered a hidden reader through the menu-bar item, focused Collapse,
+an attachment containing only the synthetic anchored prompter. The former keyboard
+test recovered a hidden prompter through the menu-bar item, focused Collapse,
 activated it with Space, tabbed to Lock, and confirmed Space no longer changed the
-control after Escape. This historical journey predates removal of direct reader
+control after Escape. This historical journey predates removal of direct prompter
 focus on 2026-11-03. These checks do not replace physical accessibility or
 presenting-app checks.
 
@@ -78,12 +82,12 @@ existing journey verifies menu recovery and graceful Quit after the ownership
 change. The full suite and coverage measurement were not repeated for this
 cleanup; the coverage figures above describe the earlier source layout.
 
-Reader-window ownership refactor on 2026-10-31 separated the observable
+Prompter-window ownership refactor on 2026-10-31 separated the observable
 `ReaderWindowController` from the native `ReaderPanelController`. The former owns
 state, placement policy, preference recovery and saving; the latter owns panel
 configuration, focus, display observation and window-delegate callbacks. The
 app delegate composes both. Preference keys/payloads, geometry calculations and
-reader visuals are unchanged. All new state and callbacks remain on `MainActor`.
+prompter visuals are unchanged. All new state and callbacks remain on `MainActor`.
 
 Validation used the Promptly scheme on My Mac (arm64), Swift 6.4.2, macOS SDK
 27.2 and host macOS 27.2. Effective settings for all three targets retained the
@@ -94,7 +98,7 @@ macOS 26.0 deployment target and configured Swift/concurrency baseline.
 | Debug app and both test targets | Passed | Xcode `BuildProject(buildForTesting: true)`; no compiler warnings |
 | Release app | Passed | Unsigned CLI build below; no warnings. The restricted-shell attempt could not launch compiler macro plug-ins; the same command passed outside that shell sandbox |
 | Unit and AppKit tests | Passed: 40 | Xcode `GetTestList` then `RunSomeTests`; 16 coordinator tests use a fake panel, and four adapter tests exercise native geometry feedback, resize/collapse/lock, display-observer restart, and close/save routing |
-| Five reader UI journeys | Not run | The runner failed to initialize with “Timed out while enabling automation mode.” An isolated retry stalled and was stopped; keyboard/mouse journeys remain unverified for this refactor |
+| Five prompter UI journeys | Not run | The runner failed to initialize with “Timed out while enabling automation mode.” An isolated retry stalled and was stopped; keyboard/mouse journeys remain unverified for this refactor |
 | Targeted Thread Sanitizer run | No runtime result | Instrumented targets compiled with a duplicate `@executable_path` rpath linker warning, but the test manager reported a 120-second control-session timeout and produced no test results. The stalled run was stopped |
 
 ```sh
@@ -124,7 +128,7 @@ Validation used the Promptly scheme, Debug configuration and My Mac (arm64),
 Swift 6.4.2, macOS SDK 27.2 and host macOS 27.2. Xcode
 `BuildProject(buildForTesting: true)` built the app and both test targets.
 `GetTestList` discovered all 45 tests at their current paths, and `RunSomeTests`
-passed all 40 unit/AppKit tests and all five reader UI journeys, with no failures,
+passed all 40 unit/AppKit tests and all five prompter UI journeys, with no failures,
 skips or unrun tests. File-integrity, local documentation-link and whitespace
 checks also passed. Release, sanitizers and coverage were not repeated for this
 file relocation. The physical-display, minimum-OS, cross-app focus, VoiceOver,
@@ -175,7 +179,7 @@ and native callbacks remain owned by MainActor.
 
 Removed Focus Prompter and its ⌥⌘F menu shortcut, programmatic app activation,
 control-focus requests, custom Space handling, and Escape-based focus release.
-Show Prompter still reveals the reader; keyboard commands remain in the native
+Show Prompter still reveals the prompter; keyboard commands remain in the native
 menu-bar menu. The existing panel now always rejects key-window status rather
 than switching into an explicit keyboard mode. Apple documents that
 [`canBecomeKey == false`](https://developer.apple.com/documentation/appkit/nswindow/canbecomekey)
@@ -187,7 +191,7 @@ Validation used the Promptly scheme, Debug configuration and My Mac (arm64),
 Swift 6.4.2, macOS SDK 27.2 and host macOS 27.2. Xcode
 `BuildProject(buildForTesting: true)` compiled the app and both test targets.
 `GetTestList` discovered 44 tests after removing the obsolete focus-request test.
-`RunSomeTests` selected 19 controller/AppKit tests and all five reader UI
+`RunSomeTests` selected 19 controller/AppKit tests and all five prompter UI
 journeys: 23 passed, and the resize test failed because its first automated drag
 reduced the height by 39 points against a strict greater-than-40-point threshold.
 An immediate isolated rerun passed without changes; the cause of the initial
@@ -201,11 +205,90 @@ navigation, presenting-app focus, VoiceOver, minimum macOS 26.0, display and
 capture checks remain open; automated clicks do not establish physical-input
 focus behavior.
 
+## SwiftUI prompter scene — 2026-11-03
+
+The prompter now uses SwiftUI `Window`, with a real `WindowVisibilityToggle` in
+its header and native `openWindow`/`dismissWindow` status-menu actions. The user
+approved normal native window activation. The custom panel, hosting view,
+native drag view and window delegate were removed. The model remains outside
+the window; a narrow adapter preserves live geometry/display policy without
+creating or ordering windows. The [implementation notes](SwiftUIPrompterWindow.md)
+record the independent alternatives review, retained native gaps, and the minimal
+visibility-toggle host-context reproduction. Earlier panel/focus evidence above
+is historical and does not establish the current SwiftUI behavior.
+
+Validation used the Promptly scheme, Debug configuration and My Mac (arm64),
+Swift 6.4.2, macOS SDK 27.2 and host macOS 27.2. Xcode
+`BuildProject(buildForTesting: true)` compiled the app and both test targets.
+`GetTestList` then `RunSomeTests` passed all **47 tests**: 41 unit/AppKit tests
+and six native prompter UI journeys, with no failures, skips or unrun tests.
+
+The UI journeys cover the native header toggle and menu dismissal independently,
+reopening the same detached/collapsed/locked state and frame, hidden Return to
+Notch, graceful Quit, collapse/expansion, locked resizing and native header
+dragging. A new check compares initial prompter placement and notch-height inset
+against the configured primary display. The synthetic prompter screenshot remains
+attached to the window journey. Native drag testing uses larger pointer travel
+and directional bounds because its recognizer consumes initial pointer travel.
+Unit checks cover old-window notification/late-detach filtering, unchanged native
+delegate identity, close-save/reopen, corrupt-preference protection and fitted
+constraints on synthetic displays smaller than the preferred minimum size.
+
+The unsigned Release app compiled with no reported warnings. A separate targeted
+Thread Sanitizer run passed all **21** controller/adapter tests with no sanitizer
+findings; the linker reported the existing duplicate `@executable_path` rpath
+warning. Sanitizer success is not proof of thread safety. Commands used:
+
+```sh
+set -o pipefail
+xcodebuild -project Promptly.xcodeproj -scheme Promptly -configuration Release \
+  -destination 'platform=macOS,arch=arm64' -derivedDataPath /private/tmp/Promptly-SwiftUIWindow-Release \
+  CODE_SIGNING_ALLOWED=NO build 2>&1 | xcsift -f toon -w
+xcodebuild -project Promptly.xcodeproj -scheme Promptly -configuration Debug \
+  -destination 'platform=macOS,arch=arm64' -derivedDataPath /private/tmp/Promptly-SwiftUIWindow-TSan \
+  -enableThreadSanitizer YES -enableCodeCoverage NO -parallel-testing-enabled NO \
+  -only-testing:PromptlyTests/ReaderWindowControllerTests \
+  -only-testing:PromptlyTests/ReaderWindowAdapterTests test 2>&1 | xcsift -f toon -w
+```
+
+Preference keys/payloads, project settings, privacy permissions and the Swift
+concurrency baseline are unchanged. Coverage was not remeasured. Physical
+keyboard/VoiceOver, notch seams, additional displays/scaling/disconnection,
+full-screen presenting apps, minimum macOS 26.0 and actual capture paths remain
+release gates. No universal capture-exclusion claim follows from this migration.
+
+## Prompter feature rename — 2026-11-04
+
+Renamed the feature folder, Swift types, app composition properties and test
+suites from Reader to Prompter. Current product documentation and design-context
+source paths use the new name. Historical validation identifiers, remote draft
+names and dated approval artifacts retain their original references.
+
+The SwiftUI scene ID remains `reader`, and preferences still use
+`reader.windowPlacement.v1` with the same Codable fields. Accessibility IDs and
+their UI-test selectors now use `prompter.*`. A comparison against the working
+tree before the rename verified that all 23 Swift files retain their logic;
+project configuration, assets and approval JSON are unchanged.
+
+Validation used the Promptly scheme, Debug configuration and My Mac (arm64),
+Swift 6.4.2, macOS SDK 27.2 and host macOS 27.2. Xcode
+`BuildProject(buildForTesting: true)` built the app and both test targets.
+`GetTestList` followed by `RunSomeTests` passed all 41 `PromptlyTests`, with no
+failures, skips or unrun selected tests. Local Markdown links, JSON and whitespace
+checks passed. Build logs contain the metadata-extraction warning for targets
+without an AppIntents.framework dependency; no App Intents work was added.
+
+The six current UI journeys were compiled but not run. The pre-existing working
+tree renders a placeholder Circle in `PromptlyApp` and comments out the menu-bar
+composition and header Hide control; those in-progress changes were preserved.
+Release, sanitizers, coverage, physical-display, accessibility and capture checks
+were not repeated for this naming change.
+
 ## Manual window journey
 
 For each check, record Pass, Fail, or Not tested with a short observation.
 
-1. Launch with no saved window preferences. Confirm one reader on the configured
+1. Launch with no saved window preferences. Confirm one prompter on the configured
    primary display, a reachable menu-bar item, and no Dock icon. Repeat with an
    ordinary window focused on the other display.
 2. On the MacBook Pro, inspect the notch seam, rounded edges, camera clearance,
@@ -217,20 +300,20 @@ For each check, record Pass, Fail, or Not tested with a short observation.
 4. Lock both expanded and collapsed states. Attempt dragging and resizing; then
    use Unlock and Return to Notch from the panel and the menu. Verify the escape
    commands remain usable and return works while locked.
-5. Focus a presenting app and click reader text and controls. Verify routine
-   interactions do not unexpectedly divert keyboard input. Use macOS keyboard
-   menu-bar navigation to reach Promptly's reader commands, including Show and
+5. Focus a presenting app and click prompter text and controls. Verify normal
+   native activation and first-click behavior, with no explicit focus mode. Use macOS keyboard
+   menu-bar navigation to reach Promptly's prompter commands, including Show and
    Hide, and confirm the presenting app remains usable. Repeat with VoiceOver enabled.
 6. Change Spaces, enter and leave a presenting app's full-screen Space, and
-   exercise Stage Manager if used. Confirm the reader stays reachable without
+   exercise Stage Manager if used. Confirm the prompter stays reachable without
    activating Promptly unexpectedly or covering essential presenting controls.
-7. Place the detached reader on each display, quit, and relaunch. Repeat while
+7. Place the detached prompter on each display, quit, and relaunch. Repeat while
    collapsed and locked. Check restored mode, size, state, and reachable controls.
 8. While detached on the external display, disconnect it. Reconnect, change the
    primary display, rearrange displays with negative origins and gaps, and change
-   scaling. Repeat with the reader locked and collapsed. Verify the reader fits
+   scaling. Repeat with the prompter locked and collapsed. Verify the prompter fits
    an actual screen and Return to Notch targets the current primary display.
-9. Hide and show the reader through its menu, repeat the journey, quit, and
+9. Hide and show the prompter through its menu, repeat the journey, quit, and
    relaunch. Check for duplicate panels, stale menu states, or lost recovery
    commands. Confirm quitting ends the app.
 10. Check Light and Dark appearance, Increased Contrast, Reduce Transparency,
@@ -242,7 +325,7 @@ For each check, record Pass, Fail, or Not tested with a short observation.
 Capture exclusion is a compatibility goal, not a security boundary. Apple
 describes [`NSWindow.SharingType.none`](https://developer.apple.com/documentation/appkit/nswindow/sharingtype-swift.enum/none)
 as a legacy value and advises against using it to hide captured content. Setting
-a window-sharing flag does not establish that the reader is absent from a stream.
+a window-sharing flag does not establish that the prompter is absent from a stream.
 Do not change accessibility exposure to influence capture.
 
 Test with synthetic text and inspect the **remote participant's received image**
@@ -253,15 +336,15 @@ path and must not be reported as an application-window test.
 
 | Sharing app | Capture method | Result | App/browser version, macOS, build, and evidence |
 | --- | --- | --- | --- |
-| Zoom | Entire display containing the reader | Not tested | — |
+| Zoom | Entire display containing the prompter | Not tested | — |
 | Zoom | Presenting application window | Not tested | — |
-| Microsoft Teams | Entire display containing the reader | Not tested | — |
+| Microsoft Teams | Entire display containing the prompter | Not tested | — |
 | Microsoft Teams | Presenting application window | Not tested | — |
-| Google Meet | Entire display containing the reader | Not tested | — |
+| Google Meet | Entire display containing the prompter | Not tested | — |
 | Google Meet | Presenting application window | Not tested | — |
 
 For every capture row, exercise anchored, detached, collapsed, and expanded
-states, including reader movement over the shared presenting window and a
+states, including prompter movement over the shared presenting window and a
 full-screen presentation where supported. Report visible, absent, intermittent,
 or blocked, including any flicker, state-specific result, or picker exclusion.
 Record permission denials and unsupported capture choices as such. If testing

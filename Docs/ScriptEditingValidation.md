@@ -6,7 +6,7 @@ implemented. The feature will be built from scratch in
 [approved Library design](LibraryDesign.md). This is an acceptance plan,
 not evidence of a completed or partially implemented Library feature.
 
-The current source contains the reader-window prototype with synthetic text and
+The current source contains the prompter-window prototype with synthetic text and
 window-placement preferences. Its [window validation record](WindowBehaviorValidation.md)
 and [coverage report](SourceCoverage.md) are separate evidence; they do not
 validate script editing, storage, sent-copy handoff or scrolling.
@@ -45,7 +45,7 @@ data preservation, migration compatibility or coverage of code that is absent.
 | Section edits and explicit removal | Add uses the last cursor's paragraph and opens naming without duplicate boundaries. Explicit Remove preserves script text and offers toast-limited recovery. Text edits and their coupled anchor changes retain coherent native undo/redo; switching scripts must preserve names and anchors. | Pending |
 | Toast lifetime and final dismissal | Inject time to check the 10-second window, hover/focus pause, explicit close, expiry, replacement and teardown. Close or expiry discards that operation's recovery data; no session Undo Delete/menu fallback remains. Undo must not target a later operation or wrong script, and unrelated native editing undo remains intact. | Pending |
 | Initial storage and failure recovery | Define schema/payload formats and bounds, then test isolated initial-store creation/reopen, revision-checked saves, late saves after deletion and injected failures. Test later migrations when a durable format exists. Failed open/save/migration must not reset the store or overwrite newer work. | Pending |
-| Save/send and reader handoff | First scripts have no sent-version hint; local save, newer edits and explicit Send are distinct. Pin-only edits do not mislabel sent content. ⌘↵ works in relevant editing contexts; verify stable sent copies, handoff cancellation/failure, reader visibility coordination and any explicitly chosen restoration policy. | Pending |
+| Save/send and prompter handoff | First scripts have no sent-version hint; local save, newer edits and explicit Send are distinct. Pin-only edits do not mislabel sent content. ⌘↵ works in relevant editing contexts; verify stable sent copies, handoff cancellation/failure, prompter visibility coordination and any explicitly chosen restoration policy. | Pending |
 | Native appearance and accessibility | Validate real macOS trackpad gestures, keyboard-only use, VoiceOver, long/localized names, Light/Dark, contrast/reduced effects and minimum macOS 26.0. Browser checks and mockup pixels are not native compatibility evidence. | Pending |
 
 ## Planned manual acceptance journey
@@ -74,10 +74,10 @@ Run this journey once the native feature and isolated test stores exist:
 7. Explicitly remove a section, then test live-toast Undo and final dismissal.
    Script text must remain intact. Expired destructive recovery must not revive
    through a retained snapshot, and unrelated native text undo must still work.
-8. Send, show the Library again and make newer edits. Verify the reader keeps its
+8. Send, show the Library again and make newer edits. Verify the prompter keeps its
    exact sent copy until another explicit Send. Once a restoration policy is
    chosen, test any relaunch behavior separately from newer library edits and
-   pin-only changes; do not infer it from an in-memory reader copy.
+   pin-only changes; do not infer it from an in-memory prompter copy.
 9. Exercise save/send cancellation, stale results and injected storage failures.
    Confirm useful retry, intact drafts and last good saves, and safe close/quit
    behavior. Record real low-storage and abrupt-termination checks separately.

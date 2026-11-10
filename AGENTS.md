@@ -28,11 +28,14 @@ The three target folders use Xcode filesystem-synchronized groups. Add ordinary
 target files on disk; keep docs/tool configuration outside them and do not edit
 `project.pbxproj` solely for file membership.
 
-The current prototype implements reader window behavior with synthetic text and
-local UserDefaults placement preferences. Script editing, SwiftData storage, and
+The current prototype uses a SwiftUI `Window` with native visibility actions,
+a header `WindowVisibilityToggle`, and a narrow AppKit geometry/display adapter.
+Normal window activation is allowed. It uses synthetic text and local UserDefaults
+placement preferences; no custom NSPanel, hosting view or window delegate remains.
+Script editing, SwiftData storage, and
 scrolling remain planned; do not reintroduce starter persistence patterns.
 The [approved Quiet Native baseline](Docs/QuietNativeDesign.md) governs Library
-and reader visuals, including SF Symbols and the refined reader control sizing.
+and prompter visuals, including SF Symbols and the refined prompter control sizing.
 The [Library design contract](Docs/LibraryDesign.md) specifies the active
 and empty-library target states for the first Library implementation in
 roadmap milestone 2. No Library implementation or native Library
@@ -152,7 +155,7 @@ Promptly/
   An AppKit import does not make a type a service. Shared native-type extensions
   and genuinely reused visuals may live in Extensions and DesignSystem.
 - Keep preference serialization, script persistence, file processing, model/speech
-  sessions, and shared non-UI reader-session state under Services. Shared persisted
+  sessions, and shared non-UI prompter-session state under Services. Shared persisted
   value contracts stay in Domain so services never depend on feature UI types.
   Services does not imply background execution; preserve explicit isolation.
 - Maintain one-way dependencies: features depend on domain contracts/services;

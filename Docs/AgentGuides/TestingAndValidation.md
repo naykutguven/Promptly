@@ -41,8 +41,9 @@ Follow [AGENTS.md](../../AGENTS.md) and the relevant domain guides.
 - Use `PromptlyTests/Extensions/` or `PromptlyUITests/Extensions/` when the owning
   test target needs focused type extensions. Keep these conveniences
   test-only and target-local; create the folder with its first real file.
-- Current tests cover window state, layout, preferences, AppKit behavior, and
-  reader UI journeys. See the [validation record](../WindowBehaviorValidation.md)
+- Current tests cover window state, layout, preferences, the SwiftUI-owned
+  window adapter, native visibility/drag/resize behavior, and
+  prompter UI journeys. See the [validation record](../WindowBehaviorValidation.md)
   and [coverage report](../SourceCoverage.md) for evidence and remaining gaps;
   they do not establish coverage of planned script editing or playback.
 - Use isolated in-memory stores for suitable logic tests and unique temporary
@@ -66,7 +67,7 @@ Cover the affected behavior, especially:
 
 - The [approved Library design](../LibraryDesign.md) has a separate
   [planned acceptance matrix](../ScriptEditingValidation.md#approved-design-adoption-pending)
-  for its first implementation. Preserve the reader-window prototype's evidence;
+  for its first implementation. Preserve the prompter-window prototype's evidence;
   there is no implemented Library baseline or passing Library test suite.
   Browser mockup checks and design approval do not establish native gesture,
   keyboard, VoiceOver, persistence or handoff behavior.

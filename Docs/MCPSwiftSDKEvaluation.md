@@ -49,7 +49,7 @@ Follow the [existing transport preference](../README.md#implementation-notes):
 an external MCP client launches a stdio helper using `MCP`; the helper forwards
 typed requests over authenticated XPC or a Unix domain socket to app-owned
 capability services. The app retains ownership of grants, persistence, editing,
-the sent reader snapshot, and playback. The helper must not open the script
+the sent prompter snapshot, and playback. The helper must not open the script
 store directly. Choosing and validating the IPC mechanism, caller identity,
 consent flow, creation scope, and helper distribution remains future work.
 
@@ -60,8 +60,8 @@ consent flow, creation scope, and helper distribution remains future work.
 - Use stable IDs, immutable `Sendable` snapshots, and expected revisions across
   IPC. Reject edits conflicting with newer saved or unsaved user work. Preserve
   recovery and native undo semantics. An edit must not implicitly send a new
-  snapshot to the reader or start playback; playback must target the authorized
-  reader script explicitly.
+  snapshot to the prompter or start playback; playback must target the authorized
+  prompter script explicitly.
 - Revalidate the grant, operation identity, script identity, and revision after
   suspension and at the last safe commit or disclosure point. Revocation,
   disconnect, cancellation, and deletion must prevent stale work from committing
