@@ -1,13 +1,16 @@
-# Native scene and reader layouts
+# Native prompter scene and layouts
 
-No layout is currently shared across independent features. The implemented UI is one menu-bar scene and one floating reader panel. Library is a planned separate workspace with approved mockups, not an implemented layout.
+The implemented UI is a SwiftUI Window plus MenuBarExtra. The shared model stays
+outside the window. The header uses native WindowDragGesture and
+WindowVisibilityToggle; the status menu uses native openWindow/dismissWindow.
+Library remains a planned separate workspace with approved mockups.
 
-- PromptlyApp creates the native menu-bar scene and Quit command.
-- PromptlyAppDelegate composes and injects the reader capability and hosted view.
-- ReaderView renders the notch inset, controls and fixed synthetic reading text; detached/collapsed/locked are independent state axes.
-- ReaderMenu supplies native reader window commands.
+A narrow AppKit attachment applies live primary-display/notch geometry to the
+SwiftUI-owned NSWindow. It does not create or show/hide a window or replace its
+delegate. Normal native activation is allowed. See Docs/SwiftUIPrompterWindow.md
+for verified gaps, native-toggle host behavior and remaining validation.
 
-Full actual UI source follows. The AppKit window controller is a behavioral dependency, not a feature view; consult its source for geometry/focus rather than copying it into a visual prototype.
+Full current UI source follows; native adapters are in components.md.
 
 ### `Promptly/App/PromptlyApp.swift`
 
@@ -27,8 +30,21 @@ struct PromptlyApp: App {
     @NSApplicationDelegateAdaptor(PromptlyAppDelegate.self) private var appDelegate
 
     var body: some Scene {
+        Window("Prompter", id: PrompterWindowController.windowID) {
+            PrompterWindowContent(controller: appDelegate.prompter, adapter: appDelegate.prompterWindow)
+        }
+        .windowStyle(.plain)
+        .windowLevel(.floating)
+        .windowBackgroundDragBehavior(.disabled)
+        .windowResizability(.contentSize)
+        .defaultSize(PrompterWindowLayoutConstants.defaultExpandedSize)
+        .defaultLaunchBehavior(appDelegate.presentsPrompterOnLaunch ? .presented : .suppressed)
+        // Explicit primary-display/notch placement also preserves the existing preference payload.
+        .restorationBehavior(.disabled)
+        .commandsRemoved()
+
         MenuBarExtra("Promptly", systemImage: "text.viewfinder") {
-            ReaderMenu(controller: appDelegate.reader)
+            PrompterMenu(controller: appDelegate.prompter)
             Divider()
             Button("Quit Promptly") { NSApplication.shared.terminate(nil) }
                 .keyboardShortcut("q")
@@ -51,40 +67,60 @@ import AppKit
 import SwiftUI
 
 final class PromptlyAppDelegate: NSObject, NSApplicationDelegate {
-    let reader: ReaderWindowController
+    let prompter: PrompterWindowController
+    let prompterWindow: PrompterWindowAdapter
+    let presentsPrompterOnLaunch: Bool
 
     override init() {
         let isUITest = ProcessInfo.processInfo.arguments.contains("--promptly-ui-testing")
-        reader = ReaderWindowController(preferences: ReaderWindowPreferences(defaults: isUITest ? nil : .standard))
+        presentsPrompterOnLaunch = isUITest || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil
+        let window = PrompterWindowAdapter()
+        prompterWindow = window
+        prompter = PrompterWindowController(preferences: PrompterWindowStateStore(defaults: isUITest ? nil : .standard),
+                                        window: window)
         super.init()
     }
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        // Hosted unit tests must not restore or write the user's window preferences.
-        let isUITest = ProcessInfo.processInfo.arguments.contains("--promptly-ui-testing")
-        guard isUITest || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
-        reader.setContent(ReaderHostingView(rootView: ReaderView(controller: reader)))
-        reader.start()
-    }
-
     func applicationWillTerminate(_ notification: Notification) {
-        reader.stop()
+        prompter.stop()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        reader.show()
-        return false
+}
+```
+
+### `Promptly/Features/Prompter/Windowing/PrompterWindowContent.swift`
+
+```swift
+import SwiftUI
+
+struct PrompterWindowContent: View {
+    let controller: PrompterWindowController
+    let adapter: PrompterWindowAdapter
+
+    var body: some View {
+        let collapsedHeight = min(PrompterWindowLayoutConstants.collapsedHeight + controller.topInset,
+                                  controller.maximumSize.height)
+        PrompterView(controller: controller)
+            .background(PrompterWindowAttachment(adapter: adapter))
+            .frame(minWidth: controller.minimumSize.width, maxWidth: controller.maximumSize.width,
+                   minHeight: controller.state.isCollapsed
+                       ? collapsedHeight : controller.minimumSize.height,
+                   maxHeight: controller.state.isCollapsed ? collapsedHeight : controller.maximumSize.height)
+            .windowResizeAnchor(.top)
+            .windowResizeBehavior(controller.canResize ? .enabled : .disabled)
+            .windowMinimizeBehavior(.disabled)
+            .windowFullScreenBehavior(.disabled)
     }
 }
 ```
 
-### `Promptly/Features/Reader/ReaderView.swift`
+### `Promptly/Features/Prompter/PrompterView.swift`
 
 ```swift
 //
-//  ReaderView.swift
+//  PrompterView.swift
 //  Promptly
 //
 //  Created by Aykut Güven on 26.10.26.
@@ -92,8 +128,8 @@ final class PromptlyAppDelegate: NSObject, NSApplicationDelegate {
 
 import SwiftUI
 
-struct ReaderView: View {
-    let controller: ReaderWindowController
+struct PrompterView: View {
+    let controller: PrompterWindowController
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
 
@@ -101,7 +137,7 @@ struct ReaderView: View {
         VStack(spacing: 0) {
             Color.clear.frame(height: controller.topInset).accessibilityHidden(true)
             controls
-                .frame(height: ReaderWindowLayout.collapsedHeight)
+                .frame(height: PrompterWindowLayoutConstants.collapsedHeight)
             if !controller.state.isCollapsed {
                 // Resizing changes the viewport and wrapping, never the script or its font size.
                 GeometryReader { _ in
@@ -113,7 +149,7 @@ struct ReaderView: View {
                             .font(.system(size: 28, weight: .medium))
                             .lineSpacing(8)
                             .fixedSize(horizontal: false, vertical: true)
-                            .accessibilityIdentifier("reader.sample")
+                            .accessibilityIdentifier("prompter.sample")
                         Spacer(minLength: 0)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -151,29 +187,31 @@ struct ReaderView: View {
                 Spacer(minLength: 4)
             }
             .frame(maxHeight: .infinity)
-            .overlay {
-                ReaderDragHandle(isEnabled: controller.state.placement == .detached && !controller.state.isLocked,
-                                 onDragEnded: controller.finishMoving)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .accessibilityHidden(true)
-            }
+            .contentShape(Rectangle())
+            .gesture(WindowDragGesture().onEnded { _ in controller.finishMoving() },
+                     isEnabled: controller.state.placement == .detached && !controller.state.isLocked)
+            .allowsWindowActivationEvents()
             .help(controller.state.isLocked ? "Unlock Position to move the prompter"
                   : controller.state.placement == .anchored ? "Detach Prompter to move it"
                   : "Drag to move the prompter")
             control(controller.state.isCollapsed ? "Expand Prompter" : "Collapse Prompter",
                     symbol: controller.state.isCollapsed ? "chevron.down" : "chevron.up",
-                    id: "reader.collapse", action: controller.toggleExpansion)
+                    id: "prompter.collapse", action: controller.toggleExpansion)
             control(controller.state.isLocked ? "Unlock Position" : "Lock Position",
                     symbol: controller.state.isLocked ? "lock.fill" : "lock.open",
-                    id: "reader.lock", action: controller.toggleLock)
+                    id: "prompter.lock", action: controller.toggleLock)
             if controller.state.placement == .anchored {
                 control("Detach Prompter", symbol: "arrow.up.left.and.arrow.down.right",
-                        id: "reader.detach", action: controller.detach)
+                        id: "prompter.detach", action: controller.detach)
             } else {
                 control("Return to Notch", symbol: "arrow.up.to.line",
-                        id: "reader.return", action: controller.returnToNotch)
+                        id: "prompter.return", action: controller.returnToNotch)
             }
-            control("Hide Prompter", symbol: "xmark", id: "reader.hide", action: controller.hide)
+            WindowVisibilityToggle(windowID: PrompterWindowController.windowID)
+                .buttonStyle(HideButtonStyle())
+                .accessibilityLabel("Hide Prompter")
+                .help("Hide Prompter")
+                .accessibilityIdentifier("prompter.hide")
         }
         .padding(.horizontal, 20)
     }
@@ -189,14 +227,23 @@ struct ReaderView: View {
         .help(Text(title))
         .accessibilityIdentifier(id)
     }
+
+    private struct HideButtonStyle: ButtonStyle {
+        func makeBody(configuration: Configuration) -> some View {
+            Image(systemName: "xmark")
+                .frame(width: 30, height: 30)
+                .contentShape(Rectangle())
+                .opacity(configuration.isPressed ? 0.5 : 1)
+        }
+    }
 }
 ```
 
-### `Promptly/Features/Reader/ReaderMenu.swift`
+### `Promptly/Features/Prompter/PrompterMenu.swift`
 
 ```swift
 //
-//  ReaderMenu.swift
+//  PrompterMenu.swift
 //  Promptly
 //
 //  Created by Aykut Güven on 26.10.26.
@@ -204,11 +251,13 @@ struct ReaderView: View {
 
 import SwiftUI
 
-struct ReaderMenu: View {
-    let controller: ReaderWindowController
+struct PrompterMenu: View {
+    let controller: PrompterWindowController
+    @Environment(\.openWindow) private var openWindow
+    @Environment(\.dismissWindow) private var dismissWindow
 
     var body: some View {
-        Button("Show Prompter", action: controller.show)
+        Button("Show Prompter") { openWindow(id: PrompterWindowController.windowID) }
             .keyboardShortcut("o")
         Divider()
         Button(controller.state.isCollapsed ? "Expand Prompter" : "Collapse Prompter",
@@ -218,10 +267,13 @@ struct ReaderMenu: View {
         if controller.state.placement == .anchored {
             Button("Detach Prompter", action: controller.detach)
         }
-        Button("Return to Notch", action: controller.returnToNotch)
+        Button("Return to Notch") {
+            controller.returnToNotch()
+            openWindow(id: PrompterWindowController.windowID)
+        }
             .keyboardShortcut("r", modifiers: [.command, .option])
         Divider()
-        Button("Hide Prompter", action: controller.hide)
+        Button("Hide Prompter") { dismissWindow(id: PrompterWindowController.windowID) }
         if controller.preferenceFailure != nil {
             Text("Window preferences could not be restored or saved. Return to Notch to reset placement.")
         }

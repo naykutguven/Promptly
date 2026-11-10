@@ -1,97 +1,164 @@
 # Native UI component inventory
 
-Promptly is a native macOS 26.0+ app built with SwiftUI and AppKit, not a web app. There is no React/Vue frontend, package manifest, CSS, Tailwind, routing library, third-party UI library, or cross-feature shared component system. `DesignSystem/` is planned and absent. SwiftUI supplies Button, Label, Text, Divider, HStack/VStack and semantic typography.
+Promptly is a native macOS 26+ SwiftUI/AppKit app. There is no web component
+library or shared DesignSystem implementation. Prompter controls remain feature
+owned. PrompterView's private control function renders 30-point borderless icon
+buttons with labels, help and stable identifiers. Its native visibility toggle
+uses a prompter-local ButtonStyle for the same xmark and target.
 
-The private `control` helper in `ReaderView.swift` supplies icon-only borderless buttons with 30×30-point hit regions, help, and stable accessibility IDs. Keyboard commands are available through the menu-bar extra. Its entire source is included with ReaderView in layouts.md; it is not a shared exported primitive.
+Native WindowDragGesture replaces the old AppKit drag handle. SwiftUI creates
+and presents the prompter. The following adapters only attach to that existing
+window for exact geometry, display/overlay policy and native notifications; they
+are not visual components to reproduce in browser code.
 
-The following actual source files are reader-local native adapters rather than reusable web visual components. They preserve pointer/focus behavior; do not invent browser equivalents as implemented app functionality.
-
-### `Promptly/Features/Reader/ReaderDragHandle.swift`
+### `Promptly/Features/Prompter/Windowing/PrompterWindowAttachment.swift`
 
 ```swift
-//
-//  ReaderDragHandle.swift
-//  Promptly
-//
-//  Created by Aykut Güven on 26.10.26.
-//
-
 import AppKit
 import SwiftUI
 
-struct ReaderDragHandle: NSViewRepresentable {
-    let isEnabled: Bool
-    let onDragEnded: () -> Void
+struct PrompterWindowAttachment: NSViewRepresentable {
+    let adapter: PrompterWindowAdapter
 
-    func makeNSView(context: Context) -> DragView {
-        let view = DragView()
-        view.isDragEnabled = isEnabled
-        view.onDragEnded = onDragEnded
-        return view
+    func makeNSView(context: Context) -> AttachmentView {
+        AttachmentView(adapter: adapter)
     }
 
-    func updateNSView(_ view: DragView, context: Context) {
-        view.isDragEnabled = isEnabled
-        view.onDragEnded = onDragEnded
+    func updateNSView(_ view: AttachmentView, context: Context) {}
+
+    static func dismantleNSView(_ view: AttachmentView, coordinator: ()) {
+        view.adapter.detach(view.attachedWindow)
     }
 
-    final class DragView: NSView {
-        var onDragEnded: (() -> Void)?
-        var isDragEnabled = false {
-            didSet {
-                if isDragEnabled != oldValue { window?.invalidateCursorRects(for: self) }
+    final class AttachmentView: NSView {
+        let adapter: PrompterWindowAdapter
+        private(set) weak var attachedWindow: NSWindow?
+
+        init(adapter: PrompterWindowAdapter) {
+            self.adapter = adapter
+            super.init(frame: .zero)
+        }
+
+        required init?(coder: NSCoder) { nil }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            if let window {
+                attachedWindow = window
+                adapter.attach(window)
+            } else {
+                adapter.detach(attachedWindow)
+                attachedWindow = nil
             }
         }
-        override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
-        override var needsPanelToBecomeKey: Bool { false }
-
-        override func resetCursorRects() {
-            super.resetCursorRects()
-            if isDragEnabled { addCursorRect(bounds, cursor: .openHand) }
-        }
-
-        override func mouseDown(with event: NSEvent) {
-            guard isDragEnabled, let window, window.isMovable else { return }
-            window.performDrag(with: event)
-            onDragEnded?()
-        }
     }
 }
 ```
 
-### `Promptly/Services/Windowing/ReaderHostingView.swift`
+### `Promptly/Features/Prompter/Windowing/PrompterWindowAdapter.swift`
 
 ```swift
-//
-//  ReaderHostingView.swift
-//  Promptly
-//
-//  Created by Aykut Güven on 26.10.26.
-//
-
 import AppKit
-import SwiftUI
+import CoreGraphics
 
-final class ReaderHostingView<Content: View>: NSHostingView<Content> {
-    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
-    override var needsPanelToBecomeKey: Bool { false }
-}
-```
+@MainActor
+final class PrompterWindowAdapter: NSObject, PrompterWindowAccessing {
+    var onEvent: (@MainActor (PrompterWindowEvent) -> Void)?
 
-### `Promptly/Services/Windowing/ReaderPanel.swift`
+    var frame: CGRect { window?.frame ?? .zero }
+    var displayID: UInt32? { window?.screen?.displayGeometry?.id }
+    var displays: [DisplayGeometry] { displayProvider() }
+    var primaryDisplayID: UInt32 { primaryDisplayIDProvider() }
 
-```swift
-//
-//  ReaderPanel.swift
-//  Promptly
-//
-//  Created by Aykut Güven on 26.10.26.
-//
+    private weak var window: NSWindow?
+    private let displayProvider: () -> [DisplayGeometry]
+    private let primaryDisplayIDProvider: () -> UInt32
+    private let notificationCenter: NotificationCenter
+    private var applyingGeometry = false
+    private var observingDisplays = false
 
-import AppKit
+    init(
+        displayProvider: @escaping () -> [DisplayGeometry] = { NSScreen.screens.compactMap(\.displayGeometry) },
+        primaryDisplayID: @escaping () -> UInt32 = { CGMainDisplayID() },
+        notificationCenter: NotificationCenter = .default
+    ) {
+        self.displayProvider = displayProvider
+        self.primaryDisplayIDProvider = primaryDisplayID
+        self.notificationCenter = notificationCenter
+    }
 
-final class ReaderPanel: NSPanel {
-    override var canBecomeKey: Bool { false }
-    override var canBecomeMain: Bool { false }
+    func attach(_ window: NSWindow) {
+        guard self.window !== window else { return }
+        detach(self.window)
+        self.window = window
+        window.setAccessibilityIdentifier("prompter.window")
+        window.backgroundColor = .clear
+        window.isOpaque = false
+        window.animationBehavior = .none
+        window.collectionBehavior = [.canJoinAllSpaces, .canJoinAllApplications, .fullScreenAuxiliary, .ignoresCycle]
+        // SwiftUI owns the window and its delegate. Only observe native geometry/lifecycle.
+        for (name, selector) in [
+            (NSWindow.didMoveNotification, #selector(windowMoved)),
+            (NSWindow.didEndLiveResizeNotification, #selector(windowResized)),
+            (NSWindow.willCloseNotification, #selector(windowClosed)),
+            (NSWindow.didChangeOcclusionStateNotification, #selector(windowOcclusionChanged))
+        ] {
+            notificationCenter.addObserver(self, selector: selector, name: name, object: window)
+        }
+        onEvent?(.attached)
+    }
+
+    func detach(_ window: NSWindow?) {
+        guard let current = self.window, current === window else { return }
+        notificationCenter.removeObserver(self, name: nil, object: current)
+        self.window = nil
+        onEvent?(.closed)
+    }
+
+    func startObservingDisplays() {
+        guard !observingDisplays else { return }
+        observingDisplays = true
+        notificationCenter.addObserver(self, selector: #selector(displaysChanged),
+                                       name: NSApplication.didChangeScreenParametersNotification, object: nil)
+    }
+
+    func stopObservingDisplays() {
+        guard observingDisplays else { return }
+        notificationCenter.removeObserver(self, name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        observingDisplays = false
+    }
+
+    func apply(_ layout: PrompterWindowLayout) {
+        guard let window else { return }
+        applyingGeometry = true
+        defer { applyingGeometry = false }
+        window.level = layout.placement == .anchored ? .statusBar : .floating
+        window.isMovable = layout.isMovable
+        window.minSize = layout.minimumSize
+        window.maxSize = layout.maximumSize
+        window.setFrame(layout.frame, display: true)
+    }
+
+    @objc private func windowMoved(_ notification: Notification) {
+        guard !applyingGeometry else { return }
+        onEvent?(.moved(frame: frame, displayID: displayID))
+    }
+
+    @objc private func windowResized(_ notification: Notification) {
+        guard !applyingGeometry else { return }
+        onEvent?(.resized(frame: frame, displayID: displayID))
+    }
+
+    @objc private func windowClosed(_ notification: Notification) {
+        onEvent?(.closed)
+    }
+
+    @objc private func windowOcclusionChanged(_ notification: Notification) {
+        if window?.isVisible == false { onEvent?(.hidden) }
+    }
+
+    @objc private func displaysChanged() {
+        onEvent?(.displaysChanged)
+    }
 }
 ```

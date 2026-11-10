@@ -1,63 +1,44 @@
 # Native surface dependency trees
 
-Swift files in this target share module scope and therefore refer to local types without explicit file imports. Trees below trace those local type references recursively, excluding Apple framework internals. Repeated dependencies are marked rather than expanded indefinitely.
-
-## Reader panel (implemented)
-
-Entry: `Promptly/App/PromptlyAppDelegate.swift`
-
-```text
-Promptly/App/PromptlyAppDelegate.swift
-├── Promptly/Features/Reader/ReaderView.swift
-│   ├── Promptly/Features/Reader/ReaderDragHandle.swift
-│   ├── Promptly/Services/Windowing/ReaderWindowController.swift
-│   │   ├── Promptly/Services/Windowing/ReaderPanel.swift
-│   │   ├── Promptly/Services/Windowing/ReaderWindowPreferences.swift
-│   │   │   └── Promptly/Domain/ReaderWindowState.swift
-│   │   ├── Promptly/Domain/ReaderWindowState.swift [repeated]
-│   │   ├── Promptly/Domain/ReaderWindowLayout.swift
-│   │   │   ├── Promptly/Domain/ReaderWindowState.swift [repeated]
-│   │   │   └── Promptly/Domain/DisplayGeometry.swift
-│   │   ├── Promptly/Domain/DisplayGeometry.swift [repeated]
-│   │   └── Promptly/Extensions/NSScreen+Extensions.swift
-│   │       └── Promptly/Domain/DisplayGeometry.swift [repeated]
-│   └── Promptly/Domain/ReaderWindowLayout.swift [repeated]
-├── Promptly/Services/Windowing/ReaderHostingView.swift
-├── Promptly/Services/Windowing/ReaderWindowController.swift [repeated]
-└── Promptly/Services/Windowing/ReaderWindowPreferences.swift [repeated]
-```
-
-UI source: ReaderView and ReaderDragHandle; visual constants: ReaderView and ReaderWindowLayout. Window controller owns focus, placement and persistence, not feature presentation. AppKit and SwiftUI are the only UI frameworks. The actual Reader has synthetic text and window controls; playback, scroll, scripts and settings remain planned.
-
-## Menu-bar scene (implemented)
-
-Entry: `Promptly/App/PromptlyApp.swift`
+## Prompter window and menu (implemented)
 
 ```text
 Promptly/App/PromptlyApp.swift
-├── Promptly/App/PromptlyAppDelegate.swift [reader dependency tree above]
-└── Promptly/Features/Reader/ReaderMenu.swift
-    └── Promptly/Services/Windowing/ReaderWindowController.swift [tree above]
+├── SwiftUI Window + MenuBarExtra
+├── Promptly/App/PromptlyAppDelegate.swift
+│   ├── Features/Prompter/Windowing/PrompterWindowController.swift
+│   │   ├── PrompterWindowAccessing.swift / PrompterWindowEvent.swift
+│   │   ├── PrompterWindowLayout.swift / PrompterWindowGeometry.swift
+│   │   ├── Domain/Windowing/PrompterWindowState.swift / DisplayGeometry.swift
+│   │   └── Services/Preferences/PrompterWindowStateStore.swift
+│   └── Features/Prompter/Windowing/PrompterWindowAdapter.swift
+│       └── Extensions/NSScreen+Extensions.swift
+├── Features/Prompter/Windowing/PrompterWindowContent.swift
+│   ├── Features/Prompter/PrompterView.swift
+│   │   └── native WindowDragGesture + WindowVisibilityToggle
+│   └── PrompterWindowAttachment.swift → existing SwiftUI NSWindow
+└── Features/Prompter/PrompterMenu.swift
+    └── native openWindow / dismissWindow
 ```
+
+All feature paths are under Promptly/. PrompterWindowLayoutConstants supplies
+sizes. The app delegate retains one model/adapter across window closure and
+reopening. There is no custom panel, hosting view, native drag view or window
+delegate. Exact geometry, preferences and display observation remain native
+feature infrastructure. Source snapshots are in layouts.md and components.md.
+Normal native activation is allowed; no Focus Prompter mode is implemented.
 
 ## Library (approved target, unimplemented)
 
-No source entry or dependency tree exists. References:
-
-```text
-Docs/LibraryDesign.md
-├── Docs/QuietNativeDesign.md [approved visual baseline and versions]
-├── Docs/Design/QuietNative/2026-10-31/LibraryActive.jpg
-├── Docs/Design/QuietNative/2026-10-31/LibraryEmpty.jpg
-├── Docs/Design/Library/Active-v6.png [historical]
-├── Docs/Design/Library/EmptyLibrary-v7.png [historical]
-├── Docs/ScriptEditingValidation.md [prospective acceptance]
-├── Docs/PersistencePolicy.md [planned persistence constraints]
-└── Docs/Architecture.md [planned feature ownership]
-```
-
-Quiet Native's active and empty states are approved, with native adoption pending. Preserve the dated snapshots and their versions. Maintain sidebar/editor/Sections structure, one Send action, exact empty-state hierarchy, native system typography, semantic colors, local privacy and synthetic scripts. Further generation requires a new user request; mockup approval is not native implementation validation.
+The Library source, storage and tests remain planned. Use Docs/LibraryDesign.md,
+Docs/QuietNativeDesign.md and their frozen synthetic images. Native adoption is
+not established by browser mockups. Preserve the approved active/empty states,
+manual sections, local privacy and 10-second Undo/recovery contract.
 
 ## Context selection
 
-This is the candidate inventory, not an instruction to upload every dependency. For visual exploration, prefer the approved images plus the Library contract and ReaderView/window constants. Do not upload private user content, preferences, stores or diagnostics. Full code for the visual surface and adapters is in layouts.md/components.md; theme.md contains exact implemented visual values.
+Prefer approved images, feature contracts and the current source snapshots for
+visual exploration. Native adapters are behavior dependencies, not reusable web
+visuals. Do not upload user scripts, preference files, stores or diagnostics.
+The resume manifest preserves earlier design-generation history; its old source
+hashes are not the current implementation map.

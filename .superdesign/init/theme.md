@@ -2,7 +2,7 @@
 
 ## Compact token summary
 
-There is no centralized theme/token file, CSS variable set, Tailwind config, breakpoint system or theme provider. Values below are actual reader literals, not a reusable design system. Dimensions are points.
+There is no centralized theme/token file, CSS variable set, Tailwind config, breakpoint system or theme provider. Values below are actual prompter literals, not a reusable design system. Dimensions are points.
 
 | Role | Current value/source |
 | --- | --- |
@@ -12,7 +12,7 @@ There is no centralized theme/token file, CSS variable set, Tailwind config, bre
 | Script label | `.caption.weight(.semibold)`; uppercase synthetic “SAMPLE SCRIPT” |
 | Primary foreground | `.white` |
 | Secondary foreground | white opacity 0.7, or 1 with Increased Contrast |
-| Reader background | black opacity 0.97, or 1 with Reduce Transparency |
+| Prompter background | black opacity 0.97, or 1 with Reduce Transparency |
 | Appearance | Forced `.dark` environment |
 | Detached corners | top 20; bottom 24 |
 | Anchored corners | top 0; bottom 24 |
@@ -20,17 +20,17 @@ There is no centralized theme/token file, CSS variable set, Tailwind config, bre
 | Icon hit regions | 30×30; borderless native Button |
 | Reading insets | horizontal 28, top 12, bottom 24; stack spacing 16 |
 | Resize hint | 10-point system glyph rotated −45°; white opacity 0.5; padding 10 |
-| Window shadow | AppKit `panel.hasShadow = true`; OS-provided, no custom shadow parameters |
+| Window shadow | SwiftUI/AppKit default; no custom shadow configuration |
 | Default expanded size | 640×320 |
 | Minimum expanded size | 360×200; capped to actual available display |
 | Display adaptation | Native visible bounds and safe-area/notch geometry, not web breakpoints |
 | Accent asset | Present without an explicit assigned color; no custom RGB value |
 
-Approved Library target: native controls, system typography, semantic colors and accessible hit areas. Frozen mockups show light neutral surfaces, quiet gray secondary text, blue selection/primary action, fine separators and modest rounded window chrome. These are visual references rather than measured source tokens. Never present sampled mockup pixels as existing app constants. Light/Dark/system appearance and adjustable reader styling are planned.
+Approved Library target: native controls, system typography, semantic colors and accessible hit areas. Frozen mockups show light neutral surfaces, quiet gray secondary text, blue selection/primary action, fine separators and modest rounded window chrome. These are visual references rather than measured source tokens. Never present sampled mockup pixels as existing app constants. Light/Dark/system appearance and adjustable prompter styling are planned.
 
 ## Raw theme sources
 
-No standalone raw theme files exist. Full unmodified ReaderView styling source is in layouts.md; full native window geometry constants and policy are below. AccentColor asset is the only color catalog entry and does not define a concrete color.
+No standalone raw theme files exist. Full unmodified PrompterView styling source is in layouts.md; full native window geometry constants and policy are below. AccentColor asset is the only color catalog entry and does not define a concrete color.
 
 ### `Promptly/Assets.xcassets/AccentColor.colorset/Contents.json`
 
@@ -48,11 +48,29 @@ No standalone raw theme files exist. Full unmodified ReaderView styling source i
 }
 ```
 
-### `Promptly/Domain/ReaderWindowLayout.swift`
+
+### `Promptly/Features/Prompter/Windowing/PrompterWindowLayoutConstants.swift`
 
 ```swift
 //
-//  ReaderWindowLayout.swift
+//  PrompterWindowLayoutConstants.swift
+//  Promptly
+//
+
+import CoreGraphics
+
+enum PrompterWindowLayoutConstants {
+    static let defaultExpandedSize = CGSize(width: 640, height: 320)
+    static let minimumExpandedSize = CGSize(width: 360, height: 200)
+    static let collapsedHeight: CGFloat = 58
+}
+```
+
+### `Promptly/Features/Prompter/Windowing/PrompterWindowGeometry.swift`
+
+```swift
+//
+//  PrompterWindowGeometry.swift
 //  Promptly
 //
 //  Created by Aykut Güven on 26.10.26.
@@ -61,24 +79,22 @@ No standalone raw theme files exist. Full unmodified ReaderView styling source i
 import CoreGraphics
 import Foundation
 
-enum ReaderWindowLayout {
-    static let defaultExpandedSize = CGSize(width: 640, height: 320)
-    static let minimumExpandedSize = CGSize(width: 360, height: 200)
-    static let collapsedHeight: CGFloat = 58
-
+enum PrompterWindowGeometry {
     static func sanitizedExpandedSize(_ size: CGSize) -> CGSize {
         CGSize(
-            width: sanitizedDimension(size.width, fallback: defaultExpandedSize.width,
-                                      minimum: minimumExpandedSize.width),
-            height: sanitizedDimension(size.height, fallback: defaultExpandedSize.height,
-                                       minimum: minimumExpandedSize.height)
+            width: sanitizedDimension(size.width,
+                                      fallback: PrompterWindowLayoutConstants.defaultExpandedSize.width,
+                                      minimum: PrompterWindowLayoutConstants.minimumExpandedSize.width),
+            height: sanitizedDimension(size.height,
+                                       fallback: PrompterWindowLayoutConstants.defaultExpandedSize.height,
+                                       minimum: PrompterWindowLayoutConstants.minimumExpandedSize.height)
         )
     }
 
     static func anchoredFrame(
         on display: DisplayGeometry,
         expandedSize: CGSize,
-        expansion: ReaderWindowState.Expansion
+        expansion: PrompterWindowState.Expansion
     ) -> CGRect {
         let size = sanitizedExpandedSize(expandedSize)
         let safeAreaTop = display.safeAreaTop.isFinite
@@ -91,7 +107,7 @@ enum ReaderWindowLayout {
             : display.visibleFrame
         let notchWidth = display.notchWidth.isFinite ? max(0, display.notchWidth) : 0
         let width = min(max(size.width, hasNotch ? notchWidth + 96 : 0), bounds.width)
-        let bodyHeight = expansion == .collapsed ? collapsedHeight : size.height
+        let bodyHeight = expansion == .collapsed ? PrompterWindowLayoutConstants.collapsedHeight : size.height
         let height = min(bodyHeight + (hasNotch ? safeAreaTop : 0), bounds.height)
         let x = min(max(display.frame.midX - width / 2, bounds.minX), bounds.maxX - width)
         return CGRect(x: x, y: bounds.maxY - height, width: width, height: height)
@@ -101,7 +117,7 @@ enum ReaderWindowLayout {
         frame: CGRect?,
         displayID: UInt32?,
         expandedSize: CGSize,
-        expansion: ReaderWindowState.Expansion,
+        expansion: PrompterWindowState.Expansion,
         displays: [DisplayGeometry],
         primaryDisplayID: UInt32?
     ) -> (frame: CGRect, displayID: UInt32)? {
@@ -137,13 +153,14 @@ enum ReaderWindowLayout {
 
     static func detachedFrame(
         fromExpandedFrame frame: CGRect,
-        expansion: ReaderWindowState.Expansion,
+        expansion: PrompterWindowState.Expansion,
         on display: DisplayGeometry
     ) -> CGRect {
         let size = sanitizedExpandedSize(frame.size)
         let bounds = display.visibleFrame
         let width = min(size.width, bounds.width)
-        let height = min(expansion == .collapsed ? collapsedHeight : size.height, bounds.height)
+        let height = min(expansion == .collapsed ? PrompterWindowLayoutConstants.collapsedHeight : size.height,
+                         bounds.height)
         // Preserve the top edge when expanding or collapsing; clamp against one real screen.
         let proposedX = frame.origin.x.isFinite ? frame.origin.x : bounds.midX - width / 2
         let proposedTop = frame.maxY.isFinite ? frame.maxY : bounds.maxY
