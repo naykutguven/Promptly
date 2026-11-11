@@ -196,17 +196,20 @@ A dedicated Core Text engine calculates line breaks using:
 
 The layout engine must not depend on SwiftUI view instances.
 
+Keep `kCTTypesetterOptionAllowUnboundedLayout` at its default, `false`. Bidirectional processing is already supported; this option permits otherwise excessively expensive layout. Reconsider enabling it only if representative long or bidirectional scripts within the input limits demonstrate a need, after measuring resource use. See Apple's [unbounded-layout option](https://developer.apple.com/documentation/coretext/kcttypesetteroptionallowunboundedlayout) and [bidirectional behavior](https://developer.apple.com/documentation/coretext/kcttypesetteroptionforcedembeddinglevel).
+
 ### F02.2 — Display-line model
 
 Each display line contains:
 
 | Field | Description |
 |---|---|
-| `index` | Zero-based index within the current layout |
+| `id` | Line identity assigned once during layout generation |
 | `text` | Text represented by the line |
 | `sourceRange` | Range within the original script |
 | `layoutRevision` | Revision that produced the line |
-| `paragraphIndex` | Optional source paragraph identifier |
+
+The model conforms to `Identifiable`. Each ID remains stable within its layout. Zero-based line indexes are derived from array positions, including in MCP responses.
 
 The source range is the authoritative connection between a display line and the original script.
 
@@ -218,8 +221,10 @@ Internal Core Text range handling must account for UTF-16 indexing and Unicode g
 - Present lines vertically within a `ScrollView`.
 - Use stable line identities within a layout revision.
 - Ensure each line fits the available reading width.
+- Preset widths and supported font sizes must provide sufficient reading width.
 - Avoid unintended second-line wrapping.
 - Use efficient/lazy view construction when needed.
+- Keep line and paragraph spacing fixed for the MVP.
 
 The layout and rendering systems must use compatible font measurements.
 
@@ -272,13 +277,16 @@ When layout regeneration occurs:
 
 The user must not unexpectedly return to the beginning.
 
-### F02.7 — Asynchronous generation
+### F02.7 — Asynchronous generation and loading state
 
-- Layout calculations may execute away from the main actor.
+- Layout calculations must run off the main actor using an `@concurrent` async entry point, as defined by [Swift's concurrency specification](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0461-async-function-isolation.md).
 - Results must be concurrency-safe.
 - Obsolete calculations must be cancelled or discarded.
 - Only results corresponding to the latest requested configuration may be applied.
 - SwiftUI-observed session state is updated on the main actor.
+- Keep the previous layout visible with its matching rendering configuration while recalculating.
+- Pause playback and disable Play and navigation, including manual scrolling and MCP navigation, until the new layout is ready or failure recovery completes.
+- Show a small progress indicator only for noticeable delays. Do not replace the previous layout with skeletons or shimmer animations.
 
 ### F02.8 — Text edge cases
 
@@ -286,14 +294,21 @@ The engine must support or explicitly handle:
 
 - Empty paragraphs
 - Consecutive newlines
-- Long unbroken words and URLs
+- Long unbroken words and URLs, wrapping between characters when needed without splitting composed characters or emoji sequences
 - Emoji and composed characters
 - Unicode whitespace
 - Bidirectional text
 - Font fallback
 - Scripts with thousands of words
 
-Blank lines must preserve their intended visual spacing without corrupting line indexes or playback timing.
+Each preserved blank line occupies a normal line-height row, counts toward the display-line total, and is navigable. Preserve consecutive blank lines. Blank-line playback duration remains a PRD-03 decision.
+
+### F02.9 — Layout failure
+
+- Preserve the previous valid layout, source text, and reading position, and expose the failure.
+- If a settings change caused the failure, restore the affected settings to their previous working values without overwriting newer settings updates.
+- Leave playback paused after recovery.
+- Failed script replacements follow the loading rules in PRD-01.
 
 ## Acceptance criteria
 
@@ -304,6 +319,10 @@ Blank lines must preserve their intended visual spacing without corrupting line 
 - Old revisions are rejected by MCP navigation.
 - Rapid settings changes cannot apply stale layout results.
 - Text rendering agrees with the layout engine's calculated boundaries.
+- Long words and URLs wrap without losing text or splitting composed characters.
+- Blank lines are included in line counts and navigation.
+- Recalculation preserves the previous display and blocks Play/navigation through UI and MCP.
+- Failed settings-triggered layout changes restore the previous working layout and affected settings without undoing newer updates.
 
 ## Out of scope
 
@@ -813,7 +832,7 @@ Output:
 - Source ranges
 - Pagination metadata
 
-Line indexing is zero-based.
+Line indexing is zero-based and derived from array positions; it is not stored in the display-line model. Blank lines are included in counts and pagination.
 
 A revision may be omitted when obtaining a fresh snapshot. If provided, it must match the active layout.
 
@@ -1011,6 +1030,8 @@ Examples:
 - User rewinding while an agent requests direct navigation.
 
 The final state must correspond to an explicit, well-defined sequence of operations.
+
+While layout generation is pending, MCP Play and navigation commands, including Rewind, return a structured layout-in-progress error.
 
 ### F07.12 — Revision safety
 
@@ -1234,7 +1255,7 @@ The settings service must:
 4. Publish the change.
 5. Trigger necessary layout/window/playback side effects.
 
-Discard obsolete layout results. If layout recalculation fails, preserve a valid reading session and expose the failure. Restore preference and layout consistency through a defined rollback or retry policy that cannot overwrite subsequent settings updates.
+Discard obsolete layout results. If a settings-triggered layout recalculation fails, preserve the previous valid layout and reading position, restore the affected settings to their previous working values, and expose the failure. Recovery must not overwrite newer settings updates. Leave playback paused.
 
 ## Acceptance criteria
 
@@ -1370,6 +1391,7 @@ Examples:
 - Invalid line index
 - Stale layout revision
 - Invalid preference value
+- Layout generation in progress
 - File import failure
 - Layout generation failure
 - MCP integration unavailable
