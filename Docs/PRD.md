@@ -61,8 +61,6 @@ Promptly is designed primarily for video meetings, interviews, presentations, an
 
 **Reading session:** The active script, generated display lines, playback state, and reading position.
 
-**Settings revision:** A version identifier for application preferences used to coordinate settings changes from multiple entry points.
-
 ---
 
 # PRD-01 — Script Input & Management
@@ -844,7 +842,6 @@ Returns:
 - Window visibility
 - Window size preset
 - Placement mode
-- Settings revision
 
 The response does not include the entire script.
 
@@ -852,7 +849,7 @@ The response does not include the entire script.
 
 ### F07.7 — `promptly_get_settings`
 
-Returns the current configurable preferences and their settings revision.
+Returns the current configurable preferences.
 
 Categories:
 - Window and layout
@@ -865,7 +862,6 @@ Example response structure:
 
 ```json
 {
-  "settings_revision": "revision-id",
   "window": {
     "size": "compact",
     "placement": "attached"
@@ -896,7 +892,6 @@ Example request:
 
 ```json
 {
-  "expected_settings_revision": "revision-id",
   "changes": {
     "window": {
       "size": "expanded",
@@ -913,14 +908,13 @@ Example request:
 ```
 
 Requirements:
-- Support partial updates.
-- Validate all supplied values.
+- Support partial updates to individual properties, including nested properties; omitted properties remain unchanged.
+- Validate all supplied values against the current settings before applying changes.
 - Reject unknown or unsupported keys.
 - Reject out-of-range values.
 - Apply updates atomically.
-- Persist changes through the shared settings service.
-- Return the resulting preferences and settings revision.
-- Support revision checks to prevent conflicting agent/UI updates.
+- Apply and persist changes through the same settings service used by the UI.
+- Return the resulting preferences.
 
 If any requested change is invalid, the entire update fails without partially modifying preferences.
 
@@ -1195,34 +1189,29 @@ Display:
 
 - Store preferences in UserDefaults.
 - Use `@AppStorage` where suitable for simple UI-bound values.
-- Prefer a shared settings service for validated, multi-property mutations.
+- Use a shared settings service for all UI and MCP mutations.
 - Ensure UI and MCP updates pass through the same validation rules.
 - Use Observation to propagate changes.
 - Persist only preferences and necessary window coordinates, never script content.
 
-## 8.9 Settings revisions
+## 8.9 Settings update behavior
 
-Each successful logical settings update generates a new settings revision.
-
-Settings updates may include a caller-provided expected revision.
-
-If the expected revision does not match the current revision, reject the update with a conflict response and return the current revision.
-
-A persisted monotonic settings version or a newly issued revision token may be used, provided conflict behavior is consistent.
+- UI and MCP submit only the properties being changed, rather than replacing settings from an older snapshot.
+- The shared settings service serializes updates and preserves all unspecified properties, including siblings within nested groups.
+- If valid updates modify the same property, the last update committed by the service wins. Client timestamps and asynchronous completion order do not determine precedence.
 
 ## 8.10 Settings change atomicity
 
 A multi-field update must be validated before any change is committed.
 
 The settings service must:
-1. Validate the input.
+1. Merge the specified properties into the current settings and validate the entire proposed update before committing.
 2. Determine affected subsystems.
 3. Commit the new preference state.
-4. Update the settings revision.
-5. Publish the change.
-6. Trigger necessary layout/window/playback side effects.
+4. Publish the change.
+5. Trigger necessary layout/window/playback side effects.
 
-If layout recalculation fails, the app must preserve a valid reading session and expose the failure. Preference and layout consistency must be restored through a defined rollback or retry policy.
+Discard obsolete layout results. If layout recalculation fails, preserve a valid reading session and expose the failure. Restore preference and layout consistency through a defined rollback or retry policy that cannot overwrite subsequent settings updates.
 
 ## Acceptance criteria
 
@@ -1233,6 +1222,7 @@ If layout recalculation fails, the app must preserve a valid reading session and
 - UI updates appear immediately through MCP.
 - Layout-affecting settings preserve reading position.
 - Invalid updates are rejected without partial persistence.
+- Updates to different properties are preserved; updates to the same property follow service commit order.
 - Resetting preferences does not delete the active script.
 - MCP clients cannot alter protected integration/security settings.
 
@@ -1327,7 +1317,7 @@ SwiftUI views consume this state rather than maintaining independent copies.
 - Validation
 - Persistence
 - Observation updates
-- Settings revisions
+- Serialized partial updates
 - Side-effect coordination
 
 **MCP Bridge**
@@ -1357,7 +1347,6 @@ Examples:
 - Invalid line index
 - Stale layout revision
 - Invalid preference value
-- Settings revision conflict
 - File import failure
 - Layout generation failure
 - MCP integration unavailable
@@ -1438,7 +1427,7 @@ Implement:
 - Revision-aware navigation
 - Settings read/write
 - Shared state integration
-- Validation and conflict handling
+- Validation and mutation ordering
 
 **Deliverable:** Agent-controllable teleprompter with consistent application state.
 
