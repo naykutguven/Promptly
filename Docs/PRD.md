@@ -75,10 +75,11 @@ Enable users and agents to load and replace scripts without maintaining separate
 
 ### F01.1 — Manual script entry
 
-- Users can open a script editor from the menu bar.
+- Users can open the script editor in a separate window from the menu bar.
+- A newly opened editor shows the active script, or empty text if no script is loaded.
 - The editor accepts pasted or typed plain text.
 - Users can review and edit content before loading it.
-- Selecting **Load into Prompter** replaces the active script.
+- Selecting **Load into Prompter** replaces the active script and closes the editor only after success. Failed or superseded loads leave the draft available.
 - Whitespace-only scripts are rejected.
 
 ### F01.2 — File import
@@ -102,18 +103,20 @@ Requirements:
 Regardless of whether the text originates from the editor, an imported file, or MCP:
 
 1. Validate the new script.
-2. Replace the active source text.
-3. Generate a new script revision.
-4. Generate the display-line layout.
+2. Prepare a new script revision and display-line layout without replacing the current session.
+3. Confirm this is still the latest load request.
+4. Commit the new source text, revisions, and layout together.
 5. Set the current line to index `0`.
 6. Set playback to Stopped.
 7. Update all connected views and MCP-visible state.
 
-If layout generation fails, the previously valid session remains available.
+The latest load request wins across UI and MCP. Older results must not replace a newer request, regardless of completion order.
+
+If validation or layout generation fails, the previously valid session remains available.
 
 ### F01.4 — Memory-only persistence
 
-Script content exists only in application memory.
+Script content and editor drafts exist only in application memory.
 
 The application must not:
 - Store scripts in UserDefaults.
@@ -132,8 +135,24 @@ The MVP does not promise secure memory erasure or protection against operating-s
 - Hiding the prompter preserves the script.
 - Showing the prompter restores the existing session.
 - Users can explicitly clear the current script.
+- Replacing or clearing the active script does not require confirmation.
+- Clearing the script invalidates pending loads so older results cannot restore it.
 - Loading a new script invalidates existing line references.
 - The app is fully functional without an MCP connection.
+
+### F01.6 — Editor synchronization and draft protection
+
+- Typed, pasted, or imported changes not yet loaded are unfinished editor edits.
+- When the active script changes or is cleared, update an open editor automatically only if it has no unfinished edits.
+- Otherwise preserve the draft and offer **Use Active Script** to replace it with the current active text.
+- Confirm before discarding unfinished edits, including on import, **Use Active Script**, editor close, or application quit. Cancelling preserves the draft.
+
+### F01.7 — Input limits
+
+- Initial script limit: 100,000 user-perceived characters.
+- Initial imported-file limit: 1 MB (1,000,000 bytes).
+- Enforce the script limit when loading through the UI or MCP.
+- Reject oversized input with a clear error. Never truncate text or replace the active session or editor draft on rejection.
 
 ## Acceptance criteria
 
@@ -143,6 +162,10 @@ The MVP does not promise secure memory erasure or protection against operating-s
 - Application restart begins without an active script.
 - Settings persist independently of the active script.
 - Invalid imports never destroy an existing valid session.
+- The editor opens separately with the active script and closes only after a successful editor-initiated load.
+- Incoming scripts preserve unfinished editor edits; discarding those edits requires confirmation.
+- Oversized input is rejected without truncation through every entry point.
+- Older load results cannot overwrite the latest load request.
 
 ## Out of scope
 
@@ -764,7 +787,7 @@ Input:
 - `text`: String
 
 Behavior:
-- Validates the script.
+- Uses the shared PRD-01 loading rules, including the script limit, draft protection, and latest-request-wins ordering.
 - Replaces the current source text.
 - Generates new script and layout revisions.
 - Resets playback to Stopped.
