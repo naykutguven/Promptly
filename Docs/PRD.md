@@ -301,7 +301,7 @@ The engine must support or explicitly handle:
 - Font fallback
 - Scripts with thousands of words
 
-Each preserved blank line occupies a normal line-height row, counts toward the display-line total, and is navigable. Preserve consecutive blank lines. Blank-line playback duration remains a PRD-03 decision.
+Each preserved blank line occupies a normal line-height row, counts toward the display-line total, and is navigable. Preserve consecutive blank lines. Blank-line playback uses the minimum line duration defined in PRD-03.
 
 ### F02.9 — Layout failure
 
@@ -347,12 +347,14 @@ The application does not continuously scroll at a fixed pixel velocity.
 Instead:
 
 1. A display line becomes current.
-2. It remains current for a calculated duration.
-3. The current-line index advances.
-4. The scroll view animates to the next line's focus position.
-5. The next line's duration begins.
+2. Scroll it into its configured focus position using a brief animation.
+3. Once scrolling finishes, start the line's calculated reading duration.
+4. Keep the line stationary for that duration.
+5. Advance to the next line and repeat, or complete playback after the final line.
 
 The reading session owns the current-line index. The scroll view only represents that position visually.
+
+Scrolling time is additional to the WPM-based reading duration. Total playback time includes both reading and scroll transitions. Respect Reduced Motion when presenting transitions.
 
 ## 3.2 Playback states
 
@@ -371,6 +373,7 @@ The reading session owns the current-line index. The scroll view only represents
 - Resumes from a paused position.
 - If playback has completed, starts again from the beginning.
 - Does nothing if playback is already active.
+- Play is unavailable while the prompter is hidden. Disable UI Play controls and reject MCP Play with a structured window-hidden error; do not show the prompter automatically.
 
 The first line must remain visible for its calculated reading duration before advancing.
 
@@ -378,7 +381,7 @@ The first line must remain visible for its calculated reading duration before ad
 
 - Immediately suspends automatic advancement.
 - Preserves the current line.
-- Preserves remaining reading time for that line where practical.
+- Preserves the remaining reading time for that line; Play continues that remaining time.
 - Does not change the scroll position.
 - Repeated Pause commands are safe and idempotent.
 
@@ -396,16 +399,16 @@ Rewind must not automatically restart playback.
 
 **Confirmed:** WPM is the only MVP playback-speed model.
 
-Recommended defaults:
+Confirmed defaults:
 - Default: 150 WPM
 - Initial supported range: 60–300 WPM
 - User-adjustable in Settings
 
 Line reading duration is based on the amount of text within that display line.
 
-For ordinary text:
+Calculate each line's reading duration as:
 
-`lineDuration = wordCount × 60 / WPM`
+`lineDuration = max(0.6 seconds, wordCount × 60 / WPM)`
 
 Example at 150 WPM:
 - 5 words → 2 seconds
@@ -414,22 +417,25 @@ Example at 150 WPM:
 
 A minimum duration prevents short lines from advancing too quickly.
 
-The initial recommended minimum is 0.6 seconds, subject to usability testing.
+The minimum duration is 0.6 seconds. Each blank line receives this minimum duration, including consecutive blank lines.
 
 Word counting must use appropriate Unicode-aware tokenization rather than assuming that all languages separate words using ASCII spaces.
 
-Words spanning multiple visual lines and blank lines require deterministic handling so timing is not unintentionally counted twice.
+Count words independently within each display line, including word fragments produced by character wrapping.
 
 ### F03.5 — Playback timing engine
 
 Playback uses monotonic elapsed time.
 
+The playback engine calculates duration when a line's reading timer starts, using the current WPM. The reading session stores the active line's calculated duration and remaining reading time in playback state. Do not store playback durations in the display-line model. Pausing and resuming retain the captured duration; a WPM change does not recalculate the current line.
+
 Requirements:
 - Avoid assuming timer callbacks are perfectly accurate.
-- Avoid accumulating timing drift over long scripts.
+- Avoid accumulating unintended timer drift over long scripts; scroll transitions remain additional elapsed time.
 - Ensure a single active playback scheduler.
 - Cancel or invalidate previous scheduled advances when playback is paused, reset, or replaced.
 - Ensure navigation commands supersede pending timer events.
+- Start each reading timer only after its scroll transition finishes. Interrupted or obsolete transition completions must not start playback.
 
 A Swift concurrency-based scheduling mechanism is preferred over a view-owned repeating timer.
 
@@ -437,7 +443,7 @@ A Swift concurrency-based scheduling mechanism is preferred over a view-owned re
 
 Changing WPM must not reset the script or reading position.
 
-**Recommended MVP behavior:**
+**Confirmed MVP behavior:**
 - The new speed takes effect from the next display line.
 - The current line finishes according to its existing timing.
 - The new speed is persisted immediately.
@@ -454,6 +460,7 @@ Requirements:
 - Cancel pending automatic advancement.
 - Allow the user to scroll normally.
 - Update the current line according to the final reading focus.
+- Reset timing so the selected line receives its full reading duration when Play is next pressed, even if scrolling settles on the same line.
 - Do not resume playback automatically.
 
 The current line should follow the nearest line to the configured focus anchor. It may update during user scrolling, but the settled position becomes authoritative when scrolling ends.
@@ -494,16 +501,29 @@ It does not imply that the app can detect every third-party screen-sharing state
 - No automatic looping occurs.
 - Pressing Play from Completed restarts at the first line.
 
+### F03.11 — System sleep
+
+- If playback is active when the Mac goes to sleep, pause it and cancel pending automatic advances.
+- Preserve the current line and its remaining reading time.
+- Playback paused by system sleep remains paused after wake until Play is explicitly requested with the prompter visible.
+- Do not advance through unread lines to catch up with time spent asleep.
+
 ## Acceptance criteria
 
 - Playback progresses line by line at the configured WPM.
-- Short lines receive appropriate minimum reading time.
+- Short and blank lines receive at least 0.6 seconds of reading time; blank lines receive exactly the minimum.
 - Play/Pause/Rewind behave consistently.
+- Pause/resume continues the current line's remaining reading time.
 - Manual scrolling immediately interrupts playback.
+- Play after manual scrolling gives the selected line its full reading duration.
 - Programmatic scrolling never falsely triggers a pause.
 - Hiding the window pauses playback.
+- Play while hidden is disabled in the UI and rejected through MCP without showing the prompter.
 - Reopening the window does not resume playback.
+- System sleep preserves position and remaining time; wake never resumes playback or skips unread lines.
 - Playback reaches Completed only after the final line's reading duration.
+- Reading timers start after scrolling finishes, so animation does not consume reading time.
+- Each display line is timed independently using its own word count and the minimum duration.
 - Changing WPM does not regenerate the layout.
 - Repeated rapid control actions do not create overlapping playback schedules.
 
@@ -870,7 +890,9 @@ An outdated revision must never be interpreted as a valid request against the cu
 
 `promptly_play`, `promptly_pause`, and `promptly_rewind` invoke the exact same operations used by the UI.
 
-Each returns the resulting playback state and current line.
+Play while hidden returns a structured window-hidden error and does not show the prompter.
+
+Each successful command returns the resulting playback state and current line.
 
 ### F07.6 — `promptly_get_state`
 
@@ -1205,6 +1227,7 @@ No user setting is needed for this behavior.
 Fixed MVP behavior:
 - Hiding the window pauses playback.
 - Showing the window never automatically resumes playback.
+- Play is unavailable while the prompter is hidden.
 
 No user setting is needed for this behavior.
 
@@ -1326,7 +1349,7 @@ The reading session owns:
 - Layout revision
 - Current-line index
 - Playback state
-- Playback timing information
+- Playback timing information, including the active line's calculated duration and remaining reading time
 
 SwiftUI views consume this state rather than maintaining independent copies.
 
@@ -1345,7 +1368,7 @@ SwiftUI views consume this state rather than maintaining independent copies.
 - Revision production
 
 **Playback Engine**
-- WPM-based line durations
+- Calculate WPM-based duration when each line's reading timer starts
 - Monotonic scheduling
 - Pause/resume/rewind timing
 - Playback completion
@@ -1392,6 +1415,7 @@ Examples:
 - Stale layout revision
 - Invalid preference value
 - Layout generation in progress
+- Prompter window hidden
 - File import failure
 - Layout generation failure
 - MCP integration unavailable
