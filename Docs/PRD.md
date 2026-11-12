@@ -551,12 +551,13 @@ Its identity is determined by the reading session, not individual view state.
 
 ### F04.2 — Highlight presentation
 
-Recommended MVP presentation:
-- Current line at full opacity.
-- Surrounding lines at reduced opacity.
+Confirmed MVP presentation:
+- Current line at full opacity (`1.0`).
+- Surrounding lines at fixed opacity, initially `0.6`. Tune this value during implementation for readability; no user-adjustable dimming in the MVP.
 - No changes to font size or line height.
-- No mandatory background rectangle.
+- No background rectangle.
 - Strong enough contrast to remain readable.
+- A blank current line has no special marker or decoration; retain its normal blank row.
 
 Highlight styling must not affect text layout.
 
@@ -569,6 +570,8 @@ Users can select:
 - Bottom
 
 The current line is automatically aligned to the chosen reading position.
+
+The default position is Center. Changing position preserves the current line, playback state, and timing; active playback continues without layout regeneration.
 
 Adequate leading and trailing scroll space must exist for the first and last lines.
 
@@ -590,15 +593,17 @@ Where Reduce Motion is enabled, transitions should become immediate or use restr
 
 ## Acceptance criteria
 
-- The current line is visually distinct.
+- A current line containing text is visually distinct; a blank current line has no special mark.
 - Top, Center, and Bottom placement remain consistent.
+- Reading focus defaults to Center.
+- Changing focus position preserves the current line and playback timing without pausing active playback.
 - Highlight transitions do not cause text reflow.
 - Rapid navigation does not produce competing highlights.
 - Manual scrolling and MCP navigation update the same highlighted line.
 
 ## Out of scope
 
-Word-level highlights, karaoke effects, multiple highlighted lines, and animated text transformations.
+User-adjustable dimming, word-level highlights, karaoke effects, multiple highlighted lines, and animated text transformations.
 
 ---
 
@@ -986,6 +991,8 @@ If any requested change is invalid, the entire update fails without partially mo
 
 Agent-initiated settings changes must behave exactly like user-initiated changes.
 
+Settings updates pause active playback only when layout regeneration is required. After regeneration, playback remains paused until Play is explicitly requested.
+
 Examples:
 
 **Changing WPM**
@@ -1008,6 +1015,10 @@ Examples:
 - Immediately updates rendering.
 - Does not change the layout revision.
 - Does not interrupt playback.
+
+**Changing reading focus position**
+- Realigns the current line to Top, Center, or Bottom.
+- Preserves the current line, playback state, and timing without regenerating display lines.
 
 **Changing placement**
 - Repositions the prompter.
@@ -1127,6 +1138,8 @@ The Settings window uses a native macOS sidebar with the following tabs:
 
 An Appearance tab may be introduced when advanced transitions become available.
 
+Opening or closing Settings preserves playback state and reading position; it does not pause active playback or resume paused playback.
+
 ## 8.2 General
 
 MVP settings:
@@ -1164,7 +1177,9 @@ Options:
 - Center
 - Bottom
 
-Changing focus position updates the scroll target without regenerating the display-line collection.
+Default: Center.
+
+Changing focus position updates the scroll target for the same current line without regenerating the display-line collection. Preserve playback state and timing; active playback continues.
 
 ## 8.4 Typography
 
@@ -1266,6 +1281,7 @@ Display:
 - UI and MCP submit only the properties being changed, rather than replacing settings from an older snapshot.
 - The shared settings service serializes updates and preserves all unspecified properties, including siblings within nested groups.
 - If valid updates modify the same property, the last update committed by the service wins. Client timestamps and asynchronous completion order do not determine precedence.
+- Settings updates through UI or MCP pause active playback only when layout regeneration is required. WPM, text color, and reading focus changes preserve playback state. After regeneration, playback remains paused until Play is explicitly requested.
 
 ## 8.10 Settings change atomicity
 
@@ -1287,6 +1303,8 @@ Discard obsolete layout results. If a settings-triggered layout recalculation fa
 - UI and MCP reflect identical settings values.
 - Agent updates appear immediately in Settings.
 - UI updates appear immediately through MCP.
+- Opening or closing Settings preserves playback state and reading position.
+- WPM, text color, and reading focus changes do not pause active playback through either UI or MCP.
 - Layout-affecting settings preserve reading position.
 - Invalid updates are rejected without partial persistence.
 - Updates to different properties are preserved; updates to the same property follow service commit order.
