@@ -40,8 +40,8 @@ Promptly is designed primarily for video meetings, interviews, presentations, an
 | MCP line indexing | Visual display lines with mandatory layout revisions for navigation |
 | Script persistence | Memory-only |
 | MCP settings access | Read and write, with security-sensitive exclusions |
-| Window sizing | Compact and Expanded fixed presets |
-| Window placement | Attached and Floating |
+| Window sizing | Compact (default) and Expanded fixed presets |
+| Window placement | Attached to the built-in laptop display (default), or Floating |
 | Source rendering | Individually rendered SwiftUI Text views |
 | Text layout | Custom Core Text engine |
 | Preferences persistence | UserDefaults |
@@ -79,7 +79,7 @@ Enable users and agents to load and replace scripts without maintaining separate
 - A newly opened editor shows the active script, or empty text if no script is loaded.
 - The editor accepts pasted or typed plain text.
 - Users can review and edit content before loading it.
-- Selecting **Load into Prompter** replaces the active script and closes the editor only after success. Failed or superseded loads leave the draft available.
+- Selecting **Load into Prompter** replaces the active script, shows the prompter without starting playback, and closes the editor only after success. Failed or superseded loads leave the draft available.
 - Whitespace-only scripts are rejected.
 
 ### F01.2 — File import
@@ -108,7 +108,8 @@ Regardless of whether the text originates from the editor, an imported file, or 
 4. Commit the new source text, revisions, and layout together.
 5. Set the current line to index `0`.
 6. Set playback to Stopped.
-7. Update all connected views and MCP-visible state.
+7. Show the prompter without starting playback.
+8. Update all connected views and MCP-visible state.
 
 The latest load request wins across UI and MCP. Older results must not replace a newer request, regardless of completion order.
 
@@ -159,6 +160,7 @@ The MVP does not promise secure memory erasure or protection against operating-s
 - Users can load scripts through both manual entry and file import.
 - MCP-provided scripts use identical loading behavior.
 - New scripts reset the reading position and playback.
+- Successful loads through UI or MCP show the prompter without starting playback.
 - Application restart begins without an active script.
 - Settings persist independently of the active script.
 - Invalid imports never destroy an existing valid session.
@@ -622,16 +624,20 @@ Provide a small, nonintrusive prompter window that users can attach near the cam
 The prompter supports:
 
 **Compact**
+- Initial usable reading area: **480 × 160 pt** (width × height).
 - Smaller reading area.
 - Shorter visual lines.
 - Designed for minimal obstruction.
 
 **Expanded**
+- Initial usable reading area: **640 × 280 pt** (width × height).
 - Larger reading area.
 - Longer visual lines.
 - Provides additional reading context.
 
-Exact measurements remain TBD.
+These dimensions exclude padding and controls, which add to the overall window size. Tune the initial dimensions during implementation for readability across supported fonts and sizes.
+
+Default preset: Compact. Restore the saved preset on subsequent launches.
 
 Neither preset supports freeform resizing.
 
@@ -640,6 +646,8 @@ Switching between presets triggers layout regeneration if the text width changes
 ### F05.2 — Attached placement
 
 Attached mode:
+- Is the default placement for new installations; restore the saved placement on subsequent launches.
+- Targets the built-in laptop display, even when an external monitor is configured as the primary display in macOS.
 - Positions the prompter relative to the notch region when available.
 - Uses top-center anchoring.
 - Accounts for display geometry.
@@ -663,6 +671,8 @@ Floating mode:
 
 ### F05.5 — Show/hide
 
+- Show the prompter on application launch, with an empty state when no script is loaded.
+- A successful script load through UI or MCP reveals a hidden prompter without starting playback. The newly loaded session is Stopped, as defined in PRD-01.
 - The window can be hidden using an in-window control.
 - The menu bar can toggle visibility.
 - Hiding pauses active playback.
@@ -676,9 +686,11 @@ The window should:
 - Use a minimal, borderless presentation.
 - Remain above ordinary application windows where supported.
 - Minimize unexpected application activation.
-- Remain available across appropriate Spaces.
-- Support compatible full-screen application environments.
-- Avoid unnecessary dock presence for a menu-bar-first application.
+- While attached in an extended desktop, remain on the built-in laptop display across that display's Spaces, without duplicating the prompter onto external displays.
+- Support eligible full-screen Spaces on the built-in display, subject to native compatibility validation.
+- Run as a menu-bar-only application with no Dock icon, including when the editor or Settings window is open.
+
+Apple's [window collection behaviors](https://developer.apple.com/documentation/appkit/nswindow/collectionbehavior-swift.struct) provide native Spaces and full-screen participation. Verify actual behavior on macOS 26 and multiple-display configurations before claiming compatibility; documentation alone is not runtime evidence.
 
 ### F05.7 — Multiple displays
 
@@ -690,8 +702,14 @@ The window should:
 ## Acceptance criteria
 
 - Compact and Expanded modes are fixed-size.
+- New installations default to Compact and Attached on the built-in laptop display.
+- Launch shows an empty prompter when no script is loaded.
+- Successful UI and MCP loads reveal the prompter without starting playback.
 - Switching presets preserves the reading position.
 - Attached and Floating placements work independently.
+- The attached prompter follows the built-in display's Spaces without appearing on external displays in an extended desktop.
+- Full-screen Spaces compatibility is verified and documented for tested configurations.
+- The application has no Dock icon.
 - Window hiding always pauses active playback.
 - Closing and reopening the window does not destroy the reading session.
 - Display changes do not strand the window offscreen.
@@ -834,7 +852,7 @@ Behavior:
 - Uses the shared PRD-01 loading rules, including the script limit, draft protection, and latest-request-wins ordering.
 - Replaces the current source text.
 - Generates new script and layout revisions.
-- Resets playback to Stopped.
+- Resets playback to Stopped and shows the prompter without starting playback.
 - Returns the resulting session metadata.
 
 Output:
@@ -1160,7 +1178,7 @@ Options:
 - Compact
 - Expanded
 
-Persist the selected preset.
+Default: Compact. Persist the selected preset.
 
 ### Placement
 
@@ -1168,7 +1186,7 @@ Options:
 - Attached
 - Floating
 
-Persist placement mode and a valid last floating position.
+Default: Attached to the built-in laptop display. Persist placement mode and a valid last floating position.
 
 ### Reading focus
 
