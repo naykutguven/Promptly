@@ -125,6 +125,7 @@ The application must not:
 - Restore the previous script after an application restart.
 - Persist imported file contents or file paths.
 - Include script contents in logs, diagnostics, or analytics.
+- Automatically upload scripts to cloud services.
 
 On normal application termination, the active session is discarded.
 
@@ -722,11 +723,13 @@ Arbitrary resizing, multiple teleprompter windows, custom window dimensions, and
 
 # PRD-06 — Screen-Sharing Privacy
 
-**Priority:** Release-blocking feasibility investigation
+**Priority:** P0 — MVP compatibility testing and disclosure
 
 ## Objective
 
 Determine how reliably Promptly can avoid appearing in third-party screen captures and clearly communicate supported behavior.
+
+The MVP may ship with documented limitations. Capture exclusion is not a release requirement for every application or capture mode; test and document observed behavior.
 
 ## Technical constraint
 
@@ -756,40 +759,30 @@ Evaluate:
 
 ### F06.2 — Compatibility documentation
 
-Maintain a compatibility matrix identifying:
+Maintain the compatibility matrix in a separate [technical research document](Research/ScreenSharingCompatibility.md), identifying:
 - Tested application and version
+- macOS version
 - Capture mode
+- Display configuration
 - Observed Promptly visibility
 - Known limitations
 - Reproduction procedure
 
 ### F06.3 — Privacy communication
 
-- Do not advertise universal invisibility without proof.
+- Do not advertise universal invisibility.
 - Describe tested capabilities accurately.
-- Warn users where protection is unavailable or unknown.
+- Clearly disclose capture limitations in the app and documentation, including cases that are unsupported or untested.
+- Keep detailed test results in the separate technical research document.
 - Keep screen-capture privacy separate from ordinary window hide/show functionality.
-
-### F06.4 — Local data privacy
-
-- No automatic cloud upload.
-- No script content in diagnostic logging.
-- No mandatory account.
-- Memory-only scripts.
-- User-controlled MCP integration.
-
-### F06.5 — MCP privacy boundary
-
-MCP clients with script-reading access can retrieve script content, regardless of screen-sharing visibility.
-
-The application must not imply that capture-related privacy also restricts authorized MCP clients.
 
 ## Acceptance criteria
 
-- A reproducible test matrix is available.
+- A reproducible test matrix is maintained in the separate technical research document.
 - Privacy claims match observed behavior.
+- Capture limitations and untested cases are clearly disclosed in the app and documentation.
 - Users are not given misleading invisibility guarantees.
-- Core functionality works without network access.
+- Documented capture limitations do not block MVP release.
 
 ## Out of scope
 
@@ -1107,6 +1100,8 @@ Preferred architecture to investigate:
 - No remotely accessible listener by default.
 
 Transport choice must be validated against the official Swift MCP SDK, client compatibility, sandboxing, and packaging requirements.
+
+Local transport does not guarantee that an external MCP client processes retrieved script text on device. Clients with authorized script-reading access can retrieve text regardless of screen-sharing visibility and may process it remotely. Screen-capture exclusion must not be presented as restricting that access.
 
 ### F07.14 — Connection behavior
 
@@ -1470,7 +1465,7 @@ Errors must not leave playback or settings in inconsistent intermediate states.
 ## 10.6 Privacy
 
 - No automatic script persistence
-- No mandatory cloud services
+- No mandatory accounts or cloud services
 - No script content in diagnostic logs
 - User-controlled MCP availability
 - Protected security-sensitive settings
@@ -1480,11 +1475,11 @@ Errors must not leave playback or settings in inconsistent intermediate states.
 
 # 11. Implementation Roadmap
 
-## Phase 0 — Privacy feasibility
+## Phase 0 — Capture compatibility research
 
 Investigate capture visibility across supported sharing applications.
 
-**Deliverable:** Documented compatibility matrix and a product decision about supported privacy claims.
+**Deliverable:** A separate technical compatibility matrix and clear disclosure of tested behavior and limitations. Capture exclusion failures do not block release when accurately documented and disclosed.
 
 ## Phase 1 — Script and layout foundation
 
@@ -1545,7 +1540,7 @@ Implement:
 - Animation polish
 - Documentation and packaging
 
-**Deliverable:** Public-release candidate, subject to the privacy feasibility decision.
+**Deliverable:** Public-release candidate with documented and clearly disclosed capture limitations.
 
 ---
 
@@ -1574,7 +1569,7 @@ The MVP is functionally complete when:
 - [ ] MCP clients can read and modify supported preferences.
 - [ ] UI and MCP updates remain synchronized.
 - [ ] Invalid or stale MCP requests are rejected safely.
-- [ ] Screen-sharing behavior has been tested and documented.
+- [ ] Screen-sharing behavior has been tested and documented, with limitations clearly disclosed in the app and documentation.
 - [ ] The app functions without an internet connection.
 
 ---
