@@ -23,7 +23,7 @@ final class PrompterLineLayoutDemoModel {
     }
 
     nonisolated enum Failure: Equatable, Sendable {
-        case engine(PrompterLineLayoutEngine.Failure)
+        case engine(LineLayoutEngine.Failure)
         case unavailable
 
         var message: LocalizedStringResource {
@@ -61,7 +61,7 @@ final class PrompterLineLayoutDemoModel {
     init(
         initialLayout: Layout? = nil,
         layout: @escaping @Sendable (Request) async throws -> [PrompterLine] = { request in
-            try await PrompterLineLayoutEngine().layout(
+            try await LineLayoutEngine().layout(
                 text: request.text, font: request.font, width: request.width
             )
         }
@@ -127,7 +127,7 @@ final class PrompterLineLayoutDemoModel {
             if error is CancellationError || Task.isCancelled {
                 phase = previous.map(Phase.ready) ?? .idle
             } else {
-                let failure = (error as? PrompterLineLayoutEngine.Failure)
+                let failure = (error as? LineLayoutEngine.Failure)
                     .map(Failure.engine) ?? .unavailable
                 phase = .failed(failure, previous: previous)
             }

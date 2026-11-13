@@ -5,11 +5,11 @@ import Testing
 @testable import Promptly
 
 @MainActor
-struct PrompterLineLayoutEngineTests {
-    private typealias Failure = PrompterLineLayoutEngine.Failure
+struct LineLayoutEngineTests {
+    private typealias Failure = LineLayoutEngine.Failure
 
     @Test func emptySourceProducesNoRows() async throws {
-        let lines = try await PrompterLineLayoutEngine().layout(
+        let lines = try await LineLayoutEngine().layout(
             text: "", font: resolvedFont(), width: 320
         )
 
@@ -18,7 +18,7 @@ struct PrompterLineLayoutEngineTests {
 
     @Test func unwrappedTextRetainsSpacesAndTabs() async throws {
         let source = "  A synthetic\treading sample.  "
-        let lines = try await PrompterLineLayoutEngine().layout(
+        let lines = try await LineLayoutEngine().layout(
             text: source, font: resolvedFont(), width: 4096
         )
 
@@ -30,7 +30,7 @@ struct PrompterLineLayoutEngineTests {
 
     @Test(arguments: [" ", "\t", "\n", "\r\n", " \t \n\n"])
     func whitespaceOnlySourceRetainsCoverageAtNarrowWidths(source: String) async throws {
-        let lines = try await PrompterLineLayoutEngine().layout(
+        let lines = try await LineLayoutEngine().layout(
             text: source, font: resolvedFont(), width: 0.01
         )
 
@@ -42,7 +42,7 @@ struct PrompterLineLayoutEngineTests {
         let source = "  First\t  " + delimiter + delimiter + "Second " + delimiter
         let chunks = ["  First\t  " + delimiter, delimiter, "Second " + delimiter, ""]
         let expectedText = ["  First\t  ", "", "Second ", ""]
-        let lines = try await PrompterLineLayoutEngine().layout(
+        let lines = try await LineLayoutEngine().layout(
             text: source, font: resolvedFont(), width: 4096
         )
 
@@ -59,7 +59,7 @@ struct PrompterLineLayoutEngineTests {
     @Test func mixedHardBreaksKeepCRLFAtomic() async throws {
         let source = "First\r\n\rSecond\n\nThird"
         let chunks = ["First\r\n", "\r", "Second\n", "\n", "Third"]
-        let lines = try await PrompterLineLayoutEngine().layout(
+        let lines = try await LineLayoutEngine().layout(
             text: source, font: resolvedFont(), width: 4096
         )
 
@@ -75,7 +75,7 @@ struct PrompterLineLayoutEngineTests {
 
     @Test func aTrailingHardBreakHasAnEmptyRowAtTheSourceEnd() async throws {
         let source = "A\r\n"
-        let lines = try await PrompterLineLayoutEngine().layout(
+        let lines = try await LineLayoutEngine().layout(
             text: source, font: resolvedFont(), width: 320
         )
 
@@ -92,7 +92,7 @@ struct PrompterLineLayoutEngineTests {
         "नमस्ते क्‍ष नमस्ते क्‍ष नमस्ते क्‍ष नमस्ते क्‍ष नमस्ते क्‍ष"
     ])
     func wrappedUnicodePreservesSourceAndGraphemeBoundaries(source: String) async throws {
-        let lines = try await PrompterLineLayoutEngine().layout(
+        let lines = try await LineLayoutEngine().layout(
             text: source, font: resolvedFont(), width: 180
         )
 
@@ -103,7 +103,7 @@ struct PrompterLineLayoutEngineTests {
 
     @Test func aLongWordWrapsWithoutDroppingCharacters() async throws {
         let source = String(repeating: "abcdefghij", count: 15)
-        let lines = try await PrompterLineLayoutEngine().layout(
+        let lines = try await LineLayoutEngine().layout(
             text: source, font: resolvedFont(), width: 90
         )
 
@@ -115,7 +115,7 @@ struct PrompterLineLayoutEngineTests {
 
     @Test func changingWidthReflowsTheSameSource() async throws {
         let source = String(repeating: "A synthetic sentence for a quiet reading window. ", count: 12)
-        let engine = PrompterLineLayoutEngine()
+        let engine = LineLayoutEngine()
         let font = resolvedFont()
         let narrow = try await engine.layout(text: source, font: font, width: 160)
         let wide = try await engine.layout(text: source, font: font, width: 480)
@@ -129,7 +129,7 @@ struct PrompterLineLayoutEngineTests {
 
     @Test func changingFontSizeReflowsTheSameSource() async throws {
         let source = String(repeating: "A synthetic sentence for a quiet reading window. ", count: 12)
-        let engine = PrompterLineLayoutEngine()
+        let engine = LineLayoutEngine()
         let small = try await engine.layout(text: source, font: resolvedFont(size: 14), width: 320)
         let large = try await engine.layout(text: source, font: resolvedFont(size: 32), width: 320)
 
@@ -143,13 +143,13 @@ struct PrompterLineLayoutEngineTests {
         let font = resolvedFont()
 
         await #expect(throws: Failure.invalidWidth) {
-            try await PrompterLineLayoutEngine().layout(text: "Sample", font: font, width: width)
+            try await LineLayoutEngine().layout(text: "Sample", font: font, width: width)
         }
     }
 
     @Test(arguments: [(0, 10), (-1, 10), (10, 0), (10, -1)])
     func invalidLimitsReportFailure(maximumUTF16Count: Int, maximumLineCount: Int) async {
-        let engine = PrompterLineLayoutEngine(
+        let engine = LineLayoutEngine(
             maximumUTF16Count: maximumUTF16Count,
             maximumLineCount: maximumLineCount
         )
@@ -165,12 +165,12 @@ struct PrompterLineLayoutEngineTests {
         let font = resolvedFont()
 
         await #expect(throws: Failure.inputTooLong) {
-            try await PrompterLineLayoutEngine(maximumUTF16Count: 1).layout(
+            try await LineLayoutEngine(maximumUTF16Count: 1).layout(
                 text: source, font: font, width: 320
             )
         }
 
-        let atLimit = try await PrompterLineLayoutEngine(maximumUTF16Count: 2).layout(
+        let atLimit = try await LineLayoutEngine(maximumUTF16Count: 2).layout(
             text: source, font: font, width: 320
         )
         #expect(atLimit == [PrompterLine(sourceRange: NSRange(location: 0, length: 2), text: source)])
@@ -180,7 +180,7 @@ struct PrompterLineLayoutEngineTests {
         let font = resolvedFont()
 
         await #expect(throws: Failure.tooManyLines) {
-            try await PrompterLineLayoutEngine(maximumLineCount: 2).layout(
+            try await LineLayoutEngine(maximumLineCount: 2).layout(
                 text: "First\nSecond\nThird", font: font, width: 4096
             )
         }
@@ -190,12 +190,12 @@ struct PrompterLineLayoutEngineTests {
         let font = resolvedFont()
 
         await #expect(throws: Failure.tooManyLines) {
-            try await PrompterLineLayoutEngine(maximumLineCount: 1).layout(
+            try await LineLayoutEngine(maximumLineCount: 1).layout(
                 text: "First\n", font: font, width: 4096
             )
         }
 
-        let atLimit = try await PrompterLineLayoutEngine(maximumLineCount: 2).layout(
+        let atLimit = try await LineLayoutEngine(maximumLineCount: 2).layout(
             text: "First\n", font: font, width: 4096
         )
         #expect(atLimit.count == 2)
@@ -206,14 +206,14 @@ struct PrompterLineLayoutEngineTests {
         let font = resolvedFont()
 
         await #expect(throws: Failure.widthTooNarrow) {
-            try await PrompterLineLayoutEngine().layout(text: source, font: font, width: 0.01)
+            try await LineLayoutEngine().layout(text: source, font: font, width: 0.01)
         }
     }
 
     @Test func cancellationBeforeLayoutDoesNotProduceRows() async {
         let font = resolvedFont()
         let task = Task { @MainActor in
-            try await PrompterLineLayoutEngine().layout(text: "Sample", font: font, width: 320)
+            try await LineLayoutEngine().layout(text: "Sample", font: font, width: 320)
         }
         // This MainActor task cannot start before the synchronous cancellation.
         task.cancel()

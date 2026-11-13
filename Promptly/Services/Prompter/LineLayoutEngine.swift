@@ -4,7 +4,7 @@ import Foundation
 import SwiftUI
 
 /// Derives display rows without changing the source or owning reading position.
-nonisolated struct PrompterLineLayoutEngine: Sendable {
+nonisolated struct LineLayoutEngine: Sendable {
     nonisolated enum Failure: Error, Equatable, Sendable {
         case invalidWidth
         case invalidFont

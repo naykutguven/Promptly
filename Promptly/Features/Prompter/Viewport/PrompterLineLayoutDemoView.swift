@@ -290,7 +290,7 @@ private struct PreparedDemoPreview: PreviewModifier {
             text: PrompterLineLayoutDemoView.sampleText, font: font, width: 520
         )
         let narrow = PrompterLineLayoutDemoModel.Request(text: wide.text, font: font, width: 366)
-        let engine = PrompterLineLayoutEngine()
+        let engine = LineLayoutEngine()
         let wideLines = try await engine.layout(text: wide.text, font: font, width: wide.width)
         let narrowLines = try await engine.layout(text: narrow.text, font: font, width: narrow.width)
         return PreparedLayouts(
