@@ -3,7 +3,7 @@
 Evaluated on **2026-10-31** against upstream release **0.12.1**, published
 2026-05-07 and reported as the latest release by GitHub on the evaluation date.
 This is a source and manifest evaluation, not an integration or compatibility
-test. MCP remains [separately scoped future work](../ROADMAP.md#later-separately-scoped).
+test. Current MVP requirements are defined in [PRD-07](../PRD.md#prd-07--mcp-integration).
 No dependency, helper target, entitlement, or runtime behavior is added.
 [Release evidence](https://github.com/modelcontextprotocol/swift-sdk/releases/tag/0.12.1).
 
@@ -43,40 +43,51 @@ implementation rather than claim compatibility from the shared transport name.
 [compatibility rules](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning),
 [stdio fallback](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/stdio#backward-compatibility).
 
-## Proposed integration boundary
+## Current MVP integration direction — 2026-11-13
 
-Follow the [existing transport preference](../README.md#implementation-notes):
-an external MCP client launches a stdio helper using `MCP`; the helper forwards
-typed requests over authenticated XPC or a Unix domain socket to app-owned
-capability services. The app retains ownership of grants, persistence, editing,
-the sent prompter snapshot, and playback. The helper must not open the script
-store directly. Choosing and validating the IPC mechanism, caller identity,
-consent flow, creation scope, and helper distribution remains future work.
+This section records the approved PRD-07 direction. It replaces the earlier
+library-based assumptions about persistent stores, per-script grants, and
+save-before-send workflows. The SDK source findings above remain dated
+2026-10-31 evidence.
 
-- Enforce separate read, create/edit, and playback permissions for explicitly
-  authorized scripts at the app service boundary. Scope enumeration, resource
-  metadata, subscriptions, and errors too; hiding a tool is not enforcement.
-  Neither MCP client-supplied identity nor tool annotations prove authorization.
-- Use stable IDs, immutable `Sendable` snapshots, and expected revisions across
-  IPC. Reject edits conflicting with newer saved or unsaved user work. Preserve
-  recovery and native undo semantics. An edit must not implicitly send a new
-  snapshot to the prompter or start playback; playback must target the authorized
-  prompter script explicitly.
-- Revalidate the grant, operation identity, script identity, and revision after
-  suspension and at the last safe commit or disclosure point. Revocation,
-  disconnect, cancellation, and deletion must prevent stale work from committing
-  or disclosing further content. Already committed work cannot be rolled back by
-  a cancellation notification alone.
-- Keep AppKit and presentation on `MainActor`, with persistence and request work
-  under explicit isolated owners. SDK actors and `@Sendable` handlers are a good
-  fit, but do not establish compatibility with Promptly's complete concurrency,
-  default isolation, Approachable Concurrency, and import-visibility settings.
-- Keep MCP disabled until locally authorized. Consent must explain that an
-  external agent can transmit retrieved scripts to remote services despite local
-  transport. Use no network-facing script API or remote inference in Promptly.
-  The SDK's HTTP OAuth facilities do not provide this local consent or script
-  authorization boundary; MCP's corresponding authorization specification is
-  scoped to HTTP. [Authorization scope](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization#purpose-and-scope).
+The preferred implementation candidate is a lightweight Swift stdio helper using
+`MCP`, launched by the external client, forwarding typed requests through secured
+local IPC to the running app. XPC and Unix domain sockets remain candidates.
+The process layout, IPC mechanism, packaging, and peer-validation design must be
+validated before selection; they are not fixed product requirements. The app
+owns the active reading session and preferences, without a second state owner
+in the helper. MCP documents the [client-launched stdio process](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/stdio).
+
+- MCP is disabled by default. Enabling it grants access to any local MCP client
+  running under the same macOS user, without per-client approval for MVP.
+- Script access includes the active prompter script and future replacements
+  until MCP is disabled. Unfinished editor drafts remain private, and protected
+  integration/security settings remain user-only. Explain this scope and possible
+  remote processing by external clients when enabling MCP.
+- Enforce the enabled state and same-user boundary in app-owned services. For a
+  helper-based design, authenticate the helper/app peers. Peer checks do not
+  automatically identify the MCP client that launched the helper; client-supplied
+  names are not proof of identity. Apple's [XPC peer signing requirement](https://developer.apple.com/documentation/foundation/nsxpcconnection/setcodesigningrequirement%28_%3A%29)
+  is one mechanism to evaluate, not a validated IPC design.
+- Preserve the PRD's latest-request-wins script loading, mandatory layout
+  revisions for navigation, and validated atomic partial settings updates.
+  Successful script loads reveal the prompter in Stopped state; they never
+  start playback. Never overwrite unfinished editor drafts.
+- Revalidate enablement, user boundary, operation identity, and relevant source
+  or layout revision after suspension and at the final commit or disclosure
+  point. Disabling MCP must prevent pending MCP work from committing or disclosing
+  content. Cancellation cannot undo already committed work.
+- Use immutable `Sendable` snapshots across IPC and keep AppKit/presentation on
+  `MainActor`. Preserve the configured concurrency and import-visibility baseline.
+- Provide local stdio integration without a network listener. Secured helper-to-app
+  communication must work within the app's sandbox and packaging constraints.
+- Initial client validation targets are [Codex](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)
+  and [Claude Desktop](https://modelcontextprotocol.io/docs/develop/connect-local-servers).
+  Their documented local server support does not establish Promptly compatibility;
+  test and record actual client versions and negotiated protocol behavior.
+- Line retrieval starts at index 0, defaults to 100 lines, and accepts at most
+  200 per request. Follow pagination with the first page's layout revision to
+  retrieve the complete layout without mixing revisions.
 
 The SDK models tool annotations as hints. Validate argument structure and bounds
 in the application instead of relying on schema descriptions or client behavior.
@@ -143,16 +154,17 @@ Before adoption, a separately scoped synthetic-content spike must establish:
    failures; recheck the latest SDK release and current protocol at that time.
 2. Helper/SDK compilation with the intended Swift 6.4 settings and macOS 26.0
    deployment, plus affected app and test targets, without weakening checks.
-3. Signed sandboxed IPC, caller/grant binding, install/discovery, app-not-running
-   behavior, and revocation with network access disabled. No entitlement or
-   signing changes are approved by this evaluation.
-4. Denied and cross-script calls, metadata leakage, stale/dirty-editor edits,
-   save failures, cancellation/disconnect before commit, and safe playback scope.
+3. Signed sandboxed IPC, same-user and enablement enforcement, install/discovery,
+   app-not-running behavior, and disabling access with network access disabled.
+   No entitlement or signing changes are approved by this evaluation.
+4. Disabled and wrong-user calls, active-script replacement, editor-draft
+   isolation, metadata leakage, pagination/revision boundaries, stale results,
+   cancellation/disconnect before commit, and safe playback behavior.
 5. Oversized/unterminated frames, request floods, slow consumers, EOF, teardown,
    repeated sessions, private diagnostics, idle CPU/energy, and offline behavior.
 
 No SDK integration build, client interoperability, signed IPC, minimum-OS,
-network-traffic, performance, or native permission-UI validation has been run.
+network-traffic, performance, or native enablement-UI validation has been run.
 The current window prototype has no script/edit/playback services for the helper
 to expose. Revisit adoption with those contracts available; retain this document
 as the dated evaluation rather than a claim of implemented MCP support.

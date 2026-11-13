@@ -857,8 +857,8 @@ Output:
 ### F07.2 — `promptly_get_lines`
 
 Inputs:
-- `start_index`: Integer, optional
-- `limit`: Integer, optional
+- `start_index`: Nonnegative integer, optional; defaults to `0`
+- `limit`: Integer from `1` to `200`, optional; defaults to `100`
 - `layout_revision`: String, optional
 
 Output:
@@ -866,11 +866,15 @@ Output:
 - Total line count
 - Ordered line records
 - Source ranges
-- Pagination metadata
+- Pagination metadata: `has_more` and `next_start_index` (`null` when complete)
 
 Line indexing is zero-based and derived from array positions; it is not stored in the display-line model. Blank lines are included in counts and pagination.
 
+A response returns at most the requested number of lines. Reject invalid pagination arguments with a structured input error. Clients can retrieve the complete layout by following `next_start_index`; additional lines must be explicitly indicated by `has_more`.
+
 A revision may be omitted when obtaining a fresh snapshot. If provided, it must match the active layout.
+
+Use the first page's layout revision for subsequent pages to avoid combining lines from different layouts.
 
 Requests for previous revisions must return a structured stale-revision error rather than silently using current indexes.
 
@@ -1052,7 +1056,7 @@ Agents may modify:
 
 Agents may not modify:
 - Whether MCP integration is enabled
-- Client authorization or permissions
+- The MCP authorization policy
 - Security/privacy acknowledgments
 - Network exposure
 - Application-wide destructive reset operations
@@ -1092,28 +1096,48 @@ Do not silently remap a stale MCP line index based on the current layout.
 
 ### F07.13 — Transport
 
-The MVP supports local MCP integration.
+The MVP supports local MCP integration over `stdio`.
 
-Preferred architecture to investigate:
-- A lightweight MCP helper using a supported local transport.
-- Controlled IPC to the running macOS application.
-- No remotely accessible listener by default.
+Requirements:
+- No network listener in the MVP.
+- Secure any communication between the MCP server process and the running app, enforcing the same macOS user boundary.
+- Use the shared application services and state defined in section 7.1.
 
-Transport choice must be validated against the official Swift MCP SDK, client compatibility, sandboxing, and packaging requirements.
+The Swift helper, process layout, and IPC mechanism remain implementation choices recorded in the [technical research document](Research/MCPSwiftSDKEvaluation.md). Validate SDK/client compatibility, sandboxing, secured communication, and packaging before adoption.
 
 Local transport does not guarantee that an external MCP client processes retrieved script text on device. Clients with authorized script-reading access can retrieve text regardless of screen-sharing visibility and may process it remotely. Screen-capture exclusion must not be presented as restricting that access.
 
 ### F07.14 — Connection behavior
 
-- Users can enable or disable MCP integration.
+- MCP is disabled by default. Users can enable or disable it in Settings.
 - Disconnecting a client does not stop playback.
 - Reconnecting does not reload the script.
 - MCP tools reflect the current user-visible state.
 - An unavailable application returns a clear connection error.
 
+## 7.6 Access scope and client support
+
+### F07.15 — Local access scope
+
+- While MCP is enabled, any local MCP client running under the same macOS user may use the supported MVP tools, without per-client approval.
+- Script access covers the active prompter script and future replacements until MCP is disabled.
+- Unfinished editor drafts are not exposed through MCP.
+- When enabling MCP, clearly explain this access scope and the external-processing boundary described in F07.13.
+- Enforce the enabled state and same-user boundary at the application service boundary.
+
+### F07.16 — Initial client support
+
+- Initial compatibility targets: Codex and Claude Desktop.
+- Validate the actual client versions, discovery, and tool workflows over local `stdio`; record tested versions before claiming compatibility.
+
 ## Acceptance criteria
 
-- An MCP client can discover all 10 supported tools.
+- Codex and Claude Desktop can discover and use all 10 supported tools over local `stdio`, with tested versions recorded.
+- MCP is disabled by default and rejects access while disabled.
+- While enabled, same-user local clients can access the active script and future replacements without per-client approval; editor drafts remain private.
+- Requests from outside the same macOS user boundary are rejected.
+- Line retrieval defaults to 100 lines and accepts at most 200 per request; pagination exposes every line without mixing layout revisions.
+- MCP introduces no network listener, and any helper-to-app communication is secured.
 - Agents can load, read, navigate, and play scripts.
 - Agents can retrieve and update supported preferences.
 - Settings changes are reflected in SwiftUI and persisted.
@@ -1126,7 +1150,7 @@ Local transport does not guarantee that an external MCP client processes retriev
 
 ## Out of scope
 
-Remote MCP access, agent-generated scripts inside Promptly, incremental text patches, per-client settings profiles, and unrestricted access to security configuration.
+Remote MCP access, per-client approval or permissions, agent-generated scripts inside Promptly, incremental text patches, per-client settings profiles, and unrestricted access to security configuration.
 
 ---
 
@@ -1262,13 +1286,13 @@ No user setting is needed for this behavior.
 ## 8.6 Integrations
 
 MCP settings:
-- Enable/disable integration
+- Enable/disable integration (disabled by default)
 - Current integration status
 - Client setup instructions
 - Available tools
 - Documentation link
 
-Integration permissions are controlled through the UI, not writable through MCP.
+Only the user can enable or disable integration through Settings. Explain the active-script and future-replacement access granted to local clients. Per-client approval and permissions are outside the MVP scope.
 
 ## 8.7 About
 
