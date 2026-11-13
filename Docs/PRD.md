@@ -966,7 +966,7 @@ Example response structure:
 }
 ```
 
-Values above are illustrative defaults, not final UI-design decisions.
+The example above shows the confirmed MVP defaults.
 
 ### F07.8 — `promptly_update_settings`
 
@@ -1164,34 +1164,24 @@ Provide centralized, persistent, immediately applicable preferences shared acros
 
 ## 8.1 Settings navigation
 
-The Settings window uses a native macOS sidebar with the following tabs:
+Use the macOS 27 System Settings layout as the reference: a native sidebar on the left and grouped settings in the selected section's content area on the right. Preserve macOS 26+ support.
 
-1. General
-2. Window & Layout
-3. Typography
-4. Playback
-5. Integrations
-6. About
+The sidebar contains four sections:
 
-An Appearance tab may be introduced when advanced transitions become available.
+1. Prompter
+2. Playback
+3. Integrations
+4. About
+
+Prompter contains Layout and Text groups within its content area.
 
 Opening or closing Settings preserves playback state and reading position; it does not pause active playback or resume paused playback.
 
-## 8.2 General
+## 8.2 Prompter
 
-MVP settings:
-- Restore default preferences
-- Basic application behavior settings, if required
+### Layout
 
-Future:
-- Launch at login
-- Global keyboard shortcut customization
-
-Destructive reset actions must require user confirmation and are not available through MCP in the MVP.
-
-## 8.3 Window & Layout
-
-### Window size
+#### Window size
 
 Options:
 - Compact
@@ -1199,7 +1189,7 @@ Options:
 
 Default: Compact. Persist the selected preset.
 
-### Placement
+#### Placement
 
 Options:
 - Attached
@@ -1207,7 +1197,7 @@ Options:
 
 Default: Attached to the built-in laptop display. Persist placement mode and a valid last floating position.
 
-### Reading focus
+#### Reading focus
 
 Options:
 - Top
@@ -1218,44 +1208,49 @@ Default: Center.
 
 Changing focus position updates the scroll target for the same current line without regenerating the display-line collection. Preserve playback state and timing; active playback continues.
 
-## 8.4 Typography
+### Text
 
-### Font family
+#### Font family
 
 - Select from compatible installed fonts.
-- Provide a readable system-font default.
+- Default: System font.
 - Handle unavailable fonts using a deterministic fallback.
 
-### Font weight
+#### Font weight
 
 - Regular
 - Medium
 - Semibold
 - Bold
 
-### Font size
+Default: Regular.
 
-- Adjustable within a validated range.
-- Provide a usable default.
+#### Font size
+
+- Default: 24 pt.
+- Supported range: 16–48 pt, validated for UI and MCP updates.
 - Changes trigger layout regeneration.
 
-### Alignment
+#### Alignment
 
 - Leading
 - Center
 - Trailing
 
+Default: Center.
+
 Alignment changes should not regenerate the layout when the usable line width and shaping remain unchanged.
 
-### Text color
+#### Text color
 
+- Default: White (`#FFFFFF`).
 - Native color selection.
 - Restore default.
 - Immediately update visible text.
 
 Colors should use a stable, explicitly defined persistence format suitable for MCP serialization.
 
-## 8.5 Playback
+## 8.3 Playback
 
 ### Reading speed
 
@@ -1283,7 +1278,7 @@ Fixed MVP behavior:
 
 No user setting is needed for this behavior.
 
-## 8.6 Integrations
+## 8.4 Integrations
 
 MCP settings:
 - Enable/disable integration (disabled by default)
@@ -1294,7 +1289,7 @@ MCP settings:
 
 Only the user can enable or disable integration through Settings. Explain the active-script and future-replacement access granted to local clients. Per-client approval and permissions are outside the MVP scope.
 
-## 8.7 About
+## 8.5 About
 
 Display:
 - Application name
@@ -1304,7 +1299,16 @@ Display:
 - Privacy information
 - Licenses and acknowledgments
 
-## 8.8 Persistence requirements
+## 8.6 Restore All Defaults
+
+- Provide **Restore All Defaults…** at the bottom of the Settings sidebar, separate from the navigation entries.
+- Require confirmation and explain that this resets all preferences, including window placement and playback preferences, and disables MCP.
+- Reset stored window coordinates along with the other preferences.
+- Preserve the active script, unfinished editor drafts, and logical reading position.
+- Apply the normal layout/playback side-effect rules when restoring defaults.
+- This action is user-only and unavailable through MCP.
+
+## 8.7 Persistence requirements
 
 - Store preferences in UserDefaults.
 - Use `@AppStorage` where suitable for simple UI-bound values.
@@ -1313,14 +1317,14 @@ Display:
 - Use Observation to propagate changes.
 - Persist only preferences and necessary window coordinates, never script content.
 
-## 8.9 Settings update behavior
+## 8.8 Settings update behavior
 
 - UI and MCP submit only the properties being changed, rather than replacing settings from an older snapshot.
 - The shared settings service serializes updates and preserves all unspecified properties, including siblings within nested groups.
 - If valid updates modify the same property, the last update committed by the service wins. Client timestamps and asynchronous completion order do not determine precedence.
 - Settings updates through UI or MCP pause active playback only when layout regeneration is required. WPM, text color, and reading focus changes preserve playback state. After regeneration, playback remains paused until Play is explicitly requested.
 
-## 8.10 Settings change atomicity
+## 8.9 Settings change atomicity
 
 A multi-field update must be validated before any change is committed.
 
@@ -1335,6 +1339,8 @@ Discard obsolete layout results. If a settings-triggered layout recalculation fa
 
 ## Acceptance criteria
 
+- Settings uses a sidebar with four sections and grouped controls in the content area; Prompter contains Layout and Text groups.
+- Typography defaults to System, Regular, 24 pt, centered alignment, and white text. UI and MCP font-size updates must stay within 16–48 pt.
 - Preferences survive app restarts.
 - Scripts do not survive app restarts.
 - UI and MCP reflect identical settings values.
@@ -1345,12 +1351,12 @@ Discard obsolete layout results. If a settings-triggered layout recalculation fa
 - Layout-affecting settings preserve reading position.
 - Invalid updates are rejected without partial persistence.
 - Updates to different properties are preserved; updates to the same property follow service commit order.
-- Resetting preferences does not delete the active script.
+- Restore All Defaults requires confirmation, resets every preference including window coordinates, and disables MCP while preserving the active script, editor drafts, and reading position.
 - MCP clients cannot alter protected integration/security settings.
 
 ## Out of scope
 
-Cloud settings sync, settings profiles, per-script preferences, remote administration, and import/export of settings.
+Launch at login, global keyboard shortcut customization, cloud settings sync, settings profiles, per-script preferences, remote administration, and import/export of settings.
 
 ---
 
