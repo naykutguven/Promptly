@@ -9,6 +9,7 @@ body:
       value: |
         Report one defect per issue.
         Include enough information to reproduce and verify the bug.
+        Docs/PRD.md is authoritative for intended product behavior.
         Use synthetic scripts and redact sensitive information.
 
   - type: input
@@ -24,12 +25,26 @@ body:
     id: reproduction
     attributes:
       label: Steps to Reproduce
-      description: Provide the smallest reliable reproduction sequence.
+      description: >-
+        Provide the smallest reliable reproduction sequence. Include the starting
+        state, exact synthetic input with line breaks, relevant settings, specific
+        controls or commands, and timing. Distinguish physical input, UI automation,
+        and MCP actions. For intermittent failures, include failures/attempts and
+        any known triggering conditions.
       placeholder: |
-        1. Load a script containing multiple lines.
-        2. Start automatic playback.
-        3. Hide the prompter window.
-        4. Reopen the prompter.
+        Starting state:
+        - Prompter visible, playback Stopped, first line selected.
+        - 60 WPM; each source line fits on one display line.
+        - Load this synthetic script, preserving the line breaks:
+          Alpha bravo charlie delta echo.
+          Foxtrot golf hotel india juliet.
+          Kilo lima mike november oscar.
+
+        Steps (physical mouse input):
+        1. Press Play.
+        2. Before the first line advances, click the in-window Hide control.
+        3. Leave the prompter hidden for 15 seconds.
+        4. Reopen the prompter using the menu-bar visibility toggle.
     validations:
       required: true
 
@@ -37,10 +52,13 @@ body:
     id: expected
     attributes:
       label: Expected Behavior
-      description: Describe the correct behavior, referencing the PRD when applicable.
+      description: >-
+        Describe the correct behavior under Docs/PRD.md. Reference the relevant
+        requirement ID or section when known.
       placeholder: |
-        Playback pauses when the prompter is hidden
-        and does not automatically resume.
+        F03.9 — Automatic pause on hide:
+        Playback changes to Paused when hidden, the current line remains unchanged,
+        and showing the prompter does not resume playback until Play is requested.
     validations:
       required: true
 
@@ -48,8 +66,26 @@ body:
     id: actual
     attributes:
       label: Actual Behavior
-      description: Describe what happens instead.
-      placeholder: "Playback continues advancing while the window is hidden."
+      description: Describe the observed result and where it first differs from the expected behavior.
+      placeholder: "After reopening, the current line has advanced even though Play was not pressed again."
+    validations:
+      required: true
+
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS Version
+      description: Include the full macOS version and the OS build number when known.
+      placeholder: "26.0 (include OS build number if known)"
+    validations:
+      required: true
+
+  - type: input
+    id: promptly-version
+    attributes:
+      label: Promptly Version or Commit
+      description: Provide the app version/build or commit SHA for a local build. Note any local changes.
+      placeholder: "Local build at <commit SHA>, with no local changes."
     validations:
       required: true
 
@@ -57,22 +93,30 @@ body:
     id: environment
     attributes:
       label: Environment
-      description: Include relevant versions and configuration.
+      description: >-
+        Optional configuration relevant to the failure. For local builds, include
+        Xcode/Swift versions and Debug or Release. For window or capture failures,
+        include display setup, window state, and the capture application and method.
       placeholder: |
-        - macOS version:
-        - Promptly version or commit:
-        - Xcode version (if relevant):
-        - Display/window configuration (if relevant):
+        - Mac model / chip:
+        - Xcode / Swift versions and Debug or Release:
+        - Displays / scaling / notch configuration:
+        - Window state (attached/detached, locked/unlocked, collapsed/expanded):
+        - Automation tool or MCP client/tool and version, if used:
+        - Capture app/version and window or display capture, if relevant:
 
   - type: dropdown
     id: reproducibility
     attributes:
       label: Reproducibility
+      description: Choose the frequency you observed; add failure counts and triggering conditions to the reproduction steps.
       options:
         - Always
         - Intermittently
         - Once
         - Unknown
+    validations:
+      required: true
 
   - type: textarea
     id: evidence
@@ -85,15 +129,19 @@ body:
     id: verification
     attributes:
       label: Regression Verification
-      description: Specify how to confirm the fix, including tests when known.
+      description: >-
+        Optional bug-specific pass/fail checks and known tests to add or extend.
+        Identify validation that requires particular hardware, software, or manual
+        interaction. Include relevant behavior that must remain working.
       placeholder: |
-        - Add a regression test reproducing the failure.
-        - Verify the expected behavior after the fix.
-        - Run relevant existing tests.
+        - Repeat the reproduction steps; after reopening, playback is Paused on the first line.
+        - Wait another 15 seconds; the current line remains unchanged until Play is pressed.
+        - Repeat using the menu-bar toggle to hide; the same behavior holds.
+        - Press Play while visible; playback resumes normally.
 
   - type: textarea
     id: additional-context
     attributes:
       label: Additional Context
-      description: Optional workarounds, suspected causes, or related issues.
-      placeholder: "Related issue #12; workaround: pause manually before hiding."
+      description: Optional last known good version/commit, workarounds, suspected causes, or related issues.
+      placeholder: "Last known good: <commit SHA>; related issue #12; workaround: Pause before hiding."

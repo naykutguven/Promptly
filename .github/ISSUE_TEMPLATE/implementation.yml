@@ -7,16 +7,20 @@ body:
   - type: markdown
     attributes:
       value: |
-        Create one bounded implementation task per issue.
-        Reference existing requirements instead of duplicating the PRD.
-        Unresolved product decisions should be researched before implementation.
+        Create one bounded implementation task per issue, independently verifiable after its dependencies complete.
+        Reference approved requirements and decisions instead of duplicating the PRD.
+        Resolve product and scope decisions before handing the task to an implementation agent; link research or decision records when relevant.
 
-  - type: input
+  - type: textarea
     id: specification
     attributes:
       label: Specification
-      description: Reference the authoritative PRD requirements or architecture document.
-      placeholder: "Docs/PRD.md — PRD-03, F03.4"
+      description: >-
+        Reference specific PRD requirement IDs, section headings, or anchors, plus
+        relevant architecture sections, accepted decisions, or research records.
+      placeholder: |
+        - Docs/PRD.md — PRD-03, F03.4
+        - Related architecture section or decision record, if applicable.
     validations:
       required: true
 
@@ -24,7 +28,7 @@ body:
     id: objective
     attributes:
       label: Objective
-      description: Describe the single outcome this task must achieve.
+      description: Describe the single bounded outcome this task must achieve.
       placeholder: "Implement a deterministic WPM-based line duration calculator."
     validations:
       required: true
@@ -33,11 +37,13 @@ body:
     id: scope
     attributes:
       label: Scope
-      description: Describe what must be implemented, including relevant boundaries or existing components to reuse.
+      description: >-
+        List the included work, affected components, reuse boundaries, and integration
+        points. Distinguish existing components from new work.
       placeholder: |
-        - Introduce a pure duration calculation API.
-        - Support the configured WPM range.
-        - Reuse existing domain models where applicable.
+        - Accept a nonnegative word count and a validated WPM value in the supported range.
+        - Apply the minimum line duration defined by F03.4.
+        - Keep the calculation independent of playback state.
     validations:
       required: true
 
@@ -45,11 +51,13 @@ body:
     id: acceptance-criteria
     attributes:
       label: Acceptance Criteria
-      description: Provide observable, independently testable completion conditions.
+      description: >-
+        State observable pass/fail conditions with concrete inputs and expected outcomes,
+        relevant boundary or failure cases, and specific behavior that must be preserved.
       placeholder: |
-        - [ ] Valid WPM inputs produce expected durations.
-        - [ ] Invalid inputs are handled deterministically.
-        - [ ] Existing behavior remains unchanged.
+        - [ ] Five words at 150 WPM produce a duration of 2 seconds.
+        - [ ] A zero-word line receives the minimum duration of 0.6 seconds.
+        - [ ] One word at 60 WPM produces 1 second; at 300 WPM it receives the 0.6-second minimum.
     validations:
       required: true
 
@@ -57,34 +65,46 @@ body:
     id: verification
     attributes:
       label: Verification
-      description: Specify the tests, build checks, and manual validation required to accept the work.
+      description: >-
+        Specify task-specific tests, build checks, or manual scenarios and the evidence
+        required for acceptance. Include applicable repository checks and report
+        skipped or unavailable validation explicitly.
       placeholder: |
-        - Add Swift Testing unit tests for normal and edge cases.
-        - Build the affected targets with strict concurrency checking.
-        - Run relevant tests and report results.
+        - Add focused unit tests for the duration examples, minimum floor, and both WPM boundaries.
+        - Build the affected app and test targets for macOS and run the focused tests.
+        - Run ./Scripts/quality.sh check for Swift or quality-tooling changes.
     validations:
       required: true
 
-  - type: input
+  - type: textarea
     id: dependencies
     attributes:
       label: Dependencies
-      description: Reference blocking issues; also configure native GitHub issue dependencies.
-      placeholder: "#12, #15 (or None)"
+      description: >-
+        List existing blocking GitHub issue URLs, one per line, or write None.
+        Configure the matching native GitHub issue dependencies as well.
+        Resolve generated batch task IDs to issue URLs before publication.
+      placeholder: |
+        https://github.com/OWNER/REPO/issues/12
+        https://github.com/OWNER/REPO/issues/15
+    validations:
+      required: true
 
   - type: textarea
     id: out-of-scope
     attributes:
       label: Out of Scope
-      description: Explicitly exclude adjacent functionality to keep agent execution focused.
+      description: List adjacent work explicitly excluded to keep the task bounded, or write None.
       placeholder: |
+        - Word tokenization.
         - Playback scheduling.
-        - SwiftUI integration.
-        - MCP tool implementation.
+        - SwiftUI or settings integration.
+    validations:
+      required: true
 
   - type: textarea
     id: notes
     attributes:
       label: Additional Context
-      description: Optional technical constraints, relevant file paths, or implementation considerations.
+      description: Optional technical constraints, source paths, decision or research references, and known risks.
       placeholder: "Relevant existing components, known risks, or decisions."

@@ -9,7 +9,7 @@ body:
       value: |
         Research one clearly defined question per issue.
         Prioritize official documentation and reproducible evidence.
-        Distinguish documented facts, observations, and assumptions.
+        Distinguish documented facts, observations, inferences, and assumptions.
         Do not implement production changes as part of research.
 
   - type: input
@@ -17,7 +17,7 @@ body:
     attributes:
       label: Research Question
       description: State the specific question or uncertainty to resolve.
-      placeholder: "Can Promptly reliably exclude its window from screen capture on macOS 26?"
+      placeholder: "Under which capture configurations, if any, can Promptly avoid appearing on macOS 26.0+?"
     validations:
       required: true
 
@@ -27,10 +27,9 @@ body:
       label: Context
       description: Explain why this investigation is necessary and what is already known.
       placeholder: |
-        The PRD requires screen-sharing privacy.
-        NSWindow.sharingType is deprecated.
-        We need to establish which capture mechanisms can
-        reliably exclude Promptly's window.
+        PRD-06 requires capture-compatibility testing and accurate disclosure of limitations.
+        We need evidence about Promptly's visibility in window and display capture
+        before choosing an approach or making compatibility claims.
     validations:
       required: true
 
@@ -41,7 +40,7 @@ body:
       description: Define what must be investigated, including relevant alternatives.
       placeholder: |
         - Review official Apple documentation.
-        - Evaluate available macOS 26 APIs.
+        - Evaluate native default behavior and APIs available on macOS 26.0+.
         - Compare viable implementation approaches.
         - Identify compatibility and security limitations.
     validations:
@@ -53,7 +52,7 @@ body:
       label: Evaluation Criteria
       description: Define how alternatives should be compared.
       placeholder: |
-        - Compatibility with macOS 26+
+        - Compatibility with the macOS 26.0 minimum deployment target
         - Reliability and observable behavior
         - Privacy and security implications
         - Implementation complexity
@@ -65,13 +64,17 @@ body:
     id: deliverables
     attributes:
       label: Expected Deliverables
-      description: Specify the evidence and conclusions required to complete the research.
+      description: >-
+        Customize the completion checklist. Findings go in an issue comment by default;
+        name any required Docs/Research/... document in the checklist and link it from the issue.
       value: |
-        - [ ] Relevant alternatives investigated.
-        - [ ] Findings supported by linked sources or reproducible tests.
-        - [ ] Documented facts distinguished from observations and assumptions.
-        - [ ] Tradeoffs and limitations identified.
-        - [ ] Recommended approach with justification.
+        - [ ] Findings recorded in an issue comment, with links to any required research documents and experiment artifacts.
+        - [ ] Relevant alternatives compared against the evaluation criteria.
+        - [ ] Material claims supported by linked primary sources or reproducible experiments.
+        - [ ] Documented facts, observations, inferences, and assumptions distinguished.
+        - [ ] Checks performed and skipped recorded, with relevant versions, reproduction steps, results, and implications for confidence.
+        - [ ] Tradeoffs, limitations, and remaining implementation gates identified.
+        - [ ] Recommendation justified against the evaluation criteria: proceed, defer, reject, or investigate further.
         - [ ] Unresolved questions and follow-up tasks identified.
     validations:
       required: true
@@ -80,12 +83,14 @@ body:
     id: validation
     attributes:
       label: Validation
-      description: Specify required experiments, prototypes, or compatibility checks.
+      description: >-
+        Specify task-specific experiments, prototypes, or compatibility checks,
+        or explain why a documentation review is sufficient.
       placeholder: |
-        - Verify API availability against the macOS 26 SDK.
-        - Test relevant capture mechanisms on a physical Mac.
-        - Record environment, reproduction steps, and results.
-        - Identify any checks that could not be performed.
+        - Verify macOS 26.0 API availability using SDK declarations.
+        - Test relevant capture applications and window/display capture modes on a physical Mac.
+        - Record exact OS, SDK/toolchain, and app versions, configuration, reproduction steps, and results.
+        - Identify skipped or unavailable checks and explain what remains unproven.
 
   - type: input
     id: references
@@ -98,12 +103,16 @@ body:
     id: constraints
     attributes:
       label: Constraints and Exclusions
-      description: Define boundaries for the research task.
-      placeholder: |
-        - Do not modify production code.
-        - Use disposable experiments if needed.
+      description: Keep the research-only boundaries and add task-specific constraints or exclusions.
+      value: |
+        - Research only; do not modify production code or project configuration.
+        - Follow AGENTS.md, README product contracts, and the relevant task guides.
+        - Prioritize official documentation and reproducible evidence.
+        - Use isolated, disposable experiments with synthetic content when needed.
         - Do not introduce dependencies without approval.
-        - Do not claim universal compatibility without evidence.
+        - Do not claim compatibility or guarantees beyond the evidence collected.
+    validations:
+      required: true
 
   - type: textarea
     id: notes
