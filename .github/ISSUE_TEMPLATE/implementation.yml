@@ -1,1 +1,90 @@
+name: Implementation
+description: A small, independently verifiable implementation task for Promptly.
+labels:
+  - agent-task
 
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Create one bounded implementation task per issue.
+        Reference existing requirements instead of duplicating the PRD.
+        Unresolved product decisions should be researched before implementation.
+
+  - type: input
+    id: specification
+    attributes:
+      label: Specification
+      description: Reference the authoritative PRD requirements or architecture document.
+      placeholder: "Docs/PRD.md — PRD-03, F03.4"
+    validations:
+      required: true
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: Describe the single outcome this task must achieve.
+      placeholder: "Implement a deterministic WPM-based line duration calculator."
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Describe what must be implemented, including relevant boundaries or existing components to reuse.
+      placeholder: |
+        - Introduce a pure duration calculation API.
+        - Support the configured WPM range.
+        - Reuse existing domain models where applicable.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Provide observable, independently testable completion conditions.
+      placeholder: |
+        - [ ] Valid WPM inputs produce expected durations.
+        - [ ] Invalid inputs are handled deterministically.
+        - [ ] Existing behavior remains unchanged.
+    validations:
+      required: true
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: Specify the tests, build checks, and manual validation required to accept the work.
+      placeholder: |
+        - Add Swift Testing unit tests for normal and edge cases.
+        - Build the affected targets with strict concurrency checking.
+        - Run relevant tests and report results.
+    validations:
+      required: true
+
+  - type: input
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Reference blocking issues; also configure native GitHub issue dependencies.
+      placeholder: "#12, #15 (or None)"
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of Scope
+      description: Explicitly exclude adjacent functionality to keep agent execution focused.
+      placeholder: |
+        - Playback scheduling.
+        - SwiftUI integration.
+        - MCP tool implementation.
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Context
+      description: Optional technical constraints, relevant file paths, or implementation considerations.
+      placeholder: "Relevant existing components, known risks, or decisions."

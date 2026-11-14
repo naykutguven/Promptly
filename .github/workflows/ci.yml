@@ -1,1 +1,161 @@
+name: CI
 
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  macos:
+    name: macOS CI
+    # The project.xcproj format and Swift 6.4 require the Xcode 27 image.
+    runs-on: xcode-27
+    # Step limits total 53 minutes, leaving 2 for runner overhead and cleanup.
+    timeout-minutes: 55
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+      CI_RESULTS: build/CI
+      CI_DERIVED_DATA: build/DerivedData
+
+    steps:
+      - name: Check out the merge result
+        timeout-minutes: 2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Record toolchain and runner
+        id: environment
+        timeout-minutes: 1
+        run: |
+          mkdir -p "$CI_RESULTS"
+          {
+            sw_vers
+            uname -m
+            xcodebuild -version
+            xcrun swift --version
+            xcrun --sdk macosx --show-sdk-version
+          } 2>&1 | tee "$CI_RESULTS/environment.log"
+
+      - name: Set up pinned source quality tools
+        id: quality_tools
+        timeout-minutes: 3
+        run: |
+          ./Scripts/quality.sh bootstrap 2>&1 | tee "$CI_RESULTS/quality-bootstrap.log"
+
+      - name: Check Swift formatting and lint
+        if: ${{ !cancelled() && steps.quality_tools.outcome == 'success' }}
+        timeout-minutes: 2
+        run: |
+          ./Scripts/quality.sh check 2>&1 | tee "$CI_RESULTS/source-quality.log"
+
+      - name: Build app and both test targets (Debug)
+        id: debug_build
+        if: ${{ !cancelled() && steps.environment.outcome == 'success' }}
+        timeout-minutes: 10
+        run: |
+          xcodebuild build-for-testing \
+            -project Promptly.xcodeproj \
+            -scheme Promptly \
+            -configuration Debug \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath "$CI_DERIVED_DATA" \
+            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= \
+            2>&1 | tee "$CI_RESULTS/debug-build.log"
+
+      - name: Run unit tests
+        if: ${{ !cancelled() && steps.debug_build.outcome == 'success' }}
+        timeout-minutes: 10
+        run: |
+          xcodebuild test-without-building \
+            -project Promptly.xcodeproj \
+            -scheme Promptly \
+            -configuration Debug \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath "$CI_DERIVED_DATA" \
+            -only-testing:PromptlyTests \
+            -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES \
+            -maximum-test-execution-time-allowance 120 \
+            -testLanguage en -testRegion US \
+            -resultBundlePath "$CI_RESULTS/unit-tests.xcresult" \
+            2>&1 | tee "$CI_RESULTS/unit-tests.log"
+
+      - name: Run UI tests
+        if: ${{ !cancelled() && steps.debug_build.outcome == 'success' }}
+        timeout-minutes: 10
+        run: |
+          xcodebuild test-without-building \
+            -project Promptly.xcodeproj \
+            -scheme Promptly \
+            -configuration Debug \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath "$CI_DERIVED_DATA" \
+            -only-testing:PromptlyUITests \
+            -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES \
+            -maximum-test-execution-time-allowance 120 \
+            -testLanguage en -testRegion US \
+            -resultBundlePath "$CI_RESULTS/ui-tests.xcresult" \
+            2>&1 | tee "$CI_RESULTS/ui-tests.log"
+
+      - name: Build Apple silicon app (Release)
+        if: ${{ !cancelled() && steps.environment.outcome == 'success' }}
+        timeout-minutes: 10
+        run: |
+          xcodebuild build \
+            -project Promptly.xcodeproj \
+            -scheme Promptly \
+            -configuration Release \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath "$CI_DERIVED_DATA" \
+            ARCHS=arm64 \
+            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= \
+            2>&1 | tee "$CI_RESULTS/release-build.log"
+
+      - name: Summarize tests and reject empty runs
+        if: ${{ !cancelled() && steps.debug_build.outcome == 'success' }}
+        timeout-minutes: 2
+        run: |
+          echo '| Suite | Passed | Failed | Skipped |' >> "$GITHUB_STEP_SUMMARY"
+          echo '| --- | --- | --- | --- |' >> "$GITHUB_STEP_SUMMARY"
+          summary_failed=0
+          for suite in unit-tests ui-tests; do
+            if xcrun xcresulttool get test-results summary \
+              --path "$CI_RESULTS/$suite.xcresult" > "$CI_RESULTS/$suite.json"; then
+              jq -r --arg suite "$suite" \
+                '"| \($suite) | \(.passedTests) | \(.failedTests) | \(.skippedTests) |"' \
+                "$CI_RESULTS/$suite.json" >> "$GITHUB_STEP_SUMMARY"
+              if ! jq -e '.passedTests > 0 and .failedTests == 0' "$CI_RESULTS/$suite.json" > /dev/null; then
+                echo "::error::$suite must execute passing tests and have no failures."
+                summary_failed=1
+              fi
+            else
+              echo "::error::Could not read $suite results. Inspect the uploaded logs and xcresult bundle."
+              summary_failed=1
+            fi
+          done
+          exit "$summary_failed"
+
+      - name: Upload logs and test results
+        if: ${{ !cancelled() }}
+        timeout-minutes: 3
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: macos-ci-results-${{ github.run_attempt }}
+          path: ${{ env.CI_RESULTS }}
+          if-no-files-found: warn
+          retention-days: 7

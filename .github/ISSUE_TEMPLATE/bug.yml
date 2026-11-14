@@ -1,1 +1,99 @@
+name: Bug Report
+description: Report a reproducible defect in Promptly.
+labels:
+  - agent-task
 
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Report one defect per issue.
+        Include enough information to reproduce and verify the bug.
+        Use synthetic scripts and redact sensitive information.
+
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: Briefly describe the defect.
+      placeholder: "Playback advances after the prompter is hidden."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Provide the smallest reliable reproduction sequence.
+      placeholder: |
+        1. Load a script containing multiple lines.
+        2. Start automatic playback.
+        3. Hide the prompter window.
+        4. Reopen the prompter.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: Describe the correct behavior, referencing the PRD when applicable.
+      placeholder: |
+        Playback pauses when the prompter is hidden
+        and does not automatically resume.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: Describe what happens instead.
+      placeholder: "Playback continues advancing while the window is hidden."
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include relevant versions and configuration.
+      placeholder: |
+        - macOS version:
+        - Promptly version or commit:
+        - Xcode version (if relevant):
+        - Display/window configuration (if relevant):
+
+  - type: dropdown
+    id: reproducibility
+    attributes:
+      label: Reproducibility
+      options:
+        - Always
+        - Intermittently
+        - Once
+        - Unknown
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Add sanitized logs, screenshots, recordings, or crash details.
+      placeholder: "Attach relevant evidence or describe observed errors."
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Regression Verification
+      description: Specify how to confirm the fix, including tests when known.
+      placeholder: |
+        - Add a regression test reproducing the failure.
+        - Verify the expected behavior after the fix.
+        - Run relevant existing tests.
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Optional workarounds, suspected causes, or related issues.
+      placeholder: "Related issue #12; workaround: pause manually before hiding."
