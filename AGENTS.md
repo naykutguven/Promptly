@@ -58,6 +58,10 @@ Load the context relevant to the current task.
 6. Consult `Docs/Architecture.md` when ownership, source placement, or
    dependencies are involved.
 
+Read `Docs/ImplementationPlan.md` when planning tasks, evaluating task dependencies, or selecting the next implementation task.
+
+Do not load the implementation plan for routine coding tasks unless sequencing or task dependencies are relevant.
+
 Do not load the entire PRD, architecture document, or all agent guides by default.
 
 A full-PRD review is appropriate for initial planning, dependency analysis, and
