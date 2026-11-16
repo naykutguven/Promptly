@@ -1,14 +1,16 @@
-# Prompter line-layout engine
+# Line layout engine
 
-Implemented on 2026-11-06 as a standalone component under
-`Promptly/Features/Prompter/Viewport/`. A separate demonstration view integrates
-the engine with SwiftUI rows and local controls. The main prompter, app settings,
-playback, and persistence are not connected to it. The existing TextRenderer
-LinePrompter experiment remains separate.
+`LineLayoutEngine` (`Promptly/Services/Prompter/LineLayoutEngine.swift`) turns
+script text into display lines, returned as `PrompterLine` values
+(`Promptly/Domain/Prompter/PrompterLine.swift`). Only the standalone
+demonstration under `Promptly/Features/Prompter/Viewport/` uses it. The main
+prompter, settings, and playback are not connected to it.
+[Architecture](Architecture.md) §4.2 defines how the reading session will use
+the engine.
 
 ## Interface
 
-`PrompterLineLayoutEngine.layout(text:font:width:)` accepts an unchanged String,
+`LineLayoutEngine.layout(text:font:width:)` accepts an unchanged String,
 a SwiftUI `Font.Resolved`, and a finite positive reading width in points. It
 returns an array of `PrompterLine` values with only:
 
@@ -16,6 +18,11 @@ returns an array of `PrompterLine` values with only:
   hard-break delimiter consumed by the line.
 - `text`: the corresponding substring with only its terminal hard break removed.
   Spaces and tabs are preserved.
+
+The PRD's line `id` and `layoutRevision` fields (F02.2) are not engine output
+yet. The reading session will mint a layout revision for each request, and
+generation will stamp each line with an identity and that revision
+([Architecture](Architecture.md) §4.2).
 
 Array indices identify rows within one layout. They are not durable reading
 positions. A caller keeps its script identity/revision and source offset,
@@ -54,9 +61,9 @@ presentation; the engine returns no y offsets, heights or baselines.
 
 Default technical limits are 1,000,000 UTF-16 units and 100,000 output rows,
 including a final empty row. Both limits are injectable at engine initialization.
-They bound this calculation; they do not establish script-store or file-format
-compatibility limits. Core Text's protection against unreasonably expensive
-layout remains enabled through its [nullable creation API](https://developer.apple.com/documentation/coretext/cttypesettercreatewithattributedstringandoptions(_:_:)).
+They bound this calculation; they do not replace the product limits in F01.7.
+Core Text's protection against unreasonably expensive layout remains enabled
+through its [nullable creation API](https://developer.apple.com/documentation/coretext/cttypesettercreatewithattributedstringandoptions(_:_:)).
 
 ## Execution and integration boundary
 
@@ -68,11 +75,22 @@ objects in the [Core Text threading guidance](https://developer.apple.com/docume
 Cancellation is checked before native creation, between lines and before return;
 an individual native call cannot be interrupted.
 
-A future viewport owner should coalesce settings/width changes, cancel obsolete
-work, and check its request generation plus script identity/revision before
-committing. It restores the latest source anchor, including navigation performed
-while layout was running. Environment/Observation and UserDefaults are separate
-from the calculation. Color-only highlight changes do not require reflow.
+The reading session will own layout requests ([Architecture](Architecture.md)
+§4.1–§4.2). It coalesces layout-affecting settings changes, including the size
+preset that defines the reading width, cancels obsolete work, and checks its
+request identity plus script and layout revisions before committing. It
+restores the latest source anchor, including navigation performed while layout
+was running. The viewport only renders committed layouts. Environment,
+Observation, and UserDefaults stay outside the calculation. Color-only highlight
+changes do not require reflow.
+
+## Design rationale
+
+Core Text's [contextual line breaking](https://developer.apple.com/documentation/coretext/cttypesettersuggestlinebreak(_:_:_:))
+gives every line a direct range in the original string, which reading anchors
+and MCP line records need. A single wrapped SwiftUI `Text` with `TextRenderer`
+provides line geometry and highlighting, but its documented layout indices are
+opaque and do not map to offsets in the original string.
 
 ## Standalone demonstration
 
@@ -86,9 +104,9 @@ local state and do not write the user's preferences.
 
 Rows use the engine's text and resolved font. A blank row displays a nonbreaking
 space to retain a line box, with a Blank line accessibility label. Selection
-changes text color only, as requested, and exposes the selected accessibility
-trait. Native buttons support selecting a row and Previous/Next/Restart.
-The native scroll view tracks the visible row by source-start identity.
+changes text color only and exposes the selected accessibility trait. Native
+buttons support selecting a row and Previous/Next/Restart. The native scroll
+view tracks the visible row by source-start identity.
 [ScrollViewProxy.scrollTo](https://developer.apple.com/documentation/swiftui/scrollviewproxy/scrollto(_:anchor:))
 aligns explicit navigation and restored rows to the viewport top; bottom padding
 allows the final row to reach that same position.
@@ -103,120 +121,50 @@ previous source and its anchor.
 
 Manual interaction invalidates pending results synchronously, before SwiftUI's
 view-task cancellation can arrive. Reflow is deferred while the user is
-interacting/decelerating. Scroll identity callbacks from programmatic
-restoration do not update the source anchor. Actual native input/callback order
-still requires physical interaction validation; the model tests do not prove
-every mouse, trackpad, keyboard or accessibility scrolling path.
+interacting or decelerating, as reported by `onScrollPhaseChange`. Scroll
+identity callbacks from programmatic restoration do not update the source
+anchor.
 
-The preview tool currently supports static snapshots for this destination and
-captures an ordinary asynchronous demo before its layout completes. Native
+Previews prepare both sample layouts through the real engine with
 [PreviewModifier.makeSharedContext](https://developer.apple.com/documentation/swiftui/previewmodifier/makesharedcontext())
-prepares both sample layouts through the actual engine before capture. A
-preview-only optional environment value supplies the prepared result, while
-the regular view continues using its cancellable task. This avoids hand-written
-line fixtures or sleeps. Preview preparation is available at the deployment
-target; no newer runtime-only API is required.
+and pass them in through a preview-only environment value, so a static snapshot
+never captures the loading state. The regular view keeps its cancellable task.
+No hand-written line fixtures or sleeps are involved.
 
-## Native choice and remaining validation
+The typeface control is a
+[segmented Picker](https://developer.apple.com/documentation/swiftui/pickerstyle/segmented).
+A pop-up Picker crashes live Previews with Xcode 27.2 on macOS 27.2, inside
+AppKit's menu presentation and independent of the engine. Recheck that before
+switching back.
 
-The standalone String/font/width-to-row interface uses Core Text's
-[contextual line breaking](https://developer.apple.com/documentation/coretext/cttypesettersuggestlinebreak(_:_:_:)).
-The earlier independent alternatives review also considered one wrapped SwiftUI
-Text with TextRenderer. TextRenderer already
-provides geometry/highlighting in the experiment; its documented opaque layout
-indices do not directly specify offsets into original strings. Core Text gives
-the requested engine a direct source-range calculation without adopting another
-window or text-view owner.
+## Validation status
 
-The results describe Core Text's layout. Displaying substrings in independent
-SwiftUI Text rows performs another layout pass. Matching fonts alone does not
-establish matching paragraph direction, tabs, whitespace or discretionary hyphen
-rendering. The engine preserves source and does not insert discretionary
-hyphenation. SwiftUI row parity, accessibility, visual fit, long-script
-responsiveness, CPU/energy, and minimum macOS 26.0 runtime behavior still need
-native integration validation. No performance improvement is claimed.
+`PromptlyTests/Services/Prompter/LineLayoutEngineTests` covers empty and
+whitespace-only input, hard breaks and blank lines (including atomic CRLF and a
+trailing break), spaces and tabs, Unicode and grapheme boundaries, long words,
+width and font-size reflow, invalid widths and limits, UTF-16 input and line
+limits, widths narrower than one cluster, and cancellation. The demo model has
+no automated tests.
 
-## Validation record
-
-On 2026-11-06, using Xcode 27.2, Swift 6.4.2, macOS SDK/runtime 27.2 and the
-arm64 My Mac destination:
-
-- Xcode `BuildProject(buildForTesting: true)` passed, compiling the app and both
-  test targets with the existing Swift 6/concurrency settings.
-- `RunSomeTests` for `PrompterLineLayoutEngineTests` passed the initial 35 cases,
-  and a subsequent run passed the added whitespace-only narrow-width cases.
-- The final complete suite passed all 40 cases across 17 test methods under
-  Thread Sanitizer using the command below: source coverage, hard breaks/blank
-  lines, whitespace, Unicode boundaries, width/font reflow, bounds and
-  cancellation. No sanitizer diagnostics were reported; this is not proof of
-  thread safety. The first sanitizer build reported an ignored duplicate
-  `@executable_path` rpath; the final incremental run reported no warnings.
+For concurrency changes, also run the suite with Thread Sanitizer. A clean run
+is not proof of thread safety.
 
 ```sh
 set -o pipefail
 xcodebuild -project Promptly.xcodeproj -scheme Promptly -configuration Debug \
   -destination 'platform=macOS,arch=arm64' \
-  -derivedDataPath /tmp/Promptly-LineLayout-TSan \
   -enableThreadSanitizer YES \
-  -only-testing:PromptlyTests/PrompterLineLayoutEngineTests test \
+  -only-testing:PromptlyTests/LineLayoutEngineTests test \
   2>&1 | xcsift -f toon -w
 ```
 
-The restricted shell initially prevented compiler macro plug-ins and local
-signing; the approved retry outside that sandbox passed. Source/docs whitespace
-and local-link checks passed. The repository-wide diff check still reports an
-unrelated pre-existing extra EOF blank line in PrompterWindowBridge.swift.
-No UI journey, visual parity, Release performance or macOS 26.0 runtime check
-was performed for this standalone component.
+Not yet validated:
 
-The demonstration was subsequently validated on the same toolchain/destination:
-
-- App and both test targets build with the demo/model included.
-- All 14 cases across 13 demo model tests passed, including exact-anchor reflow
-  round trips, navigation during a pending layout, old success/failure rejection,
-  synchronous invalidation, cancellation, last-good recovery and preview reuse.
-- The focused demo model suite also passed with Thread Sanitizer enabled.
-- Both named previews rendered successfully through the native macOS preview
-  tool and were visually inspected: wide/dark and narrow/light with Increased
-  Contrast. The initial loading-only snapshot was corrected with native async
-  preview preparation. These snapshots establish those rendered states, not
-  physical input, VoiceOver, all typography parity or scrolling performance.
-
-### Picker Preview crash follow-up
-
-Opening the original typeface pop-up crashed the live Preview on macOS 27.2
-with Xcode 27.2. Four local crash reports showed the same main-thread
-`EXC_BREAKPOINT` in AppKit while creating an `NSPopupMenuWindow`, through
-`NSWindow.setContentView` and SwiftUI's menu-presentation bridge. This happened
-before selection; no engine or demo-model frames appeared in the crashing stack.
-The reports and nearby app logs did not provide the assertion message.
-
-The user reproduced the crash in a temporary Preview containing only a native
-three-option Picker with Int tags and local State. The same minimal control
-opened and selected Serif in a separate ordinary native window through
-accessibility actions, including with matching sandbox, hardened-runtime,
-read-only selected-file and debug entitlements. Temporary diagnostic apps used
-ad-hoc signing, rather than the project's development identity. These
-observations isolate the failure from the demo's
-font resolution, engine, and prepared preview data; they do not establish the
-underlying AppKit assertion or compatibility on other OS versions.
-
-The demo now uses a native
-[segmented Picker](https://developer.apple.com/documentation/swiftui/pickerstyle/segmented),
-which Apple recommends for two to five options. This avoids popup presentation
-for its three designs without introducing a custom control or native bridge.
-The Picker retains its semantic Typeface label while hiding the visual label
-to fit the narrow demonstration window. The engine and source-anchor behavior
-are unchanged. This is a local workaround, not a general restriction on macOS
-pop-up controls.
-
-An isolated ordinary window compiled from the four actual engine/demo source
-files also passed accessibility-action checks: Next moved the source offset to
-35; System → Serif → Monospaced → System changed the line count from
-30 → 33 → 44 → 30 while retaining offset 35 and selecting its containing row.
-The native accessibility tree retained the Typeface group label and the three
-selected/unselected options. Both named previews rendered after the style change,
-including the 430-point narrow view, and the app plus both test targets built.
-The temporary isolation Preview was removed. These checks do not establish
-physical input or VoiceOver behavior for the replacement control in the live
-Preview; canvas click/keyboard automation failed with `noWindowsAvailable`.
+- Agreement between Core Text breaks and SwiftUI row rendering. Rows lay out
+  again in SwiftUI, and matching fonts alone does not establish matching
+  paragraph direction, tabs, whitespace, or discretionary-hyphen rendering. The
+  engine inserts no discretionary hyphenation.
+- Physical scrolling input (mouse, trackpad, keyboard, accessibility actions)
+  and VoiceOver.
+- Long-script responsiveness, CPU, and energy use. No performance claim is made.
+- Runtime behavior on macOS 26.0.
