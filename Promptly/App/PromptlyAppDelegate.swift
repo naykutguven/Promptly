@@ -9,7 +9,6 @@ import AppKit
 import SwiftUI
 
 final class PromptlyAppDelegate: NSObject, NSApplicationDelegate {
-
     override init() {
         let _ = ProcessInfo.processInfo.arguments.contains("--promptly-ui-testing")
         super.init()

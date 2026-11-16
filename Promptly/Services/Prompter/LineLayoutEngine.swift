@@ -45,9 +45,11 @@ nonisolated struct LineLayoutEngine: Sendable {
 
         try Task.checkCancellation()
         // Keep Core Text's default protection against unreasonably expensive layout.
-        guard let typesetter = CTTypesetterCreateWithAttributedStringAndOptions(
-            attributedText as CFAttributedString, nil
-        ) else {
+        guard
+            let typesetter = CTTypesetterCreateWithAttributedStringAndOptions(
+                attributedText as CFAttributedString, nil
+            )
+        else {
             throw Failure.typesettingFailed
         }
 
@@ -66,10 +68,11 @@ nonisolated struct LineLayoutEngine: Sendable {
             let delimiterLength = hardBreakLength(atEndOf: range, in: source)
             let displayRange = NSRange(location: offset, length: count - delimiterLength)
 
-            lines.append(PrompterLine(
-                sourceRange: range,
-                text: source.substring(with: displayRange)
-            ))
+            lines.append(
+                PrompterLine(
+                    sourceRange: range,
+                    text: source.substring(with: displayRange)
+                ))
             offset += count
             endsWithHardBreak = delimiterLength > 0
         }
@@ -77,9 +80,10 @@ nonisolated struct LineLayoutEngine: Sendable {
         try Task.checkCancellation()
         if endsWithHardBreak {
             guard lines.count < maximumLineCount else { throw Failure.tooManyLines }
-            lines.append(PrompterLine(
-                sourceRange: NSRange(location: source.length, length: 0), text: ""
-            ))
+            lines.append(
+                PrompterLine(
+                    sourceRange: NSRange(location: source.length, length: 0), text: ""
+                ))
         }
         return lines
     }
@@ -97,7 +101,8 @@ nonisolated struct LineLayoutEngine: Sendable {
         let clusterBreak = CTTypesetterSuggestClusterBreak(typesetter, offset, Double(width))
         let clusterCount = try composedBreakLength(clusterBreak, source: source, offset: offset)
         guard clusterCount > 0,
-              fits(typesetter: typesetter, offset: offset, count: clusterCount, width: width) else {
+            fits(typesetter: typesetter, offset: offset, count: clusterCount, width: width)
+        else {
             // Preserve the chosen font and Unicode clusters instead of truncating or shrinking them.
             throw Failure.widthTooNarrow
         }
@@ -119,7 +124,8 @@ nonisolated struct LineLayoutEngine: Sendable {
     private func fits(typesetter: CTTypesetter, offset: Int, count: Int, width: CGFloat) -> Bool {
         let line = CTTypesetterCreateLine(typesetter, CFRange(location: offset, length: count))
         // Consumed trailing whitespace remains in the source range even when it extends past the edge.
-        let advance = CTLineGetTypographicBounds(line, nil, nil, nil)
+        let advance =
+            CTLineGetTypographicBounds(line, nil, nil, nil)
             - CTLineGetTrailingWhitespaceWidth(line)
         return advance.isFinite && advance <= Double(width) + 0.0001
     }

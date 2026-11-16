@@ -2,6 +2,7 @@ import CoreGraphics
 import Foundation
 import SwiftUI
 import Testing
+
 @testable import Promptly
 
 @MainActor
@@ -22,10 +23,13 @@ struct LineLayoutEngineTests {
             text: source, font: resolvedFont(), width: 4096
         )
 
-        #expect(lines == [PrompterLine(
-            sourceRange: NSRange(location: 0, length: source.utf16.count),
-            text: source
-        )])
+        #expect(
+            lines == [
+                PrompterLine(
+                    sourceRange: NSRange(location: 0, length: source.utf16.count),
+                    text: source
+                )
+            ])
     }
 
     @Test(arguments: [" ", "\t", "\n", "\r\n", " \t \n\n"])
@@ -79,17 +83,18 @@ struct LineLayoutEngineTests {
             text: source, font: resolvedFont(), width: 320
         )
 
-        #expect(lines == [
-            PrompterLine(sourceRange: NSRange(location: 0, length: 3), text: "A"),
-            PrompterLine(sourceRange: NSRange(location: 3, length: 0), text: "")
-        ])
+        #expect(
+            lines == [
+                PrompterLine(sourceRange: NSRange(location: 0, length: 3), text: "A"),
+                PrompterLine(sourceRange: NSRange(location: 3, length: 0), text: ""),
+            ])
     }
 
     @Test(arguments: [
         "Cafe\u{301} 👨‍👩‍👧‍👦 🇩🇪 👍🏽 Cafe\u{301} 👨‍👩‍👧‍👦 🇩🇪 👍🏽",
         "这是用于验证自动换行和源文本范围的合成段落。这是另一句合成文字。",
         "هذه فقرة تجريبية للقراءة مع نص مختلط 123 وكلمات إضافية للتحقق من التفاف السطور.",
-        "नमस्ते क्‍ष नमस्ते क्‍ष नमस्ते क्‍ष नमस्ते क्‍ष नमस्ते क्‍ष"
+        "नमस्ते क्‍ष नमस्ते क्‍ष नमस्ते क्‍ष नमस्ते क्‍ष नमस्ते क्‍ष",
     ])
     func wrappedUnicodePreservesSourceAndGraphemeBoundaries(source: String) async throws {
         let lines = try await LineLayoutEngine().layout(

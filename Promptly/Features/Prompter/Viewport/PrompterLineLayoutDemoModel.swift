@@ -12,8 +12,8 @@ final class PrompterLineLayoutDemoModel {
         let width: CGFloat
 
         static func == (lhs: Self, rhs: Self) -> Bool {
-            lhs.text == rhs.text && lhs.font == rhs.font &&
-                (lhs.width == rhs.width || (lhs.width.isNaN && rhs.width.isNaN))
+            lhs.text == rhs.text && lhs.font == rhs.font
+                && (lhs.width == rhs.width || (lhs.width.isNaN && rhs.width.isNaN))
         }
     }
 
@@ -127,7 +127,8 @@ final class PrompterLineLayoutDemoModel {
             if error is CancellationError || Task.isCancelled {
                 phase = previous.map(Phase.ready) ?? .idle
             } else {
-                let failure = (error as? LineLayoutEngine.Failure)
+                let failure =
+                    (error as? LineLayoutEngine.Failure)
                     .map(Failure.engine) ?? .unavailable
                 phase = .failed(failure, previous: previous)
             }
@@ -137,7 +138,8 @@ final class PrompterLineLayoutDemoModel {
     func move(by delta: Int) {
         guard delta != 0, let layout, let currentLineIndex else { return }
         let (proposed, overflow) = currentLineIndex.addingReportingOverflow(delta)
-        let target = overflow
+        let target =
+            overflow
             ? (delta > 0 ? layout.lines.count - 1 : 0)
             : min(max(proposed, 0), layout.lines.count - 1)
         sourceOffset = layout.lines[target].sourceRange.location
@@ -154,7 +156,8 @@ final class PrompterLineLayoutDemoModel {
 
     func selectLine(id: Int) {
         guard let layout, let index = lineIndex(at: id, in: layout.lines),
-              layout.lines[index].sourceRange.location == id else { return }
+            layout.lines[index].sourceRange.location == id
+        else { return }
         sourceOffset = id
     }
 

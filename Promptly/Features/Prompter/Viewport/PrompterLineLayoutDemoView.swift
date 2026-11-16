@@ -55,9 +55,11 @@ struct PrompterLineLayoutDemoView: View {
                     }
                 }
             }
-            .task(id: LayoutTask(
-                request: isUserScrolling ? nil : request, retryGeneration: retryGeneration
-            )) {
+            .task(
+                id: LayoutTask(
+                    request: isUserScrolling ? nil : request, retryGeneration: retryGeneration
+                )
+            ) {
                 // Defer reflow until manual scrolling ends so restoration cannot fight the gesture.
                 guard !isUserScrolling else { return }
                 await model.update(for: request)
@@ -199,8 +201,7 @@ struct PrompterLineLayoutDemoView: View {
                     scrollToCurrentLine(using: proxy, animated: true)
                 }
                 .disabled(
-                    model.currentLineIndex == nil ||
-                    model.currentLineIndex == (model.layout?.lines.count ?? 0) - 1
+                    model.currentLineIndex == nil || model.currentLineIndex == (model.layout?.lines.count ?? 0) - 1
                 )
 
                 Spacer()
@@ -262,18 +263,18 @@ struct PrompterLineLayoutDemoView: View {
     }
 
     fileprivate static let sampleText = """
-    Welcome to the line layout demonstration. Each visible row comes from the original script, with a source range that stays meaningful when the text wraps differently.
+        Welcome to the line layout demonstration. Each visible row comes from the original script, with a source range that stays meaningful when the text wraps differently.
 
-    Select a line farther down the script. Try a larger font, a different typeface, or a narrower reading column. The highlighted row should continue to contain the same source position.
+        Select a line farther down the script. Try a larger font, a different typeface, or a narrower reading column. The highlighted row should continue to contain the same source position.
 
-    You can also scroll manually, use Previous and Next, or return to the beginning with Restart. Highlighting changes only the text color.
+        You can also scroll manually, use Previous and Next, or return to the beginning with Restart. Highlighting changes only the text color.
 
-    Blank paragraphs stay in the script. Composed characters such as café, é, and 👨‍👩‍👧‍👦 stay together when a line breaks.
+        Blank paragraphs stay in the script. Composed characters such as café, é, and 👨‍👩‍👧‍👦 stay together when a line breaks.
 
-    Widen the column and narrow it again without navigating. The stored source offset should stay the same even when the beginning of the highlighted row changes.
+        Widen the column and narrow it again without navigating. The stored source offset should stay the same even when the beginning of the highlighted row changes.
 
-    This final paragraph lets you check that the last line can reach the top of the reading area.
-    """
+        This final paragraph lets you check that the last line can reach the top of the reading area.
+        """
 }
 
 private struct PreparedDemoPreview: PreviewModifier {

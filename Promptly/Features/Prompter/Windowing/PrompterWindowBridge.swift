@@ -43,5 +43,3 @@ struct PrompterWindowBridge: NSViewRepresentable {
         }
     }
 }
-
-

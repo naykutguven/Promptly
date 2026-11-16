@@ -63,20 +63,20 @@ final class PrompterWindowModel {
         let currentFrame = window.frame
 
         // TODO: This might need some refining in the distance, something like below for the animation
-//
-//        import QuartzCore
-//
-//        NSAnimationContext.runAnimationGroup { context in
-//            context.duration = 0.4
-//            context.timingFunction = CAMediaTimingFunction(
-//                name: .easeInEaseOut
-//            )
-//
-//            window.animator().setFrame(
-//                targetFrame,
-//                display: true
-//            )
-//        }
+        //
+        //        import QuartzCore
+        //
+        //        NSAnimationContext.runAnimationGroup { context in
+        //            context.duration = 0.4
+        //            context.timingFunction = CAMediaTimingFunction(
+        //                name: .easeInEaseOut
+        //            )
+        //
+        //            window.animator().setFrame(
+        //                targetFrame,
+        //                display: true
+        //            )
+        //        }
 
         let targetFrame = NSRect(
             x: visibleFrame.midX - currentFrame.width / 2,

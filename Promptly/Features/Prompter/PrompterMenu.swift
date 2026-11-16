@@ -37,5 +37,4 @@ struct PrompterMenu: View {
         .keyboardShortcut("r", modifiers: [.command, .option])
         .disabled(!windowModel.canMoveNearNotch)
     }
-
 }

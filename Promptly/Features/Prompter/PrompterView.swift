@@ -19,9 +19,10 @@ struct PrompterView: View {
                     control(
                         windowModel.isLocked ? "Unlock Prompter" : "Lock Prompter",
                         symbol: windowModel.isLocked ? "lock.fill" : "lock.open.fill",
-                        id: "prompter.lock") {
-                            windowModel.isLocked.toggle()
-                        }
+                        id: "prompter.lock"
+                    ) {
+                        windowModel.isLocked.toggle()
+                    }
 
                     control(
                         windowModel.isAttachedToNotch ? "Detach from Notch" : "Attach to Notch",
@@ -38,7 +39,6 @@ struct PrompterView: View {
                     )
                 }
                 .padding(.horizontal, 12)
-
             }
             .foregroundStyle(.white)
             .frame(height: PrompterWindowLayoutConstants.collapsedHeight)
@@ -89,7 +89,6 @@ struct PrompterView: View {
 
 #Preview {
     PrompterView(windowModel: PrompterWindowModel())
-
 }
 
 struct PrompterHeaderView: View {

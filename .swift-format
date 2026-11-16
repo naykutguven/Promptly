@@ -1,0 +1,18 @@
+{
+    "version": 1,
+    "indentation": {
+        "spaces": 4
+    },
+    "lineLength": 120,
+    "rules": {
+        "AmbiguousTrailingClosureOverload": true,
+        "DoNotUseSemicolons": true,
+        "GroupNumericLiterals": true,
+        "NoEmptyLinesOpeningClosingBraces": true,
+        "NoEmptyTrailingClosureParentheses": true,
+        "NoParensAroundConditions": true,
+        "OneCasePerLine": true,
+        "OneVariableDeclarationPerLine": true,
+        "OrderedImports": true
+    }
+}

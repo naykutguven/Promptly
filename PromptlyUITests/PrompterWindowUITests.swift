@@ -20,11 +20,14 @@ nonisolated final class PrompterWindowUITests: XCTestCase {
         let window = app.descendants(matching: .any).matching(identifier: "prompter.window").firstMatch
         XCTAssertTrue(window.waitForExistence(timeout: 5))
         let primaryID = CGMainDisplayID()
-        let screen = try XCTUnwrap(NSScreen.screens.first {
-            ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value == primaryID
-        })
+        let screen = try XCTUnwrap(
+            NSScreen.screens.first {
+                ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value == primaryID
+            })
         let bounds = CGDisplayBounds(primaryID)
-        let top = screen.safeAreaInsets.top > 0 ? bounds.minY
+        let top =
+            screen.safeAreaInsets.top > 0
+            ? bounds.minY
             : bounds.minY + screen.frame.maxY - screen.visibleFrame.maxY
         XCTAssertEqual(window.frame.midX, bounds.midX, accuracy: 1)
         XCTAssertEqual(window.frame.minY, top, accuracy: 1)
@@ -87,8 +90,10 @@ nonisolated final class PrompterWindowUITests: XCTestCase {
     }
 
     @MainActor
-    private func chooseMenuItem(_ title: String, in app: XCUIApplication,
-                                file: StaticString = #filePath, line: UInt = #line) {
+    private func chooseMenuItem(
+        _ title: String, in app: XCUIApplication,
+        file: StaticString = #filePath, line: UInt = #line
+    ) {
         let statusItem = app.statusItems.firstMatch
         XCTAssertTrue(statusItem.waitForExistence(timeout: 2), file: file, line: line)
         statusItem.click()
@@ -159,8 +164,10 @@ nonisolated final class PrompterWindowUITests: XCTestCase {
     }
 
     @MainActor
-    private func dragEmptyHeader(of window: XCUIElement, offset: CGVector, shouldMove: Bool = true,
-                                 file: StaticString = #filePath, line: UInt = #line) {
+    private func dragEmptyHeader(
+        of window: XCUIElement, offset: CGVector, shouldMove: Bool = true,
+        file: StaticString = #filePath, line: UInt = #line
+    ) {
         let before = window.frame
         let header = window.coordinate(withNormalizedOffset: CGVector(dx: 0.4, dy: 0))
             .withOffset(CGVector(dx: 0, dy: 29))
