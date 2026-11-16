@@ -412,7 +412,8 @@ packaging evidence separately, following the
 | Decision | Why it matters | Settle in |
 |---|---|---|
 | MCP process layout, IPC, peer validation, packaging | Adds a target, a dependency, and entitlements | MCP research (F07.13) |
-| System restoration of the prompter frame | It must return the last floating position after an Attached session, survive display changes, and reset with Restore All Defaults | Windowing task (F05.3, F05.7, PRD-08 §8.6) |
+| System restoration of the prompter frame | The borderless prompter must restore across launches, survive display changes, and stop returning a floating position after Restore All Defaults; within a launch the window model returns the last floating position | Windowing task (F05.3, F05.7, PRD-08 §8.6) |
+| Non-activating prompter | Showing or using the prompter must not activate Promptly, which likely needs an AppKit non-activating panel hosting the SwiftUI view instead of a SwiftUI `Window` scene | Windowing task (F05.6) |
 | Font resolution outside a view | The session must build the same `Font.Resolved` that the rows render | Layout integration task |
 | User-scroll detection signal | Separates manual from programmatic scrolling | Viewport task (F03.7) |
 | Clock behavior across sleep (`ContinuousClock` or `SuspendingClock`) | Remaining time if the sleep notification arrives late | Playback task (F03.11) |

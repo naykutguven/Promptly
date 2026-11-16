@@ -153,7 +153,9 @@ The MVP does not promise secure memory erasure or protection against operating-s
 
 - Initial script limit: 100,000 user-perceived characters.
 - Initial imported-file limit: 1 MB (1,000,000 bytes).
+- Enforce the imported-file limit on import. A file within that limit opens in the editor even when its text exceeds the script limit, so the user can review and shorten it.
 - Enforce the script limit when loading through the UI or MCP.
+- The editor indicates when its text exceeds the script limit.
 - Reject oversized input with a clear error. Never truncate text or replace the active session or editor draft on rejection.
 
 ## Acceptance criteria
@@ -168,6 +170,7 @@ The MVP does not promise secure memory erasure or protection against operating-s
 - The editor opens separately with the active script and closes only after a successful editor-initiated load.
 - Incoming scripts preserve unfinished editor edits; discarding those edits requires confirmation.
 - Oversized input is rejected without truncation through every entry point.
+- An imported file within the 1 MB limit that exceeds the script limit opens in the editor and cannot be loaded until shortened.
 - Older load results cannot overwrite the latest load request.
 
 ## Out of scope
@@ -660,8 +663,12 @@ Attached mode:
 Floating mode:
 - Allows free movement using a designated drag region.
 - Does not enable freeform resizing.
-- Remembers the last valid floating position through window preferences.
+- Within a launch, detaching returns the window to its last floating position.
+- Across launches, macOS restores the window frame natively. Promptly stores no window coordinates of its own.
+- When no floating position is available, such as after relaunching while Attached or after Restore All Defaults, detaching uses a default floating position.
 - Prevents a restored window from becoming permanently inaccessible.
+
+Verify native frame restoration for the borderless prompter on macOS 26 before relying on it.
 
 ### F05.4 — Attach/detach behavior
 
@@ -684,9 +691,10 @@ Floating mode:
 ### F05.6 — Window behavior
 
 The window should:
-- Use a minimal, borderless presentation.
+- Use a minimal, borderless presentation on a solid black background.
 - Remain above ordinary application windows where supported.
-- Minimize unexpected application activation.
+- Do not activate Promptly when the prompter is shown, including from the menu bar or by a UI or MCP load, or when the user interacts with its controls or drag region. The application the user is working in keeps keyboard focus.
+- Activate Promptly normally when the user opens the editor or Settings.
 - While attached in an extended desktop, remain on the built-in laptop display across that display's Spaces, without duplicating the prompter onto external displays.
 - Support eligible full-screen Spaces on the built-in display, subject to native compatibility validation.
 - Run as a menu-bar-only application with no Dock icon, including when the editor or Settings window is open.
@@ -711,6 +719,8 @@ Apple's [window collection behaviors](https://developer.apple.com/documentation/
 - The attached prompter follows the built-in display's Spaces without appearing on external displays in an extended desktop.
 - Full-screen Spaces compatibility is verified and documented for tested configurations.
 - The application has no Dock icon.
+- Showing the prompter or using its controls does not take keyboard focus from the application the user is working in.
+- Within a launch, detaching returns the window to its last floating position.
 - Window hiding always pauses active playback.
 - Closing and reopening the window does not destroy the reading session.
 - Display changes do not strand the window offscreen.
@@ -940,7 +950,6 @@ Categories:
 - Typography
 - Playback
 - Highlight positioning
-- Appearance, when available
 
 Example response structure:
 
@@ -1052,7 +1061,6 @@ Agents may modify:
 - Text alignment and color
 - WPM
 - Highlight position
-- Supported appearance preferences
 
 Agents may not modify:
 - Whether MCP integration is enabled
@@ -1195,7 +1203,7 @@ Options:
 - Attached
 - Floating
 
-Default: Attached to the built-in laptop display. Persist placement mode and a valid last floating position.
+Default: Attached to the built-in laptop display. Persist placement mode. macOS restores the floating window frame (F05.3).
 
 #### Reading focus
 
@@ -1303,7 +1311,7 @@ Display:
 
 - Provide **Restore All Defaults…** at the bottom of the Settings sidebar, separate from the navigation entries.
 - Require confirmation and explain that this resets all preferences, including window placement and playback preferences, and disables MCP.
-- Reset stored window coordinates along with the other preferences.
+- Discard the remembered floating position along with the other preferences. A later detach uses the default floating position (F05.3).
 - Preserve the active script, unfinished editor drafts, and logical reading position.
 - Apply the normal layout/playback side-effect rules when restoring defaults.
 - This action is user-only and unavailable through MCP.
@@ -1315,7 +1323,7 @@ Display:
 - Use a shared settings service for all UI and MCP mutations.
 - Ensure UI and MCP updates pass through the same validation rules.
 - Use Observation to propagate changes.
-- Persist only preferences and necessary window coordinates, never script content.
+- Persist only preferences, never script content. Leave window frame restoration to macOS (F05.3).
 
 ## 8.8 Settings update behavior
 
@@ -1351,7 +1359,7 @@ Discard obsolete layout results. If a settings-triggered layout recalculation fa
 - Layout-affecting settings preserve reading position.
 - Invalid updates are rejected without partial persistence.
 - Updates to different properties are preserved; updates to the same property follow service commit order.
-- Restore All Defaults requires confirmation, resets every preference including window coordinates, and disables MCP while preserving the active script, editor drafts, and reading position.
+- Restore All Defaults requires confirmation, resets every preference including placement and the remembered floating position, and disables MCP while preserving the active script, editor drafts, and reading position.
 - MCP clients cannot alter protected integration/security settings.
 
 ## Out of scope
@@ -1616,7 +1624,8 @@ Potential post-MVP features:
 - Script libraries and saved sessions
 - Incremental script updates through MCP
 - MCP state-change notifications and subscriptions
-- Additional keyboard shortcuts
+- Keyboard shortcuts, including global hotkeys
+- User interface localization
 - Per-client MCP permissions
 - Custom window presets
 - Reading statistics
