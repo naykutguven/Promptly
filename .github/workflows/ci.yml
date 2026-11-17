@@ -23,13 +23,14 @@ jobs:
     name: macOS CI
     # The project.xcproj format and Swift 6.4 require the Xcode 27 image.
     runs-on: xcode-27
-    # Runs take about 3 minutes. Each step also has its own limit; the job limit
-    # stops a run in which several steps are slow at once.
+    # Runs took about 3 minutes before the Thread Sanitizer build was added. Each
+    # step also has its own limit; the job limit stops a run in which several steps
+    # are slow at once.
     timeout-minutes: 15
     env:
       DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+      # Scripts/tests.sh writes test results and logs to build/Tests.
       CI_RESULTS: build/CI
-      CI_DERIVED_DATA: build/DerivedData
 
     steps:
       - name: Check out the merge result
@@ -109,89 +110,39 @@ jobs:
         id: debug_build
         if: ${{ !cancelled() && steps.environment.outcome == 'success' }}
         timeout-minutes: 10
-        run: |
-          xcodebuild build-for-testing \
-            -project Promptly.xcodeproj \
-            -scheme Promptly \
-            -configuration Debug \
-            -destination 'platform=macOS,arch=arm64' \
-            -derivedDataPath "$CI_DERIVED_DATA" \
-            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= \
-            2>&1 | tee "$CI_RESULTS/debug-build.log"
+        run: ./Scripts/tests.sh build-for-testing
 
+      # Fails when no unit test passes or any test fails. Reports code coverage, or
+      # warns when Xcode could not collect it.
       - name: Run unit tests
         if: ${{ !cancelled() && steps.debug_build.outcome == 'success' }}
         timeout-minutes: 10
-        run: |
-          xcodebuild test-without-building \
-            -project Promptly.xcodeproj \
-            -scheme Promptly \
-            -configuration Debug \
-            -destination 'platform=macOS,arch=arm64' \
-            -derivedDataPath "$CI_DERIVED_DATA" \
-            -only-testing:PromptlyTests \
-            -parallel-testing-enabled NO \
-            -test-timeouts-enabled YES \
-            -maximum-test-execution-time-allowance 120 \
-            -testLanguage en -testRegion US \
-            -resultBundlePath "$CI_RESULTS/unit-tests.xcresult" \
-            2>&1 | tee "$CI_RESULTS/unit-tests.log"
-
-      - name: Run UI tests
-        if: ${{ !cancelled() && steps.debug_build.outcome == 'success' }}
-        timeout-minutes: 10
-        run: |
-          xcodebuild test-without-building \
-            -project Promptly.xcodeproj \
-            -scheme Promptly \
-            -configuration Debug \
-            -destination 'platform=macOS,arch=arm64' \
-            -derivedDataPath "$CI_DERIVED_DATA" \
-            -only-testing:PromptlyUITests \
-            -parallel-testing-enabled NO \
-            -test-timeouts-enabled YES \
-            -maximum-test-execution-time-allowance 120 \
-            -testLanguage en -testRegion US \
-            -resultBundlePath "$CI_RESULTS/ui-tests.xcresult" \
-            2>&1 | tee "$CI_RESULTS/ui-tests.log"
+        run: ./Scripts/tests.sh test-unit
 
       - name: Build Apple silicon app (Release)
         if: ${{ !cancelled() && steps.environment.outcome == 'success' }}
         timeout-minutes: 10
-        run: |
-          xcodebuild build \
-            -project Promptly.xcodeproj \
-            -scheme Promptly \
-            -configuration Release \
-            -destination 'platform=macOS,arch=arm64' \
-            -derivedDataPath "$CI_DERIVED_DATA" \
-            ARCHS=arm64 \
-            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= \
-            2>&1 | tee "$CI_RESULTS/release-build.log"
+        run: ./Scripts/tests.sh build-release
 
-      - name: Summarize tests and reject empty runs
+      # Thread Sanitizer needs its own instrumented build.
+      - name: Run unit tests with Thread Sanitizer
+        if: ${{ !cancelled() && steps.environment.outcome == 'success' }}
+        timeout-minutes: 10
+        run: ./Scripts/tests.sh test-tsan
+
+      # Non-blocking until the UI tests pass on the hosted runner. Runs last with a
+      # short limit, so a hung UI test can't use up the time of the blocking steps.
+      # The suite takes under a minute locally.
+      - name: Run UI tests (non-blocking)
         if: ${{ !cancelled() && steps.debug_build.outcome == 'success' }}
+        continue-on-error: true
+        timeout-minutes: 5
+        run: ./Scripts/tests.sh test-ui
+
+      - name: Summarize test results
+        if: ${{ !cancelled() && steps.environment.outcome == 'success' }}
         timeout-minutes: 2
-        run: |
-          echo '| Suite | Passed | Failed | Skipped |' >> "$GITHUB_STEP_SUMMARY"
-          echo '| --- | --- | --- | --- |' >> "$GITHUB_STEP_SUMMARY"
-          summary_failed=0
-          for suite in unit-tests ui-tests; do
-            if xcrun xcresulttool get test-results summary \
-              --path "$CI_RESULTS/$suite.xcresult" > "$CI_RESULTS/$suite.json"; then
-              jq -r --arg suite "$suite" \
-                '"| \($suite) | \(.passedTests) | \(.failedTests) | \(.skippedTests) |"' \
-                "$CI_RESULTS/$suite.json" >> "$GITHUB_STEP_SUMMARY"
-              if ! jq -e '.passedTests > 0 and .failedTests == 0' "$CI_RESULTS/$suite.json" > /dev/null; then
-                echo "::error::$suite must execute passing tests and have no failures."
-                summary_failed=1
-              fi
-            else
-              echo "::error::Could not read $suite results. Inspect the uploaded logs and xcresult bundle."
-              summary_failed=1
-            fi
-          done
-          exit "$summary_failed"
+        run: ./Scripts/tests.sh summarize
 
       - name: Upload logs and test results
         if: ${{ !cancelled() }}
@@ -199,6 +150,8 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: macos-ci-results-${{ github.run_attempt }}
-          path: ${{ env.CI_RESULTS }}
+          path: |
+            ${{ env.CI_RESULTS }}
+            build/Tests
           if-no-files-found: warn
           retention-days: 7

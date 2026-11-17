@@ -146,16 +146,11 @@ width and font-size reflow, invalid widths and limits, UTF-16 input and line
 limits, widths narrower than one cluster, and cancellation. The demo model has
 no automated tests.
 
-For concurrency changes, also run the suite with Thread Sanitizer. A clean run
-is not proof of thread safety.
+For concurrency changes, also run the unit tests, which include this suite, with
+Thread Sanitizer. A clean run is not proof of thread safety.
 
 ```sh
-set -o pipefail
-xcodebuild -project Promptly.xcodeproj -scheme Promptly -configuration Debug \
-  -destination 'platform=macOS,arch=arm64' \
-  -enableThreadSanitizer YES \
-  -only-testing:PromptlyTests/LineLayoutEngineTests test \
-  2>&1 | xcsift -f toon -w
+./Scripts/tests.sh test-tsan
 ```
 
 Not yet validated:

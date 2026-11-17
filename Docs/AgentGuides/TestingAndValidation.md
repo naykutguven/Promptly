@@ -21,11 +21,14 @@ Follow [AGENTS.md](../../AGENTS.md) and the relevant domain guides.
   `buildForTesting: true` to compile test targets; an app-only build misses test
   compilation failures. Discover tests with `GetTestList`, then use `RunSomeTests`
   for the relevant selection.
-- Shell app builds/tests use `xcodebuild -project Promptly.xcodeproj -scheme Promptly`
-  with an explicit configuration and `-destination 'platform=macOS'`. Use `xcsift`
-  when available, preserving the build's exit status with `pipefail`; otherwise
-  keep the unfiltered result. Build/test the app through its Xcode project, not
-  `swift build`/`swift test`; use macOS destinations.
+- Shell app builds and tests use `./Scripts/tests.sh` with one of the commands in
+  [Test commands](#test-commands); after code changes, run `build-and-test-unit`.
+  For a selection the script does not offer, use `xcodebuild -project
+  Promptly.xcodeproj -scheme Promptly` with an explicit configuration and
+  `-destination 'platform=macOS,arch=arm64'`. Use `xcsift` when available,
+  preserving the build's exit status with `pipefail`; otherwise keep the
+  unfiltered result. Build/test the app through its Xcode project, not
+  `swift build`/`swift test`.
 - If a restricted CLI environment prevents compiler macro plug-ins from launching,
   check the logs and compare with Xcode before treating it as a source failure.
   Do not install tools, clean builds, or add CI merely for an unrelated task.
@@ -33,6 +36,44 @@ Follow [AGENTS.md](../../AGENTS.md) and the relevant domain guides.
   including untracked files. Run `./Scripts/docs.sh lint-links` for links and
   `git diff --check` for whitespace in tracked changes. No app build is needed
   when only documentation changes.
+
+### Test commands
+
+Like the other scripts, `./Scripts/tests.sh` runs from any working directory and
+requires a command. CI runs `build-for-testing`, `test-unit`, `build-release`,
+`test-tsan`, and `test-ui` as separate steps, then `summarize`. The UI tests do
+not block CI until they pass on the hosted runner.
+
+Every command builds for `platform=macOS,arch=arm64` with ad-hoc signing and
+requires an Apple silicon Mac. Test commands write a fresh result bundle and the
+full log to `build/Tests`, and fail when no test passes or any test fails. When
+`xcsift` is installed, console output goes through `xcsift -f toon -w`; the log
+keeps the full output. On GitHub Actions, errors and warnings are also run
+annotations.
+
+Every build keeps App Sandbox and uses `build/DerivedData`. Thread Sanitizer
+builds use `build/DerivedData-TSan`, so they never replace the normal build.
+
+Coverage is informational: a missing report is a warning, not a failure. For a
+sandboxed app, Xcode copies the coverage data out of the app's container after
+the tests. macOS refuses that unless the app running `xcodebuild` may access
+other apps' data, and the result bundle then reports "Failed to download
+profiles … Operation not permitted". Agent shells can lack that access.
+
+| Command | Behavior |
+|---|---|
+| `build-for-testing` | Build the Debug app and both test targets with code coverage |
+| `test-unit` | Run the built unit tests with code coverage |
+| `test-ui` | Run the built UI tests; they take over the screen |
+| `build-and-test-unit` | Build and run the unit tests with code coverage |
+| `build-release` | Build the Release app and fail unless it is arm64 only |
+| `test-tsan` | Build and run the unit tests with Thread Sanitizer; the first report stops the run |
+| `summarize` | Print each test command's latest counts, unit-test coverage, and finish time, also to the GitHub job summary |
+| `help` | Show the command list |
+
+`test-unit` and `test-ui` never rebuild. They fail without a test build but do
+not detect a stale one, so run `build-for-testing` after changes. `summarize`
+keeps a command's last results until that command runs again.
 
 ### Documentation commands
 
@@ -139,8 +180,8 @@ Cover the affected behavior, especially:
 
 ## Concurrency, performance, and reporting
 
-- Run targeted Thread Sanitizer checks for relevant actor/callback/persistence
-  changes; Address Sanitizer for unsafe-memory work. Run them separately and
+- Run Thread Sanitizer with `./Scripts/tests.sh test-tsan` for relevant
+  actor/callback/persistence changes; Address Sanitizer for unsafe-memory work. Run them separately and
   never treat a passing sanitizer as proof of safety.
 - Measure an identified regression or budget with the same synthetic workload
   before/after. Use Release builds on representative Macs and report hardware,
