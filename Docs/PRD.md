@@ -1,12 +1,12 @@
 # Promptly — Product Requirements Document
 
-**Version:** 0.2  
-**Status:** Feature specification — refined  
-**Platform:** macOS 26+  
-**Language:** Swift 6.4 with strict Swift concurrency  
-**UI:** SwiftUI, Observation, AppKit where necessary  
-**Text layout:** Custom Core Text engine  
-**Persistence:** UserDefaults / @AppStorage  
+**Version:** 0.2\
+**Status:** Feature specification — refined\
+**Platform:** macOS 26+ on Apple silicon only\
+**Language:** Swift 6.4 with strict Swift concurrency\
+**UI:** SwiftUI, Observation, AppKit where necessary\
+**Text layout:** Custom Core Text engine\
+**Persistence:** UserDefaults / @AppStorage\
 **Integrations:** Model Context Protocol (MCP), official Swift SDK
 
 ---

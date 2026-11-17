@@ -7,7 +7,7 @@ User instructions take precedence.
 
 Promptly is a native macOS teleprompter with line-by-line playback and local MCP integration.
 
-- **Platform:** macOS 26.0+
+- **Platform:** macOS 26.0+ on Apple silicon only
 - **Language:** Swift 6.4 toolchain, Swift 6 language mode (`SWIFT_VERSION = 6.0`)
 - **UI:** SwiftUI, Observation, minimal AppKit integration
 - **Text layout:** Core Text
@@ -75,7 +75,7 @@ repository-wide consistency reviews.
   `Docs/AgentGuides/DataAndPrivacy.md`
 - **SwiftUI/AppKit, windows, focus, styling, and accessibility:**
   `Docs/AgentGuides/UIAndAccessibility.md`
-- **Tests, builds, running, profiling, and code handoff:**
+- **Tests, builds, linting, formatting, running, profiling, and code handoff:**
   `Docs/AgentGuides/TestingAndValidation.md`
 
 ## 4. Architecture and code organization

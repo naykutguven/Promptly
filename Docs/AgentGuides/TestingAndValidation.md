@@ -11,9 +11,12 @@ Follow [AGENTS.md](../../AGENTS.md) and the relevant domain guides.
 - Check the Swift 6.4 toolchain and Swift 6 language mode against the baseline
   in AGENTS.md. Record the actual compiler and macOS SDK/runtime; a newer host
   alone does not prove macOS 26.0 compatibility.
-- Xcode exposes a `Promptly` scheme and test plan, but no `.xcscheme` or
-  `.xctestplan` files are stored in the repository. Persist shared configuration
-  before relying on it for CI. No CI, linter, or formatter is configured.
+- CI uses the shared `Promptly` scheme stored in the repository. Its test
+  configuration is in the scheme; no standalone `.xctestplan` is stored.
+- Run `./Scripts/linters.sh` with one of the commands in
+  [Linter commands](#linter-commands). For Swift changes, run `lint-swift` and
+  `lint-swift-format`; run `lint-actions` for workflow changes and `lint-shell`
+  for shell script changes. swift-format uses the selected Xcode 27.2 toolchain.
 - Prefer Xcode tooling for the open workspace. Use `BuildProject` with
   `buildForTesting: true` to compile test targets; an app-only build misses test
   compilation failures. Discover tests with `GetTestList`, then use `RunSomeTests`
@@ -29,6 +32,42 @@ Follow [AGENTS.md](../../AGENTS.md) and the relevant domain guides.
 - Documentation-only changes need consistency, local-link, and whitespace checks,
   including untracked files; run `git diff --check` for tracked changes. No app
   build is needed when only documentation changes.
+
+### Linter commands
+
+Commands run from any working directory. A command is required; running the
+script without one fails with a usage error. There is no aggregate lint command:
+run each linter separately. CI runs `install`, then `lint-swift`,
+`lint-swift-format`, `lint-actions`, and `lint-shell` as separate steps.
+CI caches `.build/quality-tools` under a key derived from the script, so
+changing a pin starts a new cache entry. Cached tools must still pass the
+installer's version check; a cache miss or failure falls back to downloading.
+
+Checks and linters never install tools, and only `format-swift` changes source
+files. The script pins each tool version. Installs download the pinned release,
+verify its SHA-256 and reported version, and place it in the ignored
+`.build/quality-tools` directory. Installs require an Apple silicon Mac, the only
+supported platform. Checks use the repository install first, then a matching
+version on `PATH`. swift-format comes from the selected Xcode and is never
+installed by the script.
+
+| Command | Tool | Behavior |
+|---|---|---|
+| `check-swiftlint` | SwiftLint | Check for the pinned SwiftLint version (repository install, then `PATH`) |
+| `install-swiftlint` | SwiftLint | Install the pinned, checksum-verified SwiftLint in `.build/quality-tools` |
+| `lint-swift` | SwiftLint | Lint Swift sources |
+| `check-swift-format` | swift-format | Check for the pinned swift-format version from the selected Xcode |
+| `lint-swift-format` | swift-format | Check Swift formatting without changing files |
+| `format-swift` | swift-format | Format Swift sources in place |
+| `check-actionlint` | actionlint | Check for the pinned actionlint version (repository install, then `PATH`) |
+| `install-actionlint` | actionlint | Install the pinned, checksum-verified actionlint in `.build/quality-tools` |
+| `lint-actions` | actionlint, ShellCheck | Lint GitHub Actions workflows, including embedded shell blocks |
+| `check-shellcheck` | ShellCheck | Check for the pinned ShellCheck version (repository install, then `PATH`) |
+| `install-shellcheck` | ShellCheck | Install the pinned, checksum-verified ShellCheck in `.build/quality-tools` |
+| `lint-shell` | ShellCheck | Lint tracked and untracked, non-ignored `.sh`, `.bash`, and `.ksh` files |
+| `check-tools` | All | Check all four tools, reporting every failure |
+| `install` | SwiftLint, actionlint, ShellCheck | Install all three pinned tools, reporting every failure |
+| `help` | — | Show the command list |
 
 ## Test at the lowest reliable layer
 

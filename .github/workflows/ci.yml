@@ -23,8 +23,9 @@ jobs:
     name: macOS CI
     # The project.xcproj format and Swift 6.4 require the Xcode 27 image.
     runs-on: xcode-27
-    # Step limits total 53 minutes, leaving 2 for runner overhead and cleanup.
-    timeout-minutes: 55
+    # Runs take about 3 minutes. Each step also has its own limit; the job limit
+    # stops a run in which several steps are slow at once.
+    timeout-minutes: 15
     env:
       DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
       CI_RESULTS: build/CI
@@ -50,17 +51,59 @@ jobs:
             xcrun --sdk macosx --show-sdk-version
           } 2>&1 | tee "$CI_RESULTS/environment.log"
 
-      - name: Set up pinned source quality tools
-        id: quality_tools
-        timeout-minutes: 3
-        run: |
-          ./Scripts/quality.sh bootstrap 2>&1 | tee "$CI_RESULTS/quality-bootstrap.log"
+      # The linter pins live in the script, so changing it starts a new cache entry.
+      # Caching is an optimization; a cache failure must not block installation.
+      - name: Restore cached linters
+        id: linters_cache
+        timeout-minutes: 2
+        continue-on-error: true
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .build/quality-tools
+          key: linters-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Scripts/linters.sh') }}
 
-      - name: Check Swift formatting and lint
-        if: ${{ !cancelled() && steps.quality_tools.outcome == 'success' }}
+      # Three downloads can each take up to 135 seconds with retries. Cached tools
+      # pass the version check without downloading.
+      - name: Install pinned linters
+        id: install_linters
+        if: ${{ !cancelled() && steps.environment.outcome == 'success' }}
+        timeout-minutes: 8
+        run: |
+          ./Scripts/linters.sh install 2>&1 | tee "$CI_RESULTS/linters-install.log"
+
+      # Save immediately so later build or test failures don't prevent caching.
+      - name: Save linters to cache
+        if: ${{ !cancelled() && steps.install_linters.outcome == 'success' && steps.linters_cache.outputs.cache-hit != 'true' }}
+        timeout-minutes: 2
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .build/quality-tools
+          key: ${{ steps.linters_cache.outputs.cache-primary-key }}
+
+      - name: Lint Swift with SwiftLint
+        if: ${{ !cancelled() && steps.environment.outcome == 'success' }}
         timeout-minutes: 2
         run: |
-          ./Scripts/quality.sh check 2>&1 | tee "$CI_RESULTS/source-quality.log"
+          ./Scripts/linters.sh lint-swift 2>&1 | tee "$CI_RESULTS/swiftlint.log"
+
+      - name: Check Swift formatting with swift-format
+        if: ${{ !cancelled() && steps.environment.outcome == 'success' }}
+        timeout-minutes: 2
+        run: |
+          ./Scripts/linters.sh lint-swift-format 2>&1 | tee "$CI_RESULTS/swift-format.log"
+
+      - name: Lint workflows with actionlint
+        if: ${{ !cancelled() && steps.environment.outcome == 'success' }}
+        timeout-minutes: 1
+        run: |
+          ./Scripts/linters.sh lint-actions 2>&1 | tee "$CI_RESULTS/actionlint.log"
+
+      - name: Lint shell scripts with ShellCheck
+        if: ${{ !cancelled() && steps.environment.outcome == 'success' }}
+        timeout-minutes: 1
+        run: |
+          ./Scripts/linters.sh lint-shell 2>&1 | tee "$CI_RESULTS/shellcheck.log"
 
       - name: Build app and both test targets (Debug)
         id: debug_build

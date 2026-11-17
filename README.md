@@ -70,7 +70,7 @@ See [Screen-Sharing Compatibility](Docs/Research/ScreenSharingCompatibility.md) 
 
 | Component | Technology |
 | --- | --- |
-| Platform | macOS 26+ |
+| Platform | macOS 26+ on Apple silicon |
 | Language | Swift 6.4 toolchain, Swift 6 language mode |
 | UI | SwiftUI, Observation, AppKit where necessary |
 | Text layout | Core Text |
@@ -84,6 +84,7 @@ The project prioritizes native Apple frameworks and minimal dependencies.
 
 ### Requirements
 
+- A Mac with Apple silicon. Intel-based Macs are not supported.
 - macOS 26 or later to run the application.
 - Xcode 27.2 with the Swift 6.4 toolchain for development.
 

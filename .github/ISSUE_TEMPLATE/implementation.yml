@@ -72,7 +72,7 @@ body:
       placeholder: |
         - Add focused unit tests for the duration examples, minimum floor, and both WPM boundaries.
         - Build the affected app and test targets for macOS and run the focused tests.
-        - Run ./Scripts/quality.sh check for Swift or quality-tooling changes.
+        - Run ./Scripts/linters.sh lint-swift and lint-swift-format for Swift changes.
     validations:
       required: true
 
