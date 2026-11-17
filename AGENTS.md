@@ -128,6 +128,31 @@ directories.
 - Do not modify project configuration, entitlements, or dependencies without a
   concrete requirement.
 
+### Swift file headers
+
+Every new `.swift` file, including tests, must begin with this header, followed
+by one blank line before imports or declarations:
+
+```swift
+//
+//  <Filename.swift>
+//  <ModuleName>
+//
+//  Created by Aykut Güven on <dd.MM.yy>.
+//
+```
+
+- Replace `<Filename.swift>` with the actual filename, including its extension.
+- Replace `<ModuleName>` with the module of the file's target: `Promptly`,
+  `PromptlyTests`, or `PromptlyUITests`.
+- Use the actual file-creation date in `dd.MM.yy` format (for example,
+  `17.11.26`); do not copy the date from an existing file.
+- Keep `Aykut Güven` as the author, including for agent-created files.
+- Preserve existing authors and creation dates when editing files. When renaming
+  a file, update its header filename to match.
+- Before handing off, verify the header of every Swift file created during the
+  task.
+
 ## 6. Privacy and security
 
 - Scripts and editor drafts remain memory-only.
