@@ -8,7 +8,7 @@
 import AppKit
 import SwiftUI
 
-@main
+/// The app's scenes. `PromptlyMain` starts it unless Xcode is hosting unit tests.
 struct PromptlyApp: App {
     @NSApplicationDelegateAdaptor(PromptlyAppDelegate.self) private var appDelegate
 

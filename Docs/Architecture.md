@@ -368,6 +368,7 @@ engine. None of the shared owners in §3 exist yet.
 
 | Path | Today | Gap to the PRD |
 |---|---|---|
+| `App/PromptlyMain.swift` | Entry point; starts `PromptlyApp`, or in Debug builds a windowless app when Xcode hosts unit tests in the app | None |
 | `App/PromptlyApp.swift` | Menu-bar extra and prompter `Window` scene; holds `PrompterWindowModel` as `@State` | Resizable content-size window; no editor or Settings scene (F05.1, F01.1, PRD-08) |
 | `App/PromptlyAppDelegate.swift` | Keeps the app running after its last window closes | No composition root, quit, or sleep forwarding |
 | `Domain/Prompter/PrompterLine.swift` | Display text and UTF-16 source range | No `id` or `layoutRevision` (F02.2) |
@@ -380,6 +381,7 @@ engine. None of the shared owners in §3 exist yet.
 | `Features/Prompter/Viewport/PrompterLineLayoutDemoModel.swift`, `PrompterLineLayoutDemoView.swift` | Preview-only demo of layout, last-good result, and anchor reconciliation | Not part of the app; fold into the session and viewport, or delete, when the real viewport lands |
 | `Services/Prompter/LineLayoutEngine.swift` | Stateless `@concurrent` Core Text engine | Revision and identity stamping pending (F02.2) |
 | `PromptlyTests/Services/Prompter/LineLayoutEngineTests.swift`, `PromptlyTests/Domain/Windowing/PrompterWindowStateTests.swift`, `PromptlyUITests/PrompterWindowUITests.swift` | Engine, prototype state, and window UI tests | Window-state tests go when the prototype type goes |
+| `PromptlyTests/App/UnitTestHostTests.swift` | Checks the unit-test host decision and that hosting unit tests creates no Promptly windows | None |
 
 ### 8.3 Placement rules
 

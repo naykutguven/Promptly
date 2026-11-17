@@ -9,11 +9,6 @@ import AppKit
 import SwiftUI
 
 final class PromptlyAppDelegate: NSObject, NSApplicationDelegate {
-    override init() {
-        let _ = ProcessInfo.processInfo.arguments.contains("--promptly-ui-testing")
-        super.init()
-    }
-
     func applicationWillTerminate(_ notification: Notification) {
         // TODO: A place for some cleanup - maybe to stop the timer and playback etc.
     }
