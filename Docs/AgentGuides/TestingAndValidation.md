@@ -30,8 +30,22 @@ Follow [AGENTS.md](../../AGENTS.md) and the relevant domain guides.
   check the logs and compare with Xcode before treating it as a source failure.
   Do not install tools, clean builds, or add CI merely for an unrelated task.
 - Documentation-only changes need consistency, local-link, and whitespace checks,
-  including untracked files; run `git diff --check` for tracked changes. No app
-  build is needed when only documentation changes.
+  including untracked files. Run `./Scripts/docs.sh lint-links` for links and
+  `git diff --check` for whitespace in tracked changes. No app build is needed
+  when only documentation changes.
+
+### Documentation commands
+
+`./Scripts/docs.sh` is for local validation; CI does not run it. Like the
+linter script, it runs from any working directory and requires a command.
+
+| Command | Behavior |
+|---|---|
+| `install` | Install lychee with Homebrew if it is missing; the version is not pinned |
+| `lint-links` | Check relative links, root-relative links, and heading anchors in tracked and untracked, non-ignored Markdown files with lychee in offline mode |
+| `help` | Show the command list |
+
+`lint-links` does not check external URLs or links inside code blocks.
 
 ### Linter commands
 
