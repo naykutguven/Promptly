@@ -1,41 +1,34 @@
 # Testing and Validation
 
 Read before tests, builds, running, sanitizers, profiling, or handing off code.
-Follow [AGENTS.md](../../AGENTS.md) and the relevant domain guides.
+Follow [AGENTS.md](../../AGENTS.md) and the relevant domain guides; the
+[PRD](../PRD.md) defines behavior and the [Architecture](../Architecture.md)
+§9 names the lowest reliable test layer for each area.
 
 ## Project and build workflow
 
-- Use `Promptly.xcodeproj`, scheme `Promptly`, and Debug/Release configurations.
-  The app and both test targets have a macOS 26.0 minimum. Verify effective
-  settings per target/configuration; project defaults may differ from overrides.
-- Check the Swift 6.4 toolchain and Swift 6 language mode against the baseline
-  in AGENTS.md. Record the actual compiler and macOS SDK/runtime; a newer host
-  alone does not prove macOS 26.0 compatibility.
-- CI uses the shared `Promptly` scheme stored in the repository. Its test
-  configuration is in the scheme; no standalone `.xctestplan` is stored.
-- Run `./Scripts/linters.sh` with one of the commands in
-  [Linter commands](#linter-commands). For Swift changes, run `lint-swift` and
-  `lint-swift-format`; run `lint-actions` for workflow changes and `lint-shell`
-  for shell script changes. swift-format uses the selected Xcode 27.2 toolchain.
-- Prefer Xcode tooling for the open workspace. Use `BuildProject` with
-  `buildForTesting: true` to compile test targets; an app-only build misses test
-  compilation failures. Discover tests with `GetTestList`, then use `RunSomeTests`
-  for the relevant selection.
-- Shell app builds and tests use `./Scripts/tests.sh` with one of the commands in
-  [Test commands](#test-commands); after code changes, run `build-and-test-unit`.
-  For a selection the script does not offer, use `xcodebuild -project
-  Promptly.xcodeproj -scheme Promptly` with an explicit configuration and
-  `-destination 'platform=macOS,arch=arm64'`. Use `xcsift` when available,
-  preserving the build's exit status with `pipefail`; otherwise keep the
-  unfiltered result. Build/test the app through its Xcode project, not
-  `swift build`/`swift test`.
-- If a restricted CLI environment prevents compiler macro plug-ins from launching,
-  check the logs and compare with Xcode before treating it as a source failure.
-  Do not install tools, clean builds, or add CI merely for an unrelated task.
-- Documentation-only changes need consistency, local-link, and whitespace checks,
-  including untracked files. Run `./Scripts/docs.sh lint-links` for links and
-  `git diff --check` for whitespace in tracked changes. No app build is needed
-  when only documentation changes.
+- Use `Promptly.xcodeproj` and scheme `Promptly` (Debug/Release). The app and
+  both test targets require macOS 26.0 and build with the Swift 6.4 toolchain in
+  Swift 6 language mode; check effective settings per target, since project
+  defaults differ. Record the actual compiler and SDK: a newer host does not
+  prove macOS 26.0 compatibility.
+- After code changes, run `./Scripts/tests.sh build-and-test-unit` (see
+  [Test commands](#test-commands)). For other selections, use `xcodebuild
+  -project Promptly.xcodeproj -scheme Promptly` with an explicit configuration
+  and `-destination 'platform=macOS,arch=arm64'`, through `xcsift` with
+  `pipefail` when available. Never use `swift build`/`swift test`.
+- In Xcode, compile tests with `BuildProject` and `buildForTesting: true`, then
+  use `GetTestList` and `RunSomeTests`. Xcode runs use team signing and lack the
+  script's test options, so results can differ.
+- Lint with the [Linter commands](#linter-commands): `lint-swift` and
+  `lint-swift-format` for Swift, `lint-actions` for workflows, and `lint-shell`
+  for shell scripts.
+- Documentation-only changes need no build: run `./Scripts/docs.sh lint-links`
+  and `git diff --check`. The latter skips untracked files, so check those for
+  trailing whitespace too.
+- If macro plug-ins fail to launch in a restricted shell, compare with Xcode
+  before treating it as a source failure. Do not install tools, clean builds,
+  or add CI for an unrelated task.
 
 ### Test commands
 
@@ -44,21 +37,23 @@ requires a command. CI runs `build-for-testing`, `test-unit`, `build-release`,
 `test-tsan`, and `test-ui` as separate steps, then `summarize`. The UI tests do
 not block CI until they pass on the hosted runner.
 
-Every command builds for `platform=macOS,arch=arm64` with ad-hoc signing and
-requires an Apple silicon Mac. Test commands write a fresh result bundle and the
-full log to `build/Tests`, and fail when no test passes or any test fails. When
-`xcsift` is installed, console output goes through `xcsift -f toon -w`; the log
-keeps the full output. On GitHub Actions, errors and warnings are also run
-annotations.
+Commands that run `xcodebuild` require an Apple silicon Mac and use
+`platform=macOS,arch=arm64`. Builds use ad-hoc signing, keep App Sandbox, and use
+`build/DerivedData`; Thread Sanitizer builds use `build/DerivedData-TSan`, so
+they never replace the normal build. Tests run serially, in English (US), with a
+120-second limit per test.
 
-Every build keeps App Sandbox and uses `build/DerivedData`. Thread Sanitizer
-builds use `build/DerivedData-TSan`, so they never replace the normal build.
+Each `xcodebuild` run writes its full log to `build/Tests`. Test commands write a
+fresh result bundle and counts there, named `unit-tests`, `ui-tests`, or
+`tsan-unit-tests`, and fail when no test passes or any test fails. When `xcsift`
+is installed, console output goes through `xcsift -f toon -w`; the log keeps the
+full output. On GitHub Actions, errors and warnings are also run annotations.
 
-Coverage is informational: a missing report is a warning, not a failure. For a
-sandboxed app, Xcode copies the coverage data out of the app's container after
-the tests. macOS refuses that unless the app running `xcodebuild` may access
-other apps' data, and the result bundle then reports "Failed to download
-profiles … Operation not permitted". Agent shells can lack that access.
+Coverage is informational: a missing report is a warning, not a failure. Xcode
+copies coverage data out of the sandboxed app's container, which macOS refuses
+unless the app running `xcodebuild` may access other apps' data; the result
+bundle then reports "Failed to download profiles … Operation not permitted".
+Agent shells can lack that access.
 
 | Command | Behavior |
 |---|---|
@@ -103,7 +98,7 @@ files. The script pins each tool version. Installs download the pinned release,
 verify its SHA-256 and reported version, and place it in the ignored
 `.build/quality-tools` directory. Installs require an Apple silicon Mac, the only
 supported platform. Checks use the repository install first, then a matching
-version on `PATH`. swift-format comes from the selected Xcode and is never
+version on `PATH`. swift-format comes from the selected Xcode 27.2 and is never
 installed by the script.
 
 | Command | Tool | Behavior |
@@ -124,74 +119,74 @@ installed by the script.
 | `install` | SwiftLint, actionlint, ShellCheck | Install all three pinned tools, reporting every failure |
 | `help` | — | Show the command list |
 
-## Test at the lowest reliable layer
+## Writing tests
 
-- Prefer Swift Testing for policies, state transitions, anchor mapping, revision
-  checks, parsing, and cancellation. Use XCTest/XCUITest for framework/UI behavior
-  and metrics where needed.
-- Keep `XCTestCase` subclasses `nonisolated` under default `MainActor` isolation;
-  annotate UI test methods with `@MainActor`. XCTest initializers and lifecycle
-  overrides must retain their base-class isolation; do not weaken app settings.
-- Use `PromptlyTests/Extensions/` or `PromptlyUITests/Extensions/` when the owning
-  test target needs focused type extensions. Keep these conveniences
-  test-only and target-local; create the folder with its first real file.
-- Current tests cover window state, layout, preferences, the SwiftUI-owned
-  window adapter, native visibility/drag/resize behavior, and
-  prompter UI journeys. See the [validation record](../WindowBehaviorValidation.md)
-  and [coverage report](../SourceCoverage.md) for evidence and remaining gaps;
-  they do not establish coverage of planned script editing or playback.
-- Use isolated in-memory stores for suitable logic tests and unique temporary
-  on-disk stores for persistence, migration, reopen, and file-transaction tests.
-- Inject time, IDs, file roots, and capability clients where determinism matters.
-  Use synthetic scripts, no real network, no shared mutable fixtures or arbitrary
-  sleeps. Clean up tasks, observers, files, and stores after each test.
-- For bugs, add a root-cause regression test when practical. Avoid tests that
-  merely mirror an implementation or add no useful failure signal.
+- Use Swift Testing for logic and XCTest/XCUITest for native UI journeys.
+  Mirror production paths under `PromptlyTests/` and put journeys in
+  `PromptlyUITests/`; test-only extensions go in that target's `Extensions/`.
+  Architecture §8.2 lists the current tests.
+- Unit tests run in a Debug-only windowless host (`PromptlyMain`) with no
+  prompter window or menu-bar extra. Test those through UI tests, which launch
+  the app with `--promptly-ui-testing` so it starts normally.
+- Keep `XCTestCase` subclasses `nonisolated`, UI test methods `@MainActor`, and
+  lifecycle overrides at their base-class isolation.
+- Inject clocks, IDs, the layout function, presenters, and the defaults store.
+  Settings tests use a uniquely named `UserDefaults` suite, never
+  `UserDefaults.standard`. Use synthetic text, and temporary files only for
+  import tests; avoid network, shared mutable fixtures, and sleeps. Clean up
+  tasks, observers, suites, and files.
+- For bugs, add a root-cause regression test when practical. Skip tests that
+  only mirror the implementation.
 
-Cover the affected behavior, especially:
+Cover the affected behavior:
 
-- save ordering, undo/redo, unsaved edits, migration/reopen, and low-storage recovery;
-- import validation, export readability, cancellation, and safe replacement;
-- stale results after edits/deletion, reentrancy, repeated commands, and teardown;
-- reading anchors after reflow, styling, resize, section changes, and script edits;
-- long scripts, large libraries, bounded work, and unavailable models/permissions;
-- future MCP capability enforcement, script scope, revocation, and edit conflicts.
+- loading: the latest load wins across UI and MCP; failed or superseded loads
+  keep the previous session; clearing invalidates pending loads (F01.3, F01.5);
+- import and limits: `.txt`/`.md`, the 1 MB import limit, and the script limit
+  on load (F01.2, F01.7); editor drafts survive cancelled discards (F01.6);
+- layout: reading position after reflow, failure recovery, and Play and
+  navigation blocked while recalculating (F02.6–F02.9);
+- playback: timing on an injected clock, WPM changes, pause on hide and sleep,
+  stale tokens, repeated commands, and teardown (F03.5–F03.11);
+- settings: atomic partial updates and validation (PRD-08 §8.8, §8.9);
+- MCP: enablement, protected settings, same-user access, draft exclusion,
+  revision safety, and disabling mid-request (F07.10–F07.15).
 
-## UI and Mac validation
+## Mac validation
 
-- The [approved Library design](../LibraryDesign.md) has a separate
-  [planned acceptance matrix](../ScriptEditingValidation.md#approved-design-adoption-pending)
-  for its first implementation. Preserve the prompter-window prototype's evidence;
-  there is no implemented Library baseline or passing Library test suite.
-  Browser mockup checks and design approval do not establish native gesture,
-  keyboard, VoiceOver, persistence or handoff behavior.
-- Inspect affected UI on macOS with synthetic scripts, including keyboard-only
-  operation, VoiceOver, focus, text editing, and undo/redo.
-- Exercise notch/no-notch placement, detached windows, resizing, multiple displays,
-  display disconnection, scaling, and restoration when relevant.
-- Check Light/Dark, contrast, reduced effects, long/localized text, and reading
-  position preservation. Capture synthetic screenshots for UI changes.
-- Screen-sharing claims require tests with the actual sharing applications and
-  window/display capture methods. Report observed compatibility, not a guarantee.
-- On-device Foundation Models and future Speech features need real-Mac checks
-  for supported/unsupported configurations, asset availability, offline behavior,
-  permissions, and resource cleanup. Record unavailable hardware/OS checks as
-  remaining release gates.
+Compilation and unit tests do not establish runtime behavior. For UI changes,
+check on macOS with synthetic scripts and capture synthetic screenshots:
 
-## Concurrency, performance, and reporting
+- keyboard-only operation, focus, VoiceOver, Reduce Motion, contrast, long text,
+  and Light/Dark in the editor and Settings;
+- the prompter's presets, Attached and Floating placement, notch and no-notch
+  displays, multiple displays and disconnection, Spaces including full-screen,
+  showing without activating Promptly, and reading-position preservation
+  (PRD-05);
+- screen sharing with the actual sharing apps and capture methods, recorded in
+  the [compatibility research](../Research/ScreenSharingCompatibility.md).
+  Report observed compatibility, never a guarantee (PRD-06);
+- MCP with the Codex and Claude Desktop versions you record (F07.16).
 
-- Run Thread Sanitizer with `./Scripts/tests.sh test-tsan` for relevant
-  actor/callback/persistence changes; Address Sanitizer for unsafe-memory work. Run them separately and
-  never treat a passing sanitizer as proof of safety.
+Record checks that need unavailable hardware or OS versions as remaining release
+gates.
+
+## Sanitizers and performance
+
+- Run `./Scripts/tests.sh test-tsan` for concurrency changes in layout, the
+  session, playback, settings, or MCP. For unsafe-memory work, run the unit
+  tests with `xcodebuild test -enableAddressSanitizer YES` and its own
+  DerivedData path, such as `build/DerivedData-ASan`. Never combine sanitizers,
+  and never treat a passing run as proof of safety.
 - Measure an identified regression or budget with the same synthetic workload
-  before/after. Use Release builds on representative Macs and report hardware,
-  OS, workload, and results. Prioritize scroll smoothness, input latency, CPU,
-  memory, and idle energy; stop timers and work when inactive.
-- Documentation needs consistency/link/whitespace checks; logic changes need
-  targeted tests and a build; persistence/concurrency needs integration/failure
-  coverage; UI/window changes need Mac interaction and accessibility checks.
-- Report exact commands/tools, destinations, results, and skipped checks with
-  their implications. Do not claim all tests, CI, thread safety, capture exclusion,
-  minimum-OS support, or performance gains without corresponding evidence.
-- Unsigned builds check compilation, not signing, notarization, or runtime sandbox
-  entitlements.
+  before and after, using Release builds on representative Macs. Report
+  hardware, OS, workload, and results. Prioritize scroll smoothness, input
+  latency, CPU, memory, and idle energy; stop timers and work when inactive.
+
+## Reporting
+
+- Report exact commands or tools, destinations, results, and skipped checks with
+  their implications. Do not claim all tests, CI, thread safety, capture
+  exclusion, minimum-OS support, or performance gains without evidence.
+- Script builds are ad-hoc signed: they check compilation and sandboxed runs,
+  not team signing, notarization, or distribution.
