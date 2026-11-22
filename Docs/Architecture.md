@@ -97,8 +97,8 @@ App ──► Features ──► Services
   without becoming owners.
 - **Window preferences versus window state.** Settings owns the size preset
   and the placement mode. The Settings UI, the menu, the window, and MCP all
-  change them (F05.4, F07.8), and Restore All Defaults resets them (PRD-08
-  §8.6). The window model applies those values and owns the window frame,
+  change them (F05.4, F07.8), and Restore All Defaults resets them (F08.6).
+  The window model applies those values and owns the window frame,
   including the last floating position. The system restores the frame across
   launches, so Promptly stores no window coordinates of its own (§10).
 - **Visibility** is native state. The window model reports it to the session,
@@ -189,7 +189,7 @@ defaults, validation, UserDefaults coding, and Restore All Defaults (PRD-08).
 - **One mutation entry point** takes a partial update and its origin, user or
   agent. It merges the update, validates the whole result, and rejects unknown
   keys and any protected key from an agent. It then commits atomically,
-  persists, and increments a settings generation (PRD-08 §8.8–§8.9, F07.8,
+  persists, and increments a settings generation (F08.8–F08.9, F07.8,
   F07.10). Restore All Defaults is user-only.
 - **Change records** list the changed keys and the subsystems they affect:
 
@@ -198,19 +198,19 @@ defaults, validation, UserDefaults coding, and Restore All Defaults (PRD-08).
   | Font family, weight, or size | Layout: pause and reflow | F02.4 |
   | Size preset | Window frame and layout | F05.1 |
   | Placement mode | Window only | F05.4, F07.9 |
-  | Text color, alignment, reading focus | Viewport only | F04.3, PRD-08 §8.2 |
+  | Text color, alignment, reading focus | Viewport only | F04.3, F08.2 |
   | WPM | Playback, from the next line | F03.6 |
   | MCP enabled | MCP bridge | F07.14 |
 
 - Restore All Defaults produces a change record covering every subsystem. The
-  window model also discards its remembered floating position (PRD-08 §8.6).
+  window model also discards its remembered floating position (F08.6).
 - **Side effects apply in the commit's MainActor turn.** The session, the
   window model, and the MCP bridge react synchronously to a change record. A
   layout-affecting commit therefore pauses playback and enters the
   recalculating phase before any further UI or MCP command runs (F07.11).
 - **Recovery without a cycle.** If a settings-triggered layout fails, the
   session asks settings to revert the affected keys, but only those still at
-  the value that failed. Newer updates survive (F02.9, PRD-08 §8.9).
+  the value that failed. Newer updates survive (F02.9, F08.9).
 - `@AppStorage` is fine for view-local UI state, such as the selected Settings
   section. It must not write a shared preference around the service.
 
@@ -254,10 +254,10 @@ defaults, validation, UserDefaults coding, and Restore All Defaults (PRD-08).
 
 ### 4.7 Settings feature (`Features/Settings/`)
 
-The Settings scene uses the sidebar sections in PRD-08 §8.1, and its controls
+The Settings scene uses the sidebar sections in F08.1, and its controls
 submit partial updates. Enabling MCP presents the access-scope and
 external-processing disclosure (F07.15). Restore All Defaults asks for
-confirmation (PRD-08 §8.6).
+confirmation (F08.6).
 
 ### 4.8 MCP (`Services/MCP/`)
 
@@ -288,14 +288,14 @@ requirements.
 |---|---|---|---|
 | Load | Editor or MCP → session → off-main layout → recheck request, configuration, and phase → commit → App reveals the prompter | Session, on MainActor; the latest request wins | F01.3, F07.1 |
 | Clear | Menu or editor → session clears and invalidates pending loads and layouts | Session | F01.5 |
-| Layout setting | Settings UI or MCP → settings commit → session pauses and recalculates → commit with the mapped anchor, or ask settings to revert | Settings, then session | F02.6, F02.9, PRD-08 §8.9 |
+| Layout setting | Settings UI or MCP → settings commit → session pauses and recalculates → commit with the mapped anchor, or ask settings to revert | Settings, then session | F02.6, F02.9, F08.9 |
 | Play cycle | Session → scroll request with token → viewport → completion → timer → advance | Session | F03.5 |
 | Manual scroll | Viewport → session pauses and invalidates → settled line → session | Session | F03.7 |
 | Navigate | UI or MCP → session checks revision and index → pause, set line, scroll request | Session | F03.8, F07.4 |
 | Hide or show | Window model → session visibility fact; hiding pauses | Session | F03.9, F05.5 |
 | Placement or preset | Window, menu, Settings UI, or MCP → settings → window model applies it; a preset change also reflows | Settings | F05.4, F07.9 |
 | Sleep | App → session pauses | Session | F03.11 |
-| Restore defaults | Settings UI → settings reset, with MCP disabled → normal side effects; the window model discards its floating position | Settings | PRD-08 §8.6 |
+| Restore defaults | Settings UI → settings reset, with MCP disabled → normal side effects; the window model discards its floating position | Settings | F08.6 |
 
 ## 6. Concurrency and lifetime
 
@@ -414,7 +414,7 @@ packaging evidence separately, following the
 | Decision | Why it matters | Settle in |
 |---|---|---|
 | MCP process layout, IPC, peer validation, packaging | Adds a target, a dependency, and entitlements | MCP research (F07.13) |
-| System restoration of the prompter frame | The borderless prompter must restore across launches, survive display changes, and stop returning a floating position after Restore All Defaults; within a launch the window model returns the last floating position | Windowing task (F05.3, F05.7, PRD-08 §8.6) |
+| System restoration of the prompter frame | The borderless prompter must restore across launches, survive display changes, and stop returning a floating position after Restore All Defaults; within a launch the window model returns the last floating position | Windowing task (F05.3, F05.7, F08.6) |
 | Non-activating prompter | Showing or using the prompter must not activate Promptly, which likely needs an AppKit non-activating panel hosting the SwiftUI view instead of a SwiftUI `Window` scene | Windowing task (F05.6) |
 | Font resolution outside a view | The session must build the same `Font.Resolved` that the rows render | Layout integration task |
 | User-scroll detection signal | Separates manual from programmatic scrolling | Viewport task (F03.7) |

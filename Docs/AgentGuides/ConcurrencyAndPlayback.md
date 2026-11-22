@@ -56,7 +56,7 @@ for load validation and MCP access, and
 - Settings updates are serialized; the last committed update to a property wins.
   Side effects run in the commit's `MainActor` turn, so a layout-affecting
   change pauses playback and enters recalculation before the next command
-  (PRD-08 §8.8, Architecture §4.4).
+  (F08.8, Architecture §4.4).
 - After an MCP request suspends, recheck enablement and the same-user boundary
   before disclosing or mutating. Disabling MCP invalidates in-flight requests
   (Architecture §4.8).
@@ -111,7 +111,7 @@ for load validation and MCP access, and
   decision (Architecture §10).
 - Changing the focus position, text color, or WPM, opening Settings, and
   disconnecting an MCP client do not interrupt playback (F04.3, F07.9, F07.14,
-  PRD-08 §8.1).
+  F08.1).
 
 ## Layout and reading position
 
@@ -127,7 +127,7 @@ for load validation and MCP access, and
   new one is computed (F02.7, Architecture §4.2).
 - If layout fails, keep the previous layout, text, and position. Revert the
   settings that caused it only where they still hold the failed value, so newer
-  updates survive, and stay paused (F02.9, PRD-08 §8.9).
+  updates survive, and stay paused (F02.9, F08.9).
 - Keep per-advance work small. A line advance must not trigger layout,
   persistence, or invalidation of unrelated views. When nothing is Playing, no
   scheduler work runs.

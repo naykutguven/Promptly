@@ -148,7 +148,7 @@ Cover the affected behavior:
   navigation blocked while recalculating (F02.6–F02.9);
 - playback: timing on an injected clock, WPM changes, pause on hide and sleep,
   stale tokens, repeated commands, and teardown (F03.5–F03.11);
-- settings: atomic partial updates and validation (PRD-08 §8.8, §8.9);
+- settings: atomic partial updates and validation (F08.8, F08.9);
 - MCP: enablement, protected settings, same-user access, draft exclusion,
   revision safety, and disabling mid-request (F07.10–F07.15).
 

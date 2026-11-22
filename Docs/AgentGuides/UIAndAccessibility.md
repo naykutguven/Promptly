@@ -80,7 +80,7 @@ Before choosing a framework integration or workaround:
 - Within a launch, detaching returns the window to its last floating position,
   which the window model keeps in memory. With none available, after relaunching
   while Attached or after Restore All Defaults, use a default floating position
-  (F05.3, PRD-08 §8.6).
+  (F05.3, F08.6).
 - Promptly stores no window coordinates; macOS restores the frame across
   launches. Verify native restoration for the borderless prompter on macOS 26
   before relying on it (F05.3).
@@ -122,7 +122,7 @@ Before choosing a framework integration or workaround:
   enough leading and trailing space for the first and last lines. Changing the
   position neither pauses playback nor regenerates layout (F04.3).
 - Text color is a preference that applies immediately without relayout
-  (PRD-08 §8.2, F07.9).
+  (F08.2, F07.9).
 - Keep frequent playback updates local to the views that need them. Advancing a
   line must not invalidate the whole list.
 
@@ -137,21 +137,21 @@ Before choosing a framework integration or workaround:
 - Settings uses a native sidebar modeled on macOS 27 System Settings, while
   still supporting macOS 26. Its sections are Prompter (with Layout and Text
   groups), Playback, Integrations, and About. **Restore All Defaults…** sits at
-  the bottom of the sidebar, apart from navigation (PRD-08 §8.1, §8.6).
+  the bottom of the sidebar, apart from navigation (F08.1, F08.6).
 - Settings shows exactly the preferences PRD-08 defines; add no others, such as
   appearance options, without a requirement.
 - Settings controls submit partial updates, and agent changes appear
   immediately. Opening or closing Settings does not pause or resume playback
-  (PRD-08 §8.1, §8.8).
+  (F08.1, F08.8).
 - Use native color selection with a way to restore the default color
-  (PRD-08 §8.2).
+  (F08.2).
 - Enabling MCP in Integrations presents the access-scope and external-processing
-  disclosure (F07.15, PRD-08 §8.4).
+  disclosure (F07.15, F08.4).
 
 ## Confirmations and errors
 
 - Confirm only where the PRD requires it: discarding unfinished editor edits
-  (F01.6) and Restore All Defaults (PRD-08 §8.6). Replacing or clearing the
+  (F01.6) and Restore All Defaults (F08.6). Replacing or clearing the
   active script needs no confirmation (F01.5).
 - Errors say what happened, whether the session and draft are intact, and the
   next useful step. Cover the PRD's error cases, such as no script loaded,

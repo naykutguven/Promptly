@@ -1170,7 +1170,9 @@ Remote MCP access, per-client approval or permissions, agent-generated scripts i
 
 Provide centralized, persistent, immediately applicable preferences shared across the UI and authorized MCP clients.
 
-## 8.1 Settings navigation
+## Functional requirements
+
+### F08.1 — Settings navigation
 
 Use the macOS 27 System Settings layout as the reference: a native sidebar on the left and grouped settings in the selected section's content area on the right. Preserve macOS 26+ support.
 
@@ -1185,11 +1187,11 @@ Prompter contains Layout and Text groups within its content area.
 
 Opening or closing Settings preserves playback state and reading position; it does not pause active playback or resume paused playback.
 
-## 8.2 Prompter
+### F08.2 — Prompter
 
-### Layout
+#### Layout
 
-#### Window size
+##### Window size
 
 Options:
 - Compact
@@ -1197,7 +1199,7 @@ Options:
 
 Default: Compact. Persist the selected preset.
 
-#### Placement
+##### Placement
 
 Options:
 - Attached
@@ -1205,7 +1207,7 @@ Options:
 
 Default: Attached to the built-in laptop display. Persist placement mode. macOS restores the floating window frame (F05.3).
 
-#### Reading focus
+##### Reading focus
 
 Options:
 - Top
@@ -1216,15 +1218,15 @@ Default: Center.
 
 Changing focus position updates the scroll target for the same current line without regenerating the display-line collection. Preserve playback state and timing; active playback continues.
 
-### Text
+#### Text
 
-#### Font family
+##### Font family
 
 - Select from compatible installed fonts.
 - Default: System font.
 - Handle unavailable fonts using a deterministic fallback.
 
-#### Font weight
+##### Font weight
 
 - Regular
 - Medium
@@ -1233,13 +1235,13 @@ Changing focus position updates the scroll target for the same current line with
 
 Default: Regular.
 
-#### Font size
+##### Font size
 
 - Default: 24 pt.
 - Supported range: 16–48 pt, validated for UI and MCP updates.
 - Changes trigger layout regeneration.
 
-#### Alignment
+##### Alignment
 
 - Leading
 - Center
@@ -1249,7 +1251,7 @@ Default: Center.
 
 Alignment changes should not regenerate the layout when the usable line width and shaping remain unchanged.
 
-#### Text color
+##### Text color
 
 - Default: White (`#FFFFFF`).
 - Native color selection.
@@ -1258,9 +1260,9 @@ Alignment changes should not regenerate the layout when the usable line width an
 
 Colors should use a stable, explicitly defined persistence format suitable for MCP serialization.
 
-## 8.3 Playback
+### F08.3 — Playback
 
-### Reading speed
+#### Reading speed
 
 **Confirmed:** WPM only.
 
@@ -1269,7 +1271,7 @@ Colors should use a stable, explicitly defined persistence format suitable for M
 - Persist the selected value
 - Apply changes from the next display line during active playback
 
-### Manual scrolling behavior
+#### Manual scrolling behavior
 
 Fixed MVP behavior:
 - Manual scrolling pauses playback.
@@ -1277,7 +1279,7 @@ Fixed MVP behavior:
 
 No user setting is needed for this behavior.
 
-### Hide behavior
+#### Hide behavior
 
 Fixed MVP behavior:
 - Hiding the window pauses playback.
@@ -1286,7 +1288,7 @@ Fixed MVP behavior:
 
 No user setting is needed for this behavior.
 
-## 8.4 Integrations
+### F08.4 — Integrations
 
 MCP settings:
 - Enable/disable integration (disabled by default)
@@ -1297,7 +1299,7 @@ MCP settings:
 
 Only the user can enable or disable integration through Settings. Explain the active-script and future-replacement access granted to local clients. Per-client approval and permissions are outside the MVP scope.
 
-## 8.5 About
+### F08.5 — About
 
 Display:
 - Application name
@@ -1307,7 +1309,7 @@ Display:
 - Privacy information
 - Licenses and acknowledgments
 
-## 8.6 Restore All Defaults
+### F08.6 — Restore All Defaults
 
 - Provide **Restore All Defaults…** at the bottom of the Settings sidebar, separate from the navigation entries.
 - Require confirmation and explain that this resets all preferences, including window placement and playback preferences, and disables MCP.
@@ -1316,7 +1318,7 @@ Display:
 - Apply the normal layout/playback side-effect rules when restoring defaults.
 - This action is user-only and unavailable through MCP.
 
-## 8.7 Persistence requirements
+### F08.7 — Persistence requirements
 
 - Store preferences in UserDefaults.
 - Use `@AppStorage` where suitable for simple UI-bound values.
@@ -1325,14 +1327,14 @@ Display:
 - Use Observation to propagate changes.
 - Persist only preferences, never script content. Leave window frame restoration to macOS (F05.3).
 
-## 8.8 Settings update behavior
+### F08.8 — Settings update behavior
 
 - UI and MCP submit only the properties being changed, rather than replacing settings from an older snapshot.
 - The shared settings service serializes updates and preserves all unspecified properties, including siblings within nested groups.
 - If valid updates modify the same property, the last update committed by the service wins. Client timestamps and asynchronous completion order do not determine precedence.
 - Settings updates through UI or MCP pause active playback only when layout regeneration is required. WPM, text color, and reading focus changes preserve playback state. After regeneration, playback remains paused until Play is explicitly requested.
 
-## 8.9 Settings change atomicity
+### F08.9 — Settings change atomicity
 
 A multi-field update must be validated before any change is committed.
 

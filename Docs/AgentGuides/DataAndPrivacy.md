@@ -84,12 +84,12 @@ and [Testing and Validation](TestingAndValidation.md) before verification.
 ## Preferences
 
 - Persist preferences in UserDefaults through the settings service, the only
-  owner of preferences, defaults, validation, and coding (PRD-08 §8.7,
+  owner of preferences, defaults, validation, and coding (F08.7,
   Architecture §4.4).
 - All UI and MCP changes go through one mutation entry point that takes a
   partial update and its origin. It merges, validates the whole result, commits
   atomically, persists, and publishes. Invalid updates change nothing; the last
-  committed update to a property wins (PRD-08 §8.8–§8.9, F07.8).
+  committed update to a property wins (F08.8–F08.9, F07.8).
 - Agent-origin updates cannot change protected settings: MCP enablement,
   authorization policy, security or privacy acknowledgments, network exposure,
   or Restore All Defaults (F07.10).
@@ -97,17 +97,17 @@ and [Testing and Validation](TestingAndValidation.md) before verification.
   section. It must not write a shared preference around the service
   (Architecture §4.4).
 - Use stable, explicit stored formats. Text color must serialize the same way
-  for storage and MCP (PRD-08 §8.2). Read stored values through the same
-  validation; an unavailable font uses the deterministic fallback (PRD-08 §8.2).
+  for storage and MCP (F08.2). Read stored values through the same
+  validation; an unavailable font uses the deterministic fallback (F08.2).
 - Changing a stored key or format affects persistence compatibility; ask before
   doing it (AGENTS.md §7).
 - Persist only preferences. Promptly stores no window coordinates: macOS
   restores the prompter frame across launches, and the window model keeps the
   last floating position in memory for detaching within a launch (F05.3,
-  PRD-08 §8.2, §8.7).
+  F08.2, F08.7).
 - Restore All Defaults resets every preference, discards the remembered floating
   position, and disables MCP. It keeps the active script, drafts, and reading
-  position (PRD-08 §8.6).
+  position (F08.6).
 - The preferences are exactly those PRD-08 defines. Do not add others, such as
   appearance options, without a requirement. Settings import and export, cloud
   sync, profiles, and per-script preferences are out of scope (PRD-08).
@@ -115,7 +115,7 @@ and [Testing and Validation](TestingAndValidation.md) before verification.
 ## MCP access boundary
 
 - MCP is disabled by default. Only the user enables or disables it, in
-  Settings (F07.10, F07.14, PRD-08 §8.4).
+  Settings (F07.10, F07.14, F08.4).
 - Transport is local `stdio` with no network listener. Any helper-to-app
   communication is secured and enforces the same macOS user boundary (F07.13).
   The process layout and IPC mechanism are undecided; see the

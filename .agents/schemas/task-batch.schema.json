@@ -67,7 +67,7 @@
               "type": "string",
               "pattern": "\\S"
             },
-            "description": "PRD requirement references this task implements, investigates, fixes, or documents. Use numbered IDs such as F03.4, or precise section headings or anchors such as PRD-08 / 8.2 Prompter when IDs are absent. The consumer must verify that each reference resolves in Docs/PRD.md. Cite related architecture sections or decision records in notes."
+            "description": "PRD requirement references this task implements, investigates, fixes, or documents. Use numbered IDs such as F03.4 or F08.2. Use precise section headings or anchors when IDs are absent. The consumer must verify that each reference resolves in Docs/PRD.md. Cite related architecture sections or decision records in notes."
           },
           "objective": {
             "type": "string",
