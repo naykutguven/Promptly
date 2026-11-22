@@ -30,7 +30,6 @@ The repository currently contains:
 
 - A SwiftUI menu-bar application and floating prompter window prototype using synthetic text.
 - Basic window positioning, visibility, and interaction controls.
-- Local window-placement preferences.
 - A Core Text engine for calculating visual display lines and Unicode-aware source ranges.
 - A standalone SwiftUI line-layout demonstration.
 - Initial unit and UI tests.
@@ -54,7 +53,7 @@ Promptly's core functionality is designed to work offline without accounts or cl
 The planned MVP follows these rules:
 
 - **Memory-only scripts:** Active scripts and unfinished editor drafts remain in application memory and are discarded when the application quits.
-- **Local preferences:** Only preferences and necessary window coordinates are persisted.
+- **Local preferences:** Only preferences are persisted. Promptly stores no window coordinates; macOS restores the prompter frame.
 - **Optional MCP access:** MCP is disabled by default and uses local `stdio` integration without a network listener.
 - **Active-script scope:** While MCP is enabled, any local MCP client running under the same macOS user may access the active script, future replacements, and supported controls. Unfinished editor drafts are excluded.
 

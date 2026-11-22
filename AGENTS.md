@@ -156,8 +156,9 @@ by one blank line before imports or declarations:
 ## 6. Privacy and security
 
 - Scripts and editor drafts remain memory-only.
-- Persist only preferences and necessary window coordinates. Do not persist
-  script content, imported file contents, or imported file paths.
+- Persist only preferences. Promptly stores no window coordinates; macOS
+  restores the prompter frame. Do not persist script content, imported file
+  contents, or imported file paths.
 - Never include script content in logs, diagnostics, analytics, identifiers, or
   filenames.
 - Use synthetic text in tests, previews, screenshots, and examples.

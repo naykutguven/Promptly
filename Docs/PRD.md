@@ -1222,9 +1222,10 @@ Changing focus position updates the scroll target for the same current line with
 
 ##### Font family
 
-- Select from compatible installed fonts.
-- Default: System font.
-- Handle unavailable fonts using a deterministic fallback.
+- Select from all font families installed on the Mac.
+- Identify a family by its family name in storage and MCP.
+- Default: System font, stored as `System`. `System` always means the current macOS system font.
+- If a stored family is no longer installed, use and report `System` at the same weight.
 
 ##### Font weight
 
@@ -1234,6 +1235,8 @@ Changing focus position updates the scroll target for the same current line with
 - Bold
 
 Default: Regular.
+
+Offer and accept only the weights the selected family provides. When the selected family lacks the current weight, use its closest available weight in the order above, choosing the lighter one on a tie. This also applies when an MCP update changes only the family.
 
 ##### Font size
 
@@ -1258,7 +1261,7 @@ Alignment changes should not regenerate the layout when the usable line width an
 - Restore default.
 - Immediately update visible text.
 
-Colors should use a stable, explicitly defined persistence format suitable for MCP serialization.
+Store and exchange colors over MCP as `#RRGGBB` hexadecimal RGB without alpha. Any such color is accepted; no minimum contrast is enforced. Accept either letter case; store and return uppercase.
 
 ### F08.3 — Playback
 
